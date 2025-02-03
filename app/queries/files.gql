@@ -1,0 +1,6 @@
+fragment FileFields on FileDto {
+  id
+  filename
+  path
+  mimetype
+}

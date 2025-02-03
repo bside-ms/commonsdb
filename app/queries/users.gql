@@ -1,0 +1,24 @@
+fragment UserFields on UserDto {
+  id
+  status
+  firstname
+  lastname
+  username
+  email
+  bio
+  phone
+  avatar {
+    ...FileFields
+  }
+  visibility
+}
+
+query Me {
+  me {
+    ...UserFields
+  }
+  myWallet {
+    id
+    balance
+  }
+}

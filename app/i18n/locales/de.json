@@ -1,0 +1,41 @@
+{
+  "actions": {
+    "back": "Zurück"
+  },
+  "priority": "Priorität",
+  "priorities": {
+    "LOW": "niedrige",
+    "MEDIUM": "mittlere",
+    "HIGH": "hohe",
+    "URGENT": "höchste"
+  },
+  "tasks": {
+    "frequency": {
+      "IRREGULAR": "unregelmäßig",
+      "DAILY": "täglich",
+      "WEEKLY": "wöchentlich",
+      "MONTHLY": "monatlich",
+      "QUARTERLY": "quartalsweise"
+    },
+    "type": {
+      "SINGLE": "Einzelaufgabe",
+      "RECURRING": "Regelmäßige Aufgabe"
+    },
+    "assignmentStatus": {
+      "OPEN": "offen",
+      "ASSIGNED": "zugewiesen"
+    },
+    "actions": {
+      "accept": "Annehmen",
+      "settle": "Als erledigt markieren",
+      "resign": "Zurücktreten"
+    }
+  },
+  "sort": "Sortierung",
+  "sorts": {
+    "DUE_ASC": "Fälligkeit aufsteigend",
+    "DUE_DESC": "Fälligkeit absteigend",
+    "PRIORITY_ASC": "Priorität aufsteigend",
+    "PRIORITY_DESC": "Priorität absteigend"
+  }
+}

@@ -1,0 +1,149 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    url      = env("DATABASE_URL")
+    provider = "postgresql"
+}
+
+model Wallet {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    transactions WalletTransaction[]
+
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WalletTransaction {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+
+    type    WalletTransactionType
+    amount  Int
+    comment String?
+
+    walletId String
+    wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+enum WalletTransactionType {
+    TRANSFER_IN
+    TRANSFER_OUT
+}
+
+model User {
+    id       String  @id
+    email    String
+    username String?
+
+    responsibilities TaskResponsibility[]
+    wallet           Wallet?
+}
+
+model Task {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    title       String
+    description String?
+
+    type         TaskType
+    frequency    TaskFrequency?
+    dueStartDate DateTime?
+    dueEndDate   DateTime?
+
+    priority TaskPriority?
+    expense  Int?
+    factor   Float?
+
+    links       TaskLink[]
+    categories  CategoriesOnTasks[]
+    occurrences TaskOccurrence[]
+
+    maxResponsibilities Int                  @default(1)
+    responsibilities    TaskResponsibility[]
+}
+
+model TaskResponsibility {
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    taskId String
+    task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+    assignedAt DateTime @default(now())
+    assignedBy String?
+
+    @@id([userId, taskId])
+}
+
+model TaskOccurrence {
+    id           String              @id @default(uuid())
+    taskId       String
+    task         Task                @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    dueStartDate DateTime?
+    dueEndDate   DateTime?
+    status       TaskOccurenceStatus @default(PENDING)
+}
+
+model TaskLink {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+
+    label  String?
+    url    String
+    task   Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    taskId String
+}
+
+model TaskCategory {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+
+    name     String
+    parentId String?
+    parent   TaskCategory?       @relation("CategoryParent", fields: [parentId], references: [id])
+    children TaskCategory[]      @relation("CategoryParent")
+    tasks    CategoriesOnTasks[]
+}
+
+model CategoriesOnTasks {
+    task       Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    taskId     String
+    category   TaskCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    categoryId String
+
+    @@id([taskId, categoryId])
+}
+
+enum TaskPriority {
+    LOW
+    MEDIUM
+    HIGH
+    URGENT
+}
+
+enum TaskType {
+    SINGLE
+    RECURRING
+}
+
+enum TaskFrequency {
+    IRREGULAR
+    DAILY
+    WEEKLY
+    MONTHLY
+    QUARTERLY
+    YEARLY
+}
+
+enum TaskOccurenceStatus {
+    PENDING
+    COMPLETED
+    MISSED
+}

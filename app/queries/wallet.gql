@@ -1,0 +1,28 @@
+fragment WalletTransactionFields on WalletTransactionDto {
+  id
+  type
+  amount
+  comment
+  createdAt
+  updatedAt
+}
+
+fragment WalletFields on WalletDto {
+  id
+  balance
+  transactions {
+    ...WalletTransactionFields
+  }
+}
+
+query GetMyWallet {
+  myWallet {
+    ...WalletFields
+  }
+}
+
+query GetOrganizationWallet($organizationId: String!) {
+  organizationWallet(organizationId: $organizationId) {
+    ...WalletFields
+  }
+}

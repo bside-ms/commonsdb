@@ -1,0 +1,3 @@
+<template>
+    <AuthSignUpCard />
+</template>
