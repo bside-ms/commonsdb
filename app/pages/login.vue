@@ -4,8 +4,8 @@ const { public: { baseUrl } } = useRuntimeConfig()
 const { error } = await supabase.auth.signInWithOAuth({
     provider: 'keycloak',
     options: {
-        scopes: 'openid profile email commonsdb_roles',
-        redirectTo: `http://localhost:3000/oauth/callback`,
+        scopes: 'openid email profile commonsdb_roles',
+        redirectTo: `${baseUrl}/oauth/callback`,
     }
 })
 </script>
