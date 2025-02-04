@@ -10,7 +10,11 @@ export default defineEventHandler(async (event): Promise<TaskFull | null> => {
     },
     include: {
       links: true,
-      categories: true,
+      categories: {
+        include: {
+          category: true,
+        },
+      },
       responsibilities: {
         select: {
           userId: true,

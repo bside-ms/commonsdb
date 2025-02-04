@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { TaskType } from '@prisma/client';
+import { ExternalLink } from 'lucide-vue-next';
 import type { TaskFull } from '~/types/tasks';
 
 defineProps<{ task: TaskFull }>()
 </script>
 
 <template>
-    <div class="space-y-6">
-        <div v-if="task.type === TaskType.RECURRING" class="font-serif font-semibold">{{
-            $t(`tasks.type.${task.type}`) }}
+    <div class="space-y-3">
+        <div v-if="task.categories.length || task.type === TaskType.RECURRING" class="font-serif font-semibold">
+            {{ task.categories.map(tc => tc.category.name).join(", ") }}{{ task.categories.length ? " " : "" }}{{
+                task.type === TaskType.RECURRING ? " " +
+                    $t(`tasks.type.${task.type}`) : "" }}
         </div>
-        <ul class="space-y-1">
+        <ul class="space-y-px">
             <li v-if="task.priority">
                 <TaskPriority :priority="task.priority" />
             </li>

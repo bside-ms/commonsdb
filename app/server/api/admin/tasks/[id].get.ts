@@ -7,7 +7,11 @@ export default defineEventHandler(async (event) => {
     },
     include: {
       links: true,
-      categories: true,
+      categories: {
+        include: {
+          category: true,
+        },
+      },
       occurrences: {
         // maybe only future occurrences ?
         orderBy: {

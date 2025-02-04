@@ -105,7 +105,7 @@ model TaskCategory {
     id        String   @id @default(uuid())
     createdAt DateTime @default(now())
 
-    name     String
+    name     String              @unique
     parentId String?
     parent   TaskCategory?       @relation("CategoryParent", fields: [parentId], references: [id])
     children TaskCategory[]      @relation("CategoryParent")

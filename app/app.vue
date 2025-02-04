@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import Toaster from '@/components/ui/toast/Toaster.vue'
+
+const { fetch } = useUser();
+await fetch()
 </script>
 
 <template>

@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
             <div class="px-2 space-y-2">
                 <WalletBalance />
                 <Button variant="outline" size="sm" as-child>
-                    <NuxtLink to="/account/wallet">Ansehen</NuxtLink>
+                    <NuxtLink to="/wallet">Ansehen</NuxtLink>
                 </Button>
             </div>
         </div>

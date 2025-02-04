@@ -4,7 +4,6 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod';
 import { Separator } from '~/components/ui/separator';
 import { Clock } from 'lucide-vue-next';
-import { DateTime } from 'luxon';
 import { type ComboboxItem } from '~/components/Form/Combobox.vue';
 import { linkListSchema } from '~/components/Form/schema';
 import { TaskType, TaskPriority, TaskFrequency, type Task } from '@prisma/client'
@@ -27,7 +26,7 @@ const schema = toTypedSchema(
         id: z.string().uuid().optional(),
         title: z.string(),
         description: z.string().nullable().optional(),
-        category: comboboxSchema.optional(),
+        categories: z.array(comboboxSchema).optional(),
         priority: z.nativeEnum(TaskPriority).optional(),
         expense: z.number().positive(),
         factor: z.union([z.string(), z.number()]).pipe(z.coerce.number()), // z.string().default("1"),
@@ -79,69 +78,47 @@ const schema = toTypedSchema(
     })
 )
 
-// const initialDueDate = task?.due ? DateTime.fromISO(task!.due!.toString()).toLocal() : null;
-// const initialDue = initialDueDate ? {
-//     date: initialDueDate.toISODate(),
-//     time: `${initialDueDate.hour < 10 ? '0' + initialDueDate.hour : initialDueDate.hour}:${initialDueDate.minute < 10 ? '0' + initialDueDate.minute : initialDueDate.minute}`
-// } : {
-//     date: null,
-//     time: null
-// };
-// const initialCategory = task?.categories?.find(c => !c.parent);
 const { values, setFieldValue, handleSubmit } = useForm({
     validationSchema: schema,
     initialValues: {
         factor: "1"
     }
-    // initialValues: {
-    //     ...task,
-    //     expense: Duration.fromObject({ minutes: task?.expense }).shiftTo("hours").toObject().hours,
-    //     due: initialDue,
-    //     category: initialCategory ? {
-    //         value: initialCategory.id,
-    //         label: initialCategory.name
-    //     } : undefined,
-    //     subcategories: task?.categories?.filter(c => c.parent).map(c => ({ label: c.name, value: c.id })),
-    // }
 })
 const onSubmit = handleSubmit(async (values, props) => {
     const { expense, ...taskData } = values
-    const { error } = await useFetch<Task>('/api/admin/tasks', {
+
+    try {
+        await useFetch<Task>('/api/admin/tasks', {
+            method: "POST",
+            body: {
+                ...taskData,
+                expense: expense * 60
+            }
+        })
+
+        toast({
+            title: values?.id ? `Aufgabe bearbeitet` : `Aufgabe erstellt`,
+            description: values?.id ? `Du hast '${values.title}' erfolgreich bearbeitet.` : `Du hast '${values.title}' erstellt.`,
+        })
+
+        await navigateTo('/admin/tasks')
+    } catch (error) {
+        console.log('error creating task', error);
+    }
+})
+
+const createCategory = async (name: string): Promise<ComboboxItem> => {
+    const { data } = await useFetch('/api/admin/tasks/categories', {
         method: "POST",
         body: {
-            ...taskData,
-            expense: expense * 60
+            name
         }
     })
 
-    if (error.value) {
-        console.log('new task error', error.value);
-    }
-
-    toast({
-        title: values?.id ? `Aufgabe bearbeitet` : `Aufgabe erstellt`,
-        description: values?.id ? `Du hast '${values.title}' erfolgreich bearbeitet.` : `Du hast '${values.title}' erstellt.`,
-    })
-
-    await navigateTo('/admin/tasks')
-})
-
-
-const onCategorySelected = (item: ComboboxItem) => {
-    // reset subcategories
-    // setFieldValue('subcategories', []);
-}
-
-const createCategory = async (name: string) => {
     return {
-        value: '1312',
-        label: name
+        value: data.value!.id,
+        label: data.value!.name
     }
-    // const { createTaskCategory } = await GqlCreateTaskCategory({ name })
-    // return {
-    //     value: createTaskCategory.id,
-    //     label: createTaskCategory.name
-    // }
 }
 
 const onTypeCheckedChange = (checked: boolean) => {
@@ -322,20 +299,17 @@ const onTypeCheckedChange = (checked: boolean) => {
             <Separator class="col-span-full my-2" />
 
             <div class="col-span-full">
-                <FormField v-slot="{ value }" name="category">
+                <FormField name="categories">
                     <FormItem class="grid gap">
-                        <FormLabel>Kategorie</FormLabel>
-                        <FormCombobox name="category" :form-values="values" :set-field-value="setFieldValue"
+                        <FormLabel>Kategorien</FormLabel>
+                        <FormTagsCombobox name="categories" :form-values="values" :set-field-value="setFieldValue"
                             placeholder="Kategorie..." :create="createCategory" :fetch-suggestions="async () => {
-                                return []
-                                // const { taskCategories } = await GqlGetTaskCategories({
-                                //     parentId: null
-                                // })
-                                // return taskCategories.map(c => ({
-                                //     value: c.id,
-                                //     label: c.name
-                                // }))
-                            }" :disabled="loading" @selected="onCategorySelected" />
+                                const { data } = await useFetch('/api/admin/tasks/categories');
+                                return data.value?.map(c => ({
+                                    value: c.id,
+                                    label: c.name
+                                })) ?? []
+                            }" :disabled="loading" />
                         <FormMessage class="text-xs" />
                     </FormItem>
                 </FormField>

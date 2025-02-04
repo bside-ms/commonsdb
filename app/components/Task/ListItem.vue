@@ -12,7 +12,7 @@ const { task } = defineProps<TaskListItemProps>()
 
 <template>
     <div>
-        <NuxtLink :to="`${scope === 'ADMIN' ? '/admin' : '/app'}/tasks/${task.id}`"
+        <NuxtLink :to="`${scope === 'ADMIN' ? '/admin' : ''}/tasks/${task.id}`"
             class="block group transition-shadow hover:shadow-md">
             <div class="bg-black px-3 py-1">
                 <div class=" font-serif font-semibold text-lg text-white">
@@ -23,7 +23,7 @@ const { task } = defineProps<TaskListItemProps>()
                 <div class="flex-1 space-y-3">
                     <div v-if="task.type === TaskType.RECURRING" class="font-serif font-semibold">Regelmäßige Aufgabe
                     </div>
-                    <ul class="space-y-1">
+                    <ul class="space-y-px">
                         <li v-if="task.priority">
                             <TaskPriority :priority="task.priority" />
                         </li>

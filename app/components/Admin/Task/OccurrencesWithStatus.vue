@@ -7,7 +7,7 @@ const { getDueEndDateFormatted } = useTask()
 </script>
 
 <template>
-    <div v-if="task.occurrences?.length">
+    <div v-if="task.occurrences?.length && task.occurrences.some(o => o.dueEndDate)">
         <div class="text-xl font-serif font-semibold mb-3">Fälligkeiten</div>
         <div class="grid grid-cols-2 max-w-max gap-x-6 gap-y-2">
             <div class="col-span-full grid grid-cols-subgrid">

@@ -14,7 +14,7 @@ import {
     <NavigationMenu>
         <NavigationMenuList>
             <NavigationMenuItem>
-                <NuxtLink to="/app/tasks">
+                <NuxtLink to="/tasks">
                     <NavigationMenuLink :class="navigationMenuTriggerStyle()">
                         Aufgaben
                     </NavigationMenuLink>

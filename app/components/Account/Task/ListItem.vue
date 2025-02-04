@@ -11,7 +11,7 @@ const { task } = defineProps<TaskListItemProps>()
 
 <template>
     <div>
-        <NuxtLink :to="`/app/tasks/${task.id}`" class="block group transition-shadow hover:shadow-md">
+        <NuxtLink :to="`/tasks/${task.id}`" class="block group transition-shadow hover:shadow-md">
             <div class="flex gap-4 px-2 py-3">
                 <div class="flex-1">
                     <div class="flex items-center gap-2">

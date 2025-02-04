@@ -11,6 +11,8 @@ export default defineEventHandler(async (event) => {
     frequency,
     isAssignableToMany,
     maxResponsibilities,
+    categories,
+    links,
     ...taskData
   } = body;
 
@@ -47,6 +49,18 @@ export default defineEventHandler(async (event) => {
       dueStartDate: dueDateTime.startDateTime?.toISO(),
       dueEndDate: dueDateTime.endDateTime?.toISO(),
       frequency: type === TaskType.RECURRING ? frequency : null,
+      categories: categories?.length
+        ? {
+            create: categories.map((c: any) => ({
+              category: { connect: { id: c.value } },
+            })),
+          }
+        : {},
+      links: links?.length
+        ? {
+            create: links,
+          }
+        : {},
     },
   });
 

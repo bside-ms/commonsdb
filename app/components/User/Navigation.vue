@@ -36,12 +36,7 @@ const onLogout = async () => {
             </template> -->
             <DropdownMenuGroup>
                 <DropdownMenuItem as-child>
-                    <NuxtLink to="/account">
-                        Profile
-                    </NuxtLink>
-                </DropdownMenuItem>
-                <DropdownMenuItem as-child>
-                    <NuxtLink to="/account/wallet">
+                    <NuxtLink to="/wallet">
                         Reprostunden-Konto
                     </NuxtLink>
                 </DropdownMenuItem>
@@ -55,7 +50,7 @@ const onLogout = async () => {
             <!-- <template v-if="user?.roles.find((r: string) => r === 'commonsdb_admin')">
                 <DropdownMenuSeparator />
                 <DropdownMenuItem as-child>
-                    <NuxtLink to="/app/admin" class="text-destructive font-medium">
+                    <NuxtLink to="/admin" class="text-destructive font-medium">
                         Adminbereich
                     </NuxtLink>
                 </DropdownMenuItem>
