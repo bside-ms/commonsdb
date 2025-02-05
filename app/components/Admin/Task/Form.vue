@@ -6,15 +6,17 @@ import { Separator } from '~/components/ui/separator';
 import { Clock } from 'lucide-vue-next';
 import { type ComboboxItem } from '~/components/Form/Combobox.vue';
 import { linkListSchema } from '~/components/Form/schema';
-import { TaskType, TaskPriority, TaskFrequency, type Task } from '@prisma/client'
+import { TaskType, TaskPriority, TaskFrequency } from '@prisma/client'
+
 import { toast } from '~/components/ui/toast';
+import type { TaskWithCategories, TaskWithOccurrences } from '~/types/tasks';
 
 interface TaskProps {
-    task?: Task
+    task?: TaskWithCategories & TaskWithOccurrences
     loading?: boolean,
 }
 const { task } = defineProps<TaskProps>()
-const emit = defineEmits(['submit'])
+const emit = defineEmits(['submit', 'cancel'])
 
 const comboboxSchema =
     z.object({
@@ -27,12 +29,12 @@ const schema = toTypedSchema(
         title: z.string(),
         description: z.string().nullable().optional(),
         categories: z.array(comboboxSchema).optional(),
-        priority: z.nativeEnum(TaskPriority).optional(),
-        expense: z.number().positive(),
-        factor: z.union([z.string(), z.number()]).pipe(z.coerce.number()), // z.string().default("1"),
+        priority: z.nativeEnum(TaskPriority).nullable(),
+        expense: z.number().positive().nullable(),
+        factor: z.string().default("1"), // z.union([z.string(), z.number()]).pipe(z.coerce.number()).nullable(),
         links: z.array(linkListSchema).optional(),
         isAssignableToMany: z.boolean().optional(),
-        maxResponsibilities: z.number().positive().min(2).optional(),
+        maxResponsibilities: z.number().positive().min(1).optional(),
         // task type
         type: z.nativeEnum(TaskType).default(TaskType.SINGLE).nullable(),
         hasDueDate: z.boolean().default(false),
@@ -43,7 +45,7 @@ const schema = toTypedSchema(
             endTime: z.string().nullable()
         }).optional(),
         // task type 'recurring'
-        frequency: z.nativeEnum(TaskFrequency).optional(),
+        frequency: z.nativeEnum(TaskFrequency).nullable(),
     }).superRefine((data, ctx) => {
         if (data.type === TaskType.RECURRING) {
             if (!data.frequency) {
@@ -81,27 +83,41 @@ const schema = toTypedSchema(
 const { values, setFieldValue, handleSubmit } = useForm({
     validationSchema: schema,
     initialValues: {
-        factor: "1"
+        ...task,
+        categories: task?.categories?.map(tc => ({ value: tc.categoryId, label: tc.category.name })),
+        factor: task?.factor?.toString() ?? "1",
+        expense: task?.expense ? task.expense / 60 : null,
     }
 })
+
 const onSubmit = handleSubmit(async (values, props) => {
-    const { expense, ...taskData } = values
+    const { id, expense, factor, ...taskData } = values
 
     try {
-        await useFetch<Task>('/api/admin/tasks', {
-            method: "POST",
-            body: {
-                ...taskData,
-                expense: expense * 60
-            }
-        })
+        const body = {
+            ...taskData,
+            factor: factor ? Number.parseFloat(factor) : null,
+            expense: expense ? expense * 60 : null
+        }
+
+        if (id) {
+            await useFetch<Task>(`/api/admin/tasks/${id}`, {
+                method: "PATCH",
+                body
+            })
+        } else {
+            await useFetch<Task>('/api/admin/tasks', {
+                method: "POST",
+                body
+            })
+        }
 
         toast({
             title: values?.id ? `Aufgabe bearbeitet` : `Aufgabe erstellt`,
             description: values?.id ? `Du hast '${values.title}' erfolgreich bearbeitet.` : `Du hast '${values.title}' erstellt.`,
         })
 
-        await navigateTo('/admin/tasks')
+        emit('submit');
     } catch (error) {
         console.log('error creating task', error);
     }
@@ -439,8 +455,8 @@ const onTypeCheckedChange = (checked: boolean) => {
             </div>
         </div>
         <div class="flex justify-end gap-4">
-            <Button type="button" variant="outline" as-child>
-                <NuxtLink to="/admin/tasks">Abbrechen</NuxtLink>
+            <Button type="button" variant="outline" @click="emit('cancel')">
+                Abbrechen
             </Button>
             <Button type="submit">Absenden</Button>
         </div>

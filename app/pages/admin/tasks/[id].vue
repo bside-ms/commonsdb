@@ -10,7 +10,6 @@ const task = computed(() => data.value)
 
 <template>
     <div>
-        <p class="text-destructive">Todo: Bearbeitungs-Sheet</p>
         <div v-if="task" class="grid gap-6 grid-cols-12">
             <TaskView :task="task" class="col-span-full lg:col-span-9">
                 <TaskResponsibilities :task="task" />

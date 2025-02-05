@@ -46,7 +46,7 @@ const onSubmit = handleSubmit(async (values) => {
 <template>
     <Dialog>
         <DialogTrigger as-child>
-            <Button size="sm" :disabled="disabled || !nextOpenOccurrence">{{
+            <Button variant="outline" size="sm" :disabled="disabled || !nextOpenOccurrence">{{
                 $t("tasks.actions.settle")
             }}</Button>
         </DialogTrigger>

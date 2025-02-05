@@ -9,14 +9,14 @@ interface TaskEffortProps {
 }
 defineProps<TaskEffortProps>()
 
-const { getNextPendingOccurrence, getNextPendingDueEndDateFormatted } = useTask()
+const { getNextPendingOccurrenceWithDueDate, getNextPendingDueEndDateFormatted } = useTask()
 </script>
 
 <template>
     <div class="flex items-center gap-2">
         <Clock class="w-3 h-3" />
         <span v-if="task.expense">{{ useFormatReproduction(task.expense, { showMinutes: true }) }}</span>
-        <template v-if="getNextPendingOccurrence(task)">
+        <template v-if="getNextPendingOccurrenceWithDueDate(task)">
             <Separator orientation="vertical" class="h-5" />
             <div>zu erledigen bis {{ getNextPendingDueEndDateFormatted(task) }}</div>
             <template v-if="task.frequency && task.frequency !== TaskFrequency.IRREGULAR">

@@ -14,6 +14,15 @@ export const useTask = () => {
     return null;
   };
 
+  const getNextPendingOccurrenceWithDueDate = (task: TaskWithOccurrences) => {
+    if (!task.occurrences?.length) {
+      return null;
+    }
+
+    return task.occurrences.find(
+      (o) => o.status === TaskOccurenceStatus.PENDING && o.dueEndDate
+    );
+  };
   const getNextPendingOccurrence = (task: TaskWithOccurrences) => {
     if (!task.occurrences?.length) {
       return null;
@@ -51,6 +60,7 @@ export const useTask = () => {
     getDueEndDateFormatted,
     getNextDueEndDateFormatted,
     getNextPendingOccurrence,
+    getNextPendingOccurrenceWithDueDate,
     getNextPendingDueEndDateFormatted,
   };
 };

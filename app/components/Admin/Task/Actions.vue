@@ -7,18 +7,26 @@ interface TaskActionsProps {
 }
 const { task, refresh } = defineProps<TaskActionsProps>();
 
-const { isOpen, closeDialog } = useDialog()
+const { isOpen: isSettleDialogOpen, closeDialog: closeSettleDialog } = useDialog()
 const onSettle = async () => {
     await refresh();
-    closeDialog();
+    closeSettleDialog();
 
+}
+
+const { isOpen: isEditSheetOpen, closeDialog: closeEditSheet } = useDialog()
+const onSubmitEdit = async () => {
+    await refresh();
+    closeEditSheet();
 }
 </script>
 
 <template>
     <div>
         <div class="flex gap-4 lg:flex-col">
-            <AdminTaskActionsSettleDialog v-model:open="isOpen" :task="task" @submit="onSettle" />
+            <AdminTaskActionsEditSheet v-model:open="isEditSheetOpen" :task="task" @submit="onSubmitEdit"
+                @cancel="closeEditSheet" />
+            <AdminTaskActionsSettleDialog v-model:open="isSettleDialogOpen" :task="task" @submit="onSettle" />
         </div>
     </div>
 </template>

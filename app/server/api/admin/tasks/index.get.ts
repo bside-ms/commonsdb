@@ -1,4 +1,4 @@
-import { Prisma, Task } from "@prisma/client";
+import { Task } from "@prisma/client";
 
 export default defineEventHandler(async (event) => {
   if (!(await hasRoles(event, ["admin"]))) {
@@ -14,41 +14,6 @@ export default defineEventHandler(async (event) => {
   const skip = 0;
   const take = 25;
 
-  // let where = {};
-  // if (filter) {
-  //   const filterObj = JSON.parse(filter as string);
-  //   where = Object.keys(filterObj).reduce((x, key) => {
-  //     if (key === "assignmentStatus") {
-  //       return x;
-  //     }
-
-  //     return {
-  //       ...x,
-  //       [key]: {
-  //         in: filterObj[key],
-  //       },
-  //     };
-  //   }, {});
-  // }
-
-  // const query: Prisma.TaskFindManyArgs = {
-  //   where,
-  //   include: {
-  //     categories: true,
-  //     _count: {
-  //       select: {
-  //         responsibilities: true,
-  //       },
-  //     },
-  //   },
-  //   skip,
-  //   take,
-  // };
-  // const [tasks, count] = await prisma.$transaction([
-  //   prisma.task.findMany(query),
-  //   prisma.task.count(),
-  // ]);
-
   let whereRaw = "";
   let havingRaw = "";
   if (filter) {
@@ -61,13 +26,13 @@ export default defineEventHandler(async (event) => {
           havingRaw = "HAVING ";
 
           if (values.includes("OPEN")) {
-            havingRaw += `count(tr.*) >= t."maxResponsibilities"`;
+            havingRaw += `count(tr.*) < t."maxResponsibilities"`;
             if (values.includes("ASSIGNED")) {
-              havingRaw += `count(tr.*) < t."maxResponsibilities"`;
+              havingRaw += ` OR count(tr.*) >= t."maxResponsibilities"`;
             }
           } else {
             if (values.includes("ASSIGNED")) {
-              havingRaw += `count(tr.*) < t."maxResponsibilities"`;
+              havingRaw += `count(tr.*) >= t."maxResponsibilities"`;
             }
           }
 
@@ -88,7 +53,7 @@ export default defineEventHandler(async (event) => {
   >(`
       SELECT t.*, count(tr.*) AS "responsibiltyCount", count(t.*) OVER() AS "totalCount"
       FROM "Task" t 
-      LEFT JOIN "CategoriesOnTasks" cat ON t.id = cat."taskId" 
+      LEFT JOIN "CategoriesOnTasks" cat ON t.id = cat."taskId"
       LEFT JOIN "TaskResponsibility" tr ON t.id = tr."taskId"
       ${whereRaw}
       GROUP BY t.id
@@ -97,12 +62,26 @@ export default defineEventHandler(async (event) => {
       OFFSET ${skip}
     `);
 
+  const occurrences = await prisma.taskOccurrence.findMany({
+    where: {
+      taskId: {
+        in: tasks.map((t: any) => t.id),
+      },
+    },
+    orderBy: {
+      dueEndDate: "asc",
+    },
+  });
   const totalCount = tasks.at(0)?.totalCount;
 
   return {
     items: tasks.map((t) => {
       const { responsibiltyCount, totalCount, ...task } = t;
-      return task;
+      const taskOccurrences = occurrences.filter((o) => o.taskId === task.id);
+      return {
+        ...task,
+        occurrences: taskOccurrences,
+      };
     }),
     totalCount: totalCount ? Number(totalCount) : 0,
     skip,
