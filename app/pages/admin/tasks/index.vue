@@ -2,15 +2,17 @@
 import type { Task } from '@prisma/client';
 import type { PaginatedResult } from '~/types';
 
+const { appliedSort, apply: applySort } = useQuerySort();
 const { appliedFilter, apply: applyFilter } = useQueryFilter();
 const { data, execute } = await useAsyncData(
     'tasks',
     () => $fetch<PaginatedResult<Task>>('/api/admin/tasks', {
         query: {
-            filter: appliedFilter.value
+            filter: appliedFilter.value,
+            sort: appliedSort.value
         }
     }),
-    { watch: [appliedFilter] }
+    { watch: [appliedFilter, appliedSort] }
 );
 await execute();
 
@@ -19,6 +21,9 @@ const total = computed(() => data.value?.totalCount ?? 0);
 
 const onFilterChanged = (field: string, values: string[]) => {
     applyFilter(field, values);
+}
+const onSortChanged = (sort: string) => {
+    applySort([sort]);
 }
 </script>
 
@@ -32,7 +37,7 @@ const onFilterChanged = (field: string, values: string[]) => {
                     <TaskFilterType @filter:changed="(values) => onFilterChanged('type', values)" />
                     <TaskFilterPriority @filter:changed="(values) => onFilterChanged('priority', values)" />
                 </div>
-                <TaskSort />
+                <TaskSort @sort:changed="onSortChanged" />
             </div>
             <AdminTaskList :tasks="tasks" />
 

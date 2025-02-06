@@ -6,10 +6,11 @@ import { Separator } from '~/components/ui/separator';
 import { Clock } from 'lucide-vue-next';
 import { type ComboboxItem } from '~/components/Form/Combobox.vue';
 import { linkListSchema } from '~/components/Form/schema';
-import { TaskType, TaskPriority, TaskFrequency } from '@prisma/client'
+import { TaskType, TaskPriority, TaskFrequency, type Task } from '@prisma/client'
 
 import { toast } from '~/components/ui/toast';
 import type { TaskWithCategories, TaskWithOccurrences } from '~/types/tasks';
+import { DateTime } from 'luxon';
 
 interface TaskProps {
     task?: TaskWithCategories & TaskWithOccurrences
@@ -45,7 +46,7 @@ const schema = toTypedSchema(
             endTime: z.string().nullable()
         }).optional(),
         // task type 'recurring'
-        frequency: z.nativeEnum(TaskFrequency).nullable(),
+        frequency: z.nativeEnum(TaskFrequency).nullable().optional(),
     }).superRefine((data, ctx) => {
         if (data.type === TaskType.RECURRING) {
             if (!data.frequency) {
@@ -80,13 +81,52 @@ const schema = toTypedSchema(
     })
 )
 
-const { values, setFieldValue, handleSubmit } = useForm({
+const initialDue = computed(() => {
+    let due: {
+        startDate: string | null,
+        startTime: string | null,
+        endDate: string | null,
+        endTime: string | null,
+    } = {
+        startDate: null,
+        startTime: null,
+        endDate: null,
+        endTime: null,
+    };
+
+    if (!task?.dueEndDate && !task?.dueStartDate) {
+        return due
+    }
+
+    if (task.dueEndDate) {
+        const dueEndDateTime = DateTime.fromISO(task.dueEndDate.toString())
+        due = {
+            ...due,
+            endDate: dueEndDateTime.toFormat("yyyy-LL-dd"),
+            endTime: dueEndDateTime.toFormat("HH:mm")
+        }
+    }
+    if (task.dueStartDate) {
+        const dueStartDateTime = DateTime.fromISO(task.dueStartDate.toString())
+        due = {
+            ...due,
+            startDate: dueStartDateTime.toFormat("yyyy-LL-dd"),
+            startTime: dueStartDateTime.toFormat("HH:mm")
+        }
+    }
+
+    return due
+})
+
+const { errors, values, setFieldValue, handleSubmit } = useForm({
     validationSchema: schema,
     initialValues: {
         ...task,
         categories: task?.categories?.map(tc => ({ value: tc.categoryId, label: tc.category.name })),
         factor: task?.factor?.toString() ?? "1",
         expense: task?.expense ? task.expense / 60 : null,
+        hasDueDate: task?.dueEndDate || task?.dueStartDate ? true : false,
+        due: initialDue.value
     }
 })
 
@@ -453,6 +493,9 @@ const onTypeCheckedChange = (checked: boolean) => {
                 <h5 class="text-sm font-medium leading-none">Links</h5>
                 <FormLinkList name="links" :form-values="values" :set-field-value="setFieldValue" />
             </div>
+        </div>
+        <div v-if="Object.entries(errors).length">
+            {{ errors }}
         </div>
         <div class="flex justify-end gap-4">
             <Button type="button" variant="outline" @click="emit('cancel')">

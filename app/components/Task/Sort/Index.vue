@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/button'
 import {
     Select,
     SelectContent,
@@ -10,8 +9,15 @@ import {
 } from '@/components/ui/select'
 import { ArrowDownUp } from 'lucide-vue-next'
 
-const { t: $t } = useI18n()
+const emit = defineEmits(["sort:changed"]);
 
+const { appliedSort } = useQuerySort();
+const modelValue = computed({
+    get: () => appliedSort.value?.at(0) ?? undefined,
+    set: val => val,
+})
+
+const { t: $t } = useI18n()
 const items = [
     {
         label: $t("sorts.DUE_ASC"),
@@ -30,16 +36,10 @@ const items = [
         value: "PRIORITY_DESC"
     }
 ]
-const mapping = {
-    "DUE_ASC": { field: "dueEndDate", dir: "asc" },
-    "DUE_DESC": { field: "dueEndDate", dir: "desc" },
-    "PRIORITY_ASC": { field: "priority", dir: "asc" },
-    "PRIORITY_DESC": { field: "priority", dir: "desc" },
-}
 </script>
 
 <template>
-    <Select>
+    <Select v-model="modelValue" @update:model-value="(val) => emit('sort:changed', val)">
         <SelectTrigger class="flex gap-3 max-w-[280px]">
             <ArrowDownUp class="size-3.5" />
             <SelectValue class="flex-1 text-left" :placeholder="$t('sort')" />
