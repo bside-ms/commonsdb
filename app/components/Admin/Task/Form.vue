@@ -187,7 +187,6 @@ const onTypeCheckedChange = (checked: boolean) => {
 }
 </script>
 
-
 <template>
     <form @submit="onSubmit">
         <input name="id" type="hidden" readonly />
@@ -494,10 +493,7 @@ const onTypeCheckedChange = (checked: boolean) => {
                 <FormLinkList name="links" :form-values="values" :set-field-value="setFieldValue" />
             </div>
         </div>
-        <div v-if="Object.entries(errors).length">
-            {{ errors }}
-        </div>
-        <div class="flex justify-end gap-4">
+        <div class="flex justify-end gap-4 mt-4">
             <Button type="button" variant="outline" @click="emit('cancel')">
                 Abbrechen
             </Button>

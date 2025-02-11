@@ -1,0 +1,27 @@
+model Wallet {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    transactions WalletTransaction[]
+
+    Organization Organization? @relation("OrganizationWallet")
+    User         User?         @relation("UserWallet")
+}
+
+model WalletTransaction {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+
+    type    WalletTransactionType
+    amount  Int
+    comment String?
+
+    walletId String
+    wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+enum WalletTransactionType {
+    TRANSFER_IN
+    TRANSFER_OUT
+}

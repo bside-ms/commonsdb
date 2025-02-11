@@ -1,0 +1,10 @@
+model User {
+    id       String  @id
+    email    String
+    username String?
+
+    walletId                String?              @unique
+    wallet                  Wallet?              @relation("UserWallet", fields: [walletId], references: [id])
+    responsibilities        TaskResponsibility[]
+    organizationMemberships OrganizationMember[]
+}

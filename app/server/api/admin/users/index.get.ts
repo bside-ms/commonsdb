@@ -6,5 +6,27 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  return await prisma.user.findMany();
+  const { search } = getQuery(event);
+
+  let where;
+  if ((search as string)?.length) {
+    where = {
+      OR: [
+        {
+          username: {
+            contains: search as string,
+          },
+        },
+        {
+          email: {
+            contains: search as string,
+          },
+        },
+      ],
+    };
+  }
+
+  return await prisma.user.findMany({
+    where,
+  });
 });

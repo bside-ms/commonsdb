@@ -59,6 +59,18 @@ const user = useSupabaseUser();
                                 </div>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton tooltip="Aufgaben" as-child>
+                                <div class="flex justify-between">
+                                    <NuxtLink to="/admin/organizations" class="flex-1">Organisationen</NuxtLink>
+                                    <Button variant="ghost" size="icon" as-child>
+                                        <NuxtLink to="/admin/organizations/new">
+                                            <Plus class="size-4" />
+                                        </NuxtLink>
+                                    </Button>
+                                </div>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
