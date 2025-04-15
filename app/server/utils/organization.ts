@@ -1,4 +1,5 @@
-import { OrganizationMemberRole } from "@prisma/client";
+import Prisma from "@prisma/client";
+const { OrganizationMemberRole } = Prisma;
 
 export const getOrganizations = async (
   where: any = {},
