@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Home, Hammer, PiggyBank, Handshake } from "lucide-vue-next"
+import { Home, Hammer, PiggyBank, Handshake, CakeSlice, Award } from "lucide-vue-next"
 import {
     Sidebar,
     SidebarContent,
@@ -20,7 +20,7 @@ import {
     CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 
-const props = defineProps<SidebarProps>()
+defineProps<SidebarProps>()
 
 interface NavigationItem {
     title: string;
@@ -41,14 +41,24 @@ const navigation: Array<{
             icon: Home,
         },
         {
+            title: "Initiativen",
+            url: "/organizations/memberships",
+            icon: Handshake,
+        },
+        {
             title: "Aufgaben",
             url: "/tasks",
             icon: Hammer,
         },
         {
-            title: "Initiativen",
-            url: "/organizations/memberships",
-            icon: Handshake,
+            title: "Ressourcen",
+            url: "/resources",
+            icon: CakeSlice,
+        },
+        {
+            title: "Qualifikationen",
+            url: "/qualifications",
+            icon: Award,
         },
         {
             title: "Reprostunden",

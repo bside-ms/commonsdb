@@ -1,8 +1,5 @@
 FROM node:22-alpine as build
 
-ARG GQL_HOST
-ENV GQL_HOST $GQL_HOST
-
 WORKDIR /app
 
 COPY package.json ./
