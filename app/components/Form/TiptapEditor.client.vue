@@ -31,17 +31,3 @@ onUnmounted(() => {
 <template>
     <editor-content :editor="editor" class="prose prose-sm max-w-none" />
 </template>
-
-<style lang="postcss">
-.tiptap {
-    @apply min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
-}
-
-.tiptap>p:first-child {
-    @apply mt-0;
-}
-
-.tiptap>p:last-child {
-    @apply mb-0;
-}
-</style>

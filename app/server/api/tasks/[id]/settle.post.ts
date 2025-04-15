@@ -1,12 +1,15 @@
-import { serverSupabaseUser } from "#supabase/server";
 import { TaskOccurenceStatus } from "@prisma/client";
 import { DateTime } from "luxon";
+import { isAdminUser } from "~/server/utils/auth";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
-  const { taskOccurrenceId } = await readBody(event);
+  const { taskOccurrenceId, userIds } = await readBody<{
+    taskOccurrenceId: string;
+    userIds?: string[];
+  }>(event);
 
-  const user = await serverSupabaseUser(event);
+  const { user } = await getUserSession(event);
   if (!user) {
     throw createError({
       statusCode: 401,
@@ -14,18 +17,28 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const taskOccurrence = await prisma.taskOccurrence.findUnique({
+  // only admin user can settle a task for another user
+  if (userIds && !isAdminUser(event)) {
+    throw createError({
+      statusCode: 403,
+      message: "Only admins can settle a task for another user",
+    });
+  }
+
+  const taskOccurrence = await prisma.taskOccurrence.findUniqueOrThrow({
     where: {
       id: taskOccurrenceId,
+      taskId,
     },
     include: {
       task: {
         include: {
           responsibilities: {
-            include: {
+            select: {
+              userId: true,
               user: {
-                include: {
-                  wallet: true,
+                select: {
+                  walletId: true,
                 },
               },
             },
@@ -35,27 +48,19 @@ export default defineEventHandler(async (event) => {
     },
   });
 
-  if (!taskOccurrence || taskOccurrence.taskId !== taskId) {
+  // check if settling user is assigned
+  if (
+    !taskOccurrence.task.responsibilities.some((r) =>
+      userIds ? userIds.includes(r.userId) : r.userId === user.id
+    )
+  ) {
     throw createError({
-      statusCode: 404,
-      message: "No occurrence found for this task",
+      statusCode: 405,
+      message: "User not assigned to task",
     });
   }
 
-  if (!hasRoles(event, ["admin"])) {
-    if (
-      taskOccurrence.task.responsibilities.some(
-        (r) => r.userId === user.user_metadata.sub
-      )
-    ) {
-      throw createError({
-        statusCode: 405,
-        message: "User not allowed",
-      });
-    }
-  }
-
-  // SET OCCURRENCE AS COMPLETE
+  // set occurrence as complete
   await prisma.taskOccurrence.update({
     where: {
       id: taskOccurrenceId,
@@ -65,7 +70,9 @@ export default defineEventHandler(async (event) => {
     },
   });
 
-  // DEPOSIT REWARDS TO RESPONSIBLE PERSONS
+  // TODO: maybe we should not reward all assignees, but only these who completed the tasks?
+
+  // deposit reward
   const reward =
     taskOccurrence.task.expense && taskOccurrence.task.factor
       ? taskOccurrence.task.expense * taskOccurrence.task.factor
@@ -73,8 +80,8 @@ export default defineEventHandler(async (event) => {
   if (reward > 0) {
     const comment = `'${taskOccurrence.task.title}' am ${DateTime.now().toFormat("dd.LL.yyyy 'um' HH:mm 'Uhr'")} erledigt`;
     taskOccurrence.task.responsibilities.map(async (r) => {
-      if (r.user.wallet) {
-        await $fetch(`/api/wallets/${r.user.wallet.id}/charge`, {
+      if (r.user.walletId) {
+        await $fetch(`/api/wallets/${r.user.walletId}/charge`, {
           method: "POST",
           body: {
             amount: reward,

@@ -1,7 +1,5 @@
-import { serverSupabaseUser } from "#supabase/server";
-
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event);
+  const { user } = await getUserSession(event);
   if (!user) {
     throw createError({
       statusCode: 401,
@@ -11,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   const userEntity = await prisma.user.findUnique({
     where: {
-      id: user.user_metadata.sub,
+      id: user.id,
     },
     include: {
       responsibilities: true,

@@ -10,7 +10,7 @@ const modelValue: ModelRef<string | undefined> = defineModel()
 
 <template>
     <Select v-model="modelValue">
-        <SelectTrigger>
+        <SelectTrigger class="w-32">
             <SelectValue :placeholder="placeholder" />
         </SelectTrigger>
         <SelectContent>

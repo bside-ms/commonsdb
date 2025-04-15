@@ -17,3 +17,8 @@ export type UserWithResponsibilities = Prisma.UserGetPayload<
 >;
 
 export type UserFull = UserWithWallet & UserWithResponsibilities;
+
+export enum USER_ROLES {
+  USER = "commonsdb_user",
+  ADMIN = "commonsdb_admin",
+}

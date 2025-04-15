@@ -14,7 +14,7 @@ defineProps<{ errors: { title: string; description?: string }[] }>()
     <div v-if="errors && errors.length" class="flex flex-col gap-2">
         <template v-for="{ title, description } in errors">
             <Alert variant="destructive">
-                <AlertCircle class="w-4 h-4" />
+                <AlertCircle class="size-4" />
                 <AlertTitle>{{ title }}</AlertTitle>
                 <AlertDescription v-if="description">{{ description }}</AlertDescription>
             </Alert>

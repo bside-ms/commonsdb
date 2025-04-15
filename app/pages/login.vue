@@ -1,17 +1,18 @@
 <script setup lang="ts">
-const supabase = useSupabaseClient();
-const { public: { baseUrl } } = useRuntimeConfig()
-const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'keycloak',
-    options: {
-        scopes: 'openid email profile commonsdb_roles',
-        redirectTo: `${baseUrl}/oauth/callback`,
-    }
+import { Button } from '~/components/ui/button';
+
+definePageMeta({
+    layout: false
 })
 </script>
 
 <template>
-    <div class="container">
-        <p>Du wirst zum B-Side-Login weitergeleitet...</p>
+    <div class="min-h-screen w-screen grid place-content-center">
+        <div class="container">
+            <Logo />
+            <Button class="mt-8" as-child>
+                <a href="/auth/keycloak">Mit B-Side Account anmelden</a>
+            </Button>
+        </div>
     </div>
 </template>

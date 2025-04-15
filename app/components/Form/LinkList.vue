@@ -37,14 +37,14 @@ const { name } = defineProps<LinkListProps>();
                     </FormField>
                     <div class="col-span-full md:col-span-2">
                         <Button variant="ghost" size="icon" class="md:mt-8" @click="remove(index)">
-                            <Minus class="w-4 h-4" />
+                            <Minus class="size-4" />
                         </Button>
                     </div>
                 </template>
             </div>
 
             <Button type="button" variant="ghost" size="sm" @click="push({ label: '', url: '' })">
-                <Plus class="w-4 h-4 mr-1" /> Link hinzufügen
+                <Plus class="size-4 mr-1" /> Link hinzufügen
             </Button>
         </FieldArray>
 

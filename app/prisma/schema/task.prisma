@@ -3,6 +3,10 @@ model Task {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    status               TaskStatus               @default(PROCESSING)
+    publishingStatus     TaskPublishingStatus     @default(DRAFT)
+    responsibilityStatus TaskResponsibilityStatus @default(OPEN)
+
     title       String
     description String?
 
@@ -85,6 +89,23 @@ enum TaskPriority {
 enum TaskType {
     SINGLE
     RECURRING
+}
+
+enum TaskStatus {
+    PROCESSING
+    COMPLETE
+}
+
+enum TaskPublishingStatus {
+    DRAFT
+    PUBLISHED
+    FOLDED // eingestellt [beendet]
+}
+
+enum TaskResponsibilityStatus {
+    OPEN
+    PARTLY_ASSIGNED
+    FULLY_ASSIGNED
 }
 
 enum TaskFrequency {

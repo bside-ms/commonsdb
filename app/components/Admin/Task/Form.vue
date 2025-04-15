@@ -7,10 +7,10 @@ import { Clock } from 'lucide-vue-next';
 import { type ComboboxItem } from '~/components/Form/Combobox.vue';
 import { linkListSchema } from '~/components/Form/schema';
 import { TaskType, TaskPriority, TaskFrequency, type Task } from '@prisma/client'
-
-import { toast } from '~/components/ui/toast';
 import type { TaskWithCategories, TaskWithOccurrences } from '~/types/tasks';
 import { DateTime } from 'luxon';
+import { toast } from 'vue-sonner';
+import { Switch } from '~/components/ui/switch';
 
 interface TaskProps {
     task?: TaskWithCategories & TaskWithOccurrences
@@ -152,8 +152,7 @@ const onSubmit = handleSubmit(async (values, props) => {
             })
         }
 
-        toast({
-            title: values?.id ? `Aufgabe bearbeitet` : `Aufgabe erstellt`,
+        toast(values?.id ? `Aufgabe bearbeitet` : `Aufgabe erstellt`, {
             description: values?.id ? `Du hast '${values.title}' erfolgreich bearbeitet.` : `Du hast '${values.title}' erstellt.`,
         })
 
@@ -230,7 +229,8 @@ const onTypeCheckedChange = (checked: boolean) => {
                             </FormDescription>
                         </div>
                         <FormControl>
-                            <Switch :checked="value === TaskType.RECURRING" @update:checked="onTypeCheckedChange" />
+                            <Switch :model-value="value === TaskType.RECURRING"
+                                @update:model-value="onTypeCheckedChange" />
                         </FormControl>
                     </FormItem>
                 </FormField>
@@ -248,7 +248,7 @@ const onTypeCheckedChange = (checked: boolean) => {
                             </FormDescription>
                         </div>
                         <FormControl>
-                            <Switch :checked="value" @update:checked="handleChange" />
+                            <Switch :model-value="value" @update:model-value="handleChange" />
                         </FormControl>
                     </FormItem>
                 </FormField>
@@ -319,7 +319,7 @@ const onTypeCheckedChange = (checked: boolean) => {
                         <FormLabel>Rhythmus</FormLabel>
                         <Select v-bind="componentField">
                             <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger class="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                             </FormControl>
@@ -391,7 +391,7 @@ const onTypeCheckedChange = (checked: boolean) => {
                         <FormControl>
                             <Select v-bind="componentField">
                                 <FormControl>
-                                    <SelectTrigger>
+                                    <SelectTrigger class="w-full">
                                         <SelectValue />
                                     </SelectTrigger>
                                 </FormControl>
@@ -427,7 +427,7 @@ const onTypeCheckedChange = (checked: boolean) => {
                         <FormLabel>Priorität</FormLabel>
                         <Select v-bind="componentField">
                             <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger class="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                             </FormControl>
@@ -458,14 +458,14 @@ const onTypeCheckedChange = (checked: boolean) => {
                     <FormItem class="flex items-center justify-between">
                         <div class="space-y-0.5">
                             <FormLabel class="text-base">
-                                Mehrfachbuchung
+                                Gemeinschaftsarbeit
                             </FormLabel>
                             <FormDescription>
                                 Benötigt es mehr Menschen für diese Aufgabe?
                             </FormDescription>
                         </div>
                         <FormControl>
-                            <Switch :checked="value" @update:checked="handleChange" />
+                            <Switch :model-value="value" @update:model-value="handleChange" />
                         </FormControl>
                     </FormItem>
                 </FormField>

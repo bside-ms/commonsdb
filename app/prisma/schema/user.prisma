@@ -1,7 +1,11 @@
 model User {
-    id       String  @id
+    id String @id
+
     email    String
     username String?
+
+    firstname String?
+    lastname  String?
 
     walletId                String?              @unique
     wallet                  Wallet?              @relation("UserWallet", fields: [walletId], references: [id])

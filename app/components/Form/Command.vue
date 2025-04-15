@@ -1,34 +1,16 @@
-<script setup lang="ts">
-import {
-    ComboboxAnchor,
-    ComboboxContent,
-    ComboboxInput,
-    ComboboxPortal,
-    ComboboxRoot,
-} from 'radix-vue'
-import { CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
+<script setup lang="ts" generic="T extends AcceptableValue">
+import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox'
+import type { AcceptableValue } from 'reka-ui';
 
 interface FormCommandProps {
     placeholder: string;
     disabled?: boolean;
     fetchSuggestions?: (nameLike?: string) => Promise<any[]>
 }
-const { disabled, fetchSuggestions } = defineProps<FormCommandProps>()
-const modelValue = defineModel()
+const { fetchSuggestions } = defineProps<FormCommandProps>()
+const modelValue = defineModel<T>()
 
-const open = ref(false)
-const searchTerm = ref('')
-
-const suggestions: Ref<any[]> = ref([])
-const onSelectSuggestion = (ev: any) => {
-    const result = ev.detail.value;
-
-    modelValue.value = result;
-    searchTerm.value = suggestions.value.find(x => x.value.id === result.id)?.label ?? ""
-
-    open.value = false;
-}
-
+const suggestions: Ref<{ label: string; value: T }[]> = ref([])
 const loading = ref(false)
 const doFetchSuggestions = async (search: string) => {
     if (fetchSuggestions && search.length) {
@@ -36,17 +18,28 @@ const doFetchSuggestions = async (search: string) => {
         suggestions.value = await fetchSuggestions(search)
     }
 }
-
-defineExpose({
-    reset: () => {
-        open.value = false;
-        searchTerm.value = ""
-    }
-})
 </script>
 
 <template>
-    <ComboboxRoot v-model:open="open" v-model:search-term="searchTerm" @update:search-term="doFetchSuggestions"
+    <Combobox by="label" v-model:model-value="modelValue">
+        <ComboboxAnchor as-child>
+            <ComboboxInput class="w-full" :display-value="(val) => val?.label ?? ''" :placeholder="placeholder"
+                @update:model-value="doFetchSuggestions" />
+        </ComboboxAnchor>
+
+        <ComboboxList>
+            <ComboboxEmpty>
+                Keine Ergebnisse
+            </ComboboxEmpty>
+
+            <ComboboxGroup>
+                <ComboboxItem v-for="(suggestion, index) in suggestions" :key="index" :value="suggestion">
+                    {{ suggestion.label }}
+                </ComboboxItem>
+            </ComboboxGroup>
+        </ComboboxList>
+    </Combobox>
+    <!-- <ComboboxRoot v-model:open="open" v-model:search-term="searchTerm" @update:search-term="doFetchSuggestions"
         :disabled="disabled">
         <ComboboxAnchor as-child>
             <ComboboxInput :placeholder="placeholder"
@@ -69,5 +62,5 @@ defineExpose({
                 </CommandList>
             </ComboboxContent>
         </ComboboxPortal>
-    </ComboboxRoot>
+    </ComboboxRoot> -->
 </template>

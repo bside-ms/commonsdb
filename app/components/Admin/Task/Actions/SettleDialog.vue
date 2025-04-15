@@ -48,7 +48,7 @@ const onSubmit = handleSubmit(async (values) => {
         <DialogTrigger as-child>
             <Button variant="outline" size="sm" :disabled="disabled || !nextOpenOccurrence">{{
                 $t("tasks.actions.settle")
-            }}</Button>
+                }}</Button>
         </DialogTrigger>
         <DialogContent class="sm:max-w-[425px]">
             <DialogHeader>
@@ -67,9 +67,32 @@ const onSubmit = handleSubmit(async (values) => {
                         <FormItem class="grid gap">
                             <FormLabel>Personen oder Initiativen</FormLabel>
                             <FormTagsCombobox name="responsibles" :form-values="values" :set-field-value="setFieldValue"
-                                placeholder="Person oder Organisation..." :fetch-suggestions="async () => {
-                                    const { data } = await useFetch('/api/admin/users')
-                                    return data.value?.map(u => ({ value: u.id, label: `${u.username} (${u.email})` })) ?? []
+                                placeholder="Person oder Organisation..." :fetch-suggestions="async (search?: string) => {
+                                    const { data: users } = await useFetch('/api/admin/users', {
+                                        query: {
+                                            search
+                                        }
+                                    })
+                                    const { data: paginatedOrganizationsResult } = await useFetch('/api/admin/organizations', {
+                                        query: {
+                                            search
+                                        }
+                                    })
+
+                                    return [
+                                        {
+                                            name: 'User', items: users.value?.map(u => ({
+                                                value: u.id, label:
+                                                    `${u.username} (${u.email})`
+                                            })) ?? []
+                                        },
+                                        {
+                                            name: 'Organizations', items: paginatedOrganizationsResult.value?.totalCount ? paginatedOrganizationsResult.value.items.map(o => ({
+                                                value: o.id, label:
+                                                    `${o.name} (${o.code})`
+                                            })) : []
+                                        }
+                                    ]
                                 }" :disabled="loading" />
                             <FormMessage class="text-xs" />
                         </FormItem>

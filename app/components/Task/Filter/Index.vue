@@ -47,7 +47,7 @@ const onChange = (val: string, checked: boolean) => {
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="outline" size="sm" :class="['h-7 gap-1 rounded-md px-3']">
-        <ListFilter class="h-3.5 w-3.5" />
+        <ListFilter class="size-3.5" />
         <span>{{ label }}</span>
       </Button>
     </DropdownMenuTrigger>

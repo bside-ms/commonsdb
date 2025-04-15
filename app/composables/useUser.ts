@@ -1,8 +1,13 @@
 import type { WalletTransaction } from "@prisma/client";
-import type { UserFull } from "~/types/users";
+import { USER_ROLES, type UserFull } from "~/types/users";
 
 export const useUser = () => {
   const user: Ref<UserFull | null> = useState("current-user", () => null);
+
+  const { user: sessionUser } = useUserSession();
+  const isAdminUser = computed(() =>
+    sessionUser.value?.roles.includes(USER_ROLES.ADMIN)
+  );
 
   const wallet = computed(() => user.value?.wallet);
   const walletBalance: Ref<number> = useState(
@@ -15,10 +20,10 @@ export const useUser = () => {
   );
 
   const fetch = async () => {
-    const { data } = await useFetch("/api/me");
+    const { data } = await useFetch("/api/users/me");
 
     const { user: me, balance } = data.value ?? {};
-    user.value = me;
+    user.value = me ?? null;
     walletBalance.value = balance ?? 0;
   };
 
@@ -32,6 +37,7 @@ export const useUser = () => {
 
   return {
     user,
+    isAdminUser,
     fetch,
     wallet,
     walletBalance,

@@ -1,43 +1,73 @@
-import { serverSupabaseUser } from "#supabase/server";
+import { TaskResponsibilityStatus } from "@prisma/client";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
   const { userId } = await readBody(event);
 
-  const user = await serverSupabaseUser(event);
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      message: "Cannot load user",
-    });
-  }
-
-  const userIdToResign: string = userId ?? user.user_metadata.sub;
-
-  // has to be admin, if userIdToResign is not self-id
-  if (
-    userIdToResign !== user.user_metadata.sub &&
-    !(await hasRoles(event, ["admin"]))
-  ) {
-    throw createError({
-      statusCode: 403,
-      message: "Not allowed",
-    });
-  }
-
-  if (!taskId || !userIdToResign) {
+  if (!taskId || !userId) {
     throw createError({
       statusCode: 400,
-      message: "No task or user id",
+      message: "Bad Request",
     });
   }
 
-  await prisma.taskResponsibility.delete({
+  const { user } = await requireUserSession(event);
+  const isAdmin = await isAdminUser(event);
+
+  if (userId !== user.id && !isAdmin) {
+    throw createError({
+      statusCode: 403,
+      message: "Forbidden",
+    });
+  }
+
+  const task = await prisma.task.findUniqueOrThrow({
     where: {
-      userId_taskId: {
-        taskId,
-        userId: userIdToResign,
+      id: taskId,
+    },
+    include: {
+      _count: {
+        select: {
+          responsibilities: {
+            where: {
+              userId,
+            },
+          },
+        },
       },
     },
+  });
+
+  // just return, if responsibility for this user is not found/counted
+  if (!task._count.responsibilities) {
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const r = await tx.taskResponsibility.delete({
+      where: {
+        userId_taskId: {
+          taskId,
+          userId,
+        },
+      },
+    });
+
+    // if responsibility was delete/released, update task.responsibilityStatus
+    if (r) {
+      const responsibilityStatus =
+        task._count.responsibilities - 1 > 0
+          ? TaskResponsibilityStatus.PARTLY_ASSIGNED
+          : TaskResponsibilityStatus.OPEN;
+
+      await tx.task.update({
+        where: {
+          id: task.id,
+        },
+        data: {
+          responsibilityStatus,
+        },
+      });
+    }
   });
 });

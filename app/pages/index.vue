@@ -1,6 +1,13 @@
+<script setup lang="ts">
+const title = usePageTitle();
+title.value = "Deine Übersicht"
+useSeoMeta({
+    title
+})
+</script>
+
 <template>
-    <Container>
-        <Headline>Deine Übersicht</Headline>
+    <div>
         <AccountDashboard />
-    </Container>
+    </div>
 </template>

@@ -1,21 +1,14 @@
 <script setup lang="ts">
-import { Button } from '../ui/button';
+const { walletBalance } = useUser()
 </script>
 
 <template>
-    <div class="grid gap-6 lg:grid-cols-12">
-        <div class="lg:col-span-3">
-            <Headline size="sm" text-align="left" class="mb-2">Reprostunden-Konto</Headline>
-            <div class="px-2 space-y-2">
-                <WalletBalance />
-                <Button variant="outline" size="sm" as-child>
-                    <NuxtLink to="/wallet">Ansehen</NuxtLink>
-                </Button>
-            </div>
-        </div>
-        <div class="lg:col-span-6">
-            <Headline size="sm" text-align="left" class="mb-2">Deine Aufgaben</Headline>
+    <div class="grid gap-6 lg:grid-cols-6">
+        <Box title="Deine Aufgaben" class="col-span-full lg:col-span-4">
             <AccountTaskList />
-        </div>
+        </Box>
+        <Box title="Reprostunden" link="/wallet" class="col-span-full lg:col-span-2">
+            <WalletBalance :wallet-balance="walletBalance" />
+        </Box>
     </div>
 </template>

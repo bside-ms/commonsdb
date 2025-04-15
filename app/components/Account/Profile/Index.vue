@@ -4,7 +4,7 @@
             Profile
         </LayoutSectionHeading>
         <dl>
-            <WalletBalance />
+            <WalletBalance :wallet-balance="0" />
         </dl>
     </div>
 </template>

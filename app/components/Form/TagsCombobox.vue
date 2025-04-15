@@ -3,13 +3,14 @@ import { CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/componen
 import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete } from '@/components/ui/tags-input'
 import { ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxPortal, ComboboxRoot } from 'radix-vue'
 
+export interface ComboboxSuggestionGroup { name?: string, items: ComboboxItem[] }
 export interface ComboboxItem { value: string, label: string }
 
 interface TagsComboboxProps {
     name: string; formValues: any; setFieldValue: (name: any, value: any) => void;
     placeholder: string;
     disabled?: boolean;
-    fetchSuggestions?: (nameLike?: string) => Promise<ComboboxItem[]>
+    fetchSuggestions?: (search: string) => Promise<ComboboxSuggestionGroup[]>
     create?: (name: string) => Promise<ComboboxItem>
 }
 const { name, formValues, disabled, setFieldValue, create, fetchSuggestions } = defineProps<TagsComboboxProps>()
@@ -22,8 +23,6 @@ const modelValue = computed({
 const open = ref(false)
 const searchTerm = ref('')
 
-const suggestions: Ref<ComboboxItem[]> = ref([])
-const filteredSuggestions = computed(() => suggestions.value?.filter(suggestion => !modelValue.value.find((selection: ComboboxItem) => selection.value === suggestion.value)))
 const onSelectSuggestion = (ev: any) => {
     if (typeof ev.detail.value === 'string') {
         searchTerm.value = ''
@@ -57,14 +56,12 @@ const onRemove = (id: string) => {
     setFieldValue(name, modelValue.value.filter((x: any) => x.value !== id))
 }
 
-watch(() => disabled, async (isDisabled, wasDisabled) => {
-    if (fetchSuggestions && wasDisabled && !isDisabled) {
-        await fetchSuggestions()
+const loading = ref(false)
+const doFetchSuggestions = async (search: string) => {
+    if (fetchSuggestions && search.length) {
+        loading.value = true
+        suggestions.value = await fetchSuggestions(search)
     }
-})
-
-if (fetchSuggestions) {
-    suggestions.value = await fetchSuggestions()
 }
 </script>
 
@@ -77,7 +74,8 @@ if (fetchSuggestions) {
             </TagsInputItem>
         </div>
 
-        <ComboboxRoot v-model="modelValue" v-model:open="open" v-model:search-term="searchTerm" :disabled="disabled">
+        <ComboboxRoot v-model="modelValue" v-model:open="open" v-model:search-term="searchTerm"
+            @update:search-term="doFetchSuggestions" :disabled="disabled">
             <ComboboxAnchor as-child>
                 <ComboboxInput :placeholder="placeholder" as-child>
                     <TagsInputInput class="w-full px-3" @keydown.enter.prevent />
@@ -97,8 +95,8 @@ if (fetchSuggestions) {
                         <CommandEmpty v-else>
                             Keine Ergebnisse
                         </CommandEmpty>
-                        <CommandGroup>
-                            <CommandItem v-for="({ label }, index) in filteredSuggestions" :key="index" :value="label"
+                        <CommandGroup v-for="(group, index) in suggestions" :heading="group.name">
+                            <CommandItem v-for="({ label }, index) in group.items" :key="index" :value="label"
                                 @select.prevent="onSelectSuggestion">
                                 {{ label }}
                             </CommandItem>

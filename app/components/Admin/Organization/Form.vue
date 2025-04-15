@@ -3,7 +3,7 @@ import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod';
 import { type Organization } from '@prisma/client'
-import { toast } from '~/components/ui/toast';
+import { toast } from 'vue-sonner';
 
 interface OrganizationFormProps {
     organization?: Organization
@@ -29,16 +29,16 @@ const schema = toTypedSchema(
     })
 )
 
-const { data: code } = await useFetch('/api/admin/organizations/get-unique-code')
-const { values, setFieldValue, handleSubmit } = useForm({
+const { data: code } = !organization?.code ? await useFetch('/api/organizations/get-unique-code') : {};
+const { errors, values, setFieldValue, handleSubmit } = useForm({
     validationSchema: schema,
     initialValues: {
-        code: code.value,
+        code: code?.value,
         ...organization,
     }
 })
 
-const onSubmit = handleSubmit(async (values, props) => {
+const onSubmit = handleSubmit(async (values) => {
     const { id, members, ...organizationData } = values;
 
     try {
@@ -51,7 +51,7 @@ const onSubmit = handleSubmit(async (values, props) => {
         }
 
         if (id) {
-            await useFetch<Organization>(`/api/admin/organizations/${id}`, {
+            await useFetch<Organization>(`/api/organizations/${id}`, {
                 method: "PATCH",
                 body
             })
@@ -62,8 +62,7 @@ const onSubmit = handleSubmit(async (values, props) => {
             })
         }
 
-        toast({
-            title: values?.id ? `Organization bearbeitet` : `Organization erstellt`,
+        toast(values?.id ? `Organization bearbeitet` : `Organization erstellt`, {
             description: `Deine Eingabe wurde gespeichert.`,
         })
 
@@ -76,7 +75,9 @@ const onSubmit = handleSubmit(async (values, props) => {
 
 <template>
     <form @submit="onSubmit">
-        <input name="id" type="hidden" readonly />
+        <FormField v-slot="{ componentField }" name="id">
+            <Input v-bind="componentField" type="hidden" :disabled="loading" />
+        </FormField>
         <div class="grid grid-cols-6 gap-x-2 gap-y-4">
             <div class="col-span-full">
                 <FormField v-slot="{ componentField }" name="name">
@@ -120,9 +121,11 @@ const onSubmit = handleSubmit(async (values, props) => {
             </div>
 
             <div class="col-span-full">
-                <Label>Members</Label>
-                <p class="text-muted-foreground text-sm">Füge dieser Organisation Menschen hinzu und vergib ggf.
-                    spezielle Berechtigungen.</p>
+                <Label>Member</Label>
+                <p class="text-muted-foreground text-sm">
+                    Füge dieser Organisation Menschen hinzu und vergib ggf.
+                    spezielle Berechtigungen.
+                </p>
                 <AdminOrganizationFormMembers name="members" class="mt-3" />
             </div>
         </div>

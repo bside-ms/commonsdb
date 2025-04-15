@@ -2,13 +2,10 @@
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as z from 'zod'
-import { LoadingButton } from '~/components/ui/button';
 import type { FormError } from '~/components/Form/Errors.vue';
-import { useToast } from '~/components/ui/toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field';
-
-const { toast } = useToast();
+import { Button } from '../ui/button';
 
 const formSchema = toTypedSchema(z.object({
     name: z.string(),
@@ -273,7 +270,7 @@ const onSubmit = handleSubmit(async (values) => {
             </div>
 
             <div class="mt-6">
-                <LoadingButton type="submit" class="w-full" :disabled="loading">Create</LoadingButton>
+                <Button type="submit" class="w-full" :disabled="loading">Create</Button>
             </div>
         </div>
     </form>

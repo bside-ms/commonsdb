@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxPortal, ComboboxRoot } from 'radix-vue'
+import { cn } from '~/lib/utils';
 import { CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
 import { Button } from '../ui/button';
-import { cn } from '~/lib/utils';
 import { ChevronsUpDownIcon } from 'lucide-vue-next';
 
 export interface ComboboxItem { value: string, label: string }
@@ -64,7 +63,7 @@ onMounted(async () => {
                 <Button variant="outline" role="combobox"
                     :class="cn('justify-between font-normal', !formValues.category && 'text-muted-foreground')">
                     {{ formValues.category ? formValues.category.label : placeholder }}
-                    <ChevronsUpDownIcon class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDownIcon class="ml-2 size-4 shrink-0 opacity-50" />
                 </Button>
             </FormControl>
         </PopoverTrigger>

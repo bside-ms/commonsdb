@@ -1,6 +1,4 @@
 <script setup lang="ts">
-const user = useSupabaseUser()
-
 const { data } = await useFetch('/api/users/me/tasks')
 const tasks = computed(() => data.value)
 </script>

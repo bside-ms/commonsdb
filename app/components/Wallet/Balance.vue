@@ -1,10 +1,10 @@
 <script setup lang="ts">
-const { walletBalance } = useUser()
+defineProps<{ walletBalance: number }>()
 </script>
 
 <template>
     <div>
-        <dt class="text-sm text-gray-600">Guthaben</dt>
+        <dt class="text-xs text-muted-foreground">Guthaben</dt>
         <dd class="flex items-end gap-1">
             <span
                 :class="['text-2xl font-semibold', walletBalance && { 'text-green-700': walletBalance > 0, 'text-red-700': walletBalance < 0 }]">{{

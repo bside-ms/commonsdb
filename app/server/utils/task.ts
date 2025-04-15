@@ -68,7 +68,7 @@ export const getNumberOfFutureOccurrencesToCreate = (
 
 export const getTasksWithOccurrences = async (
   filter?: any,
-  sort?: string,
+  sort?: string | null,
   skip: number = 0,
   take: number = 25
 ) => {

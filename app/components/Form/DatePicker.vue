@@ -31,7 +31,7 @@ const value = computed({
                     'ps-3 justify-start text-left font-normal',
                     !value && 'text-muted-foreground'
                 )">
-                    <CalendarIcon class="mr-2 h-4 w-4 opacity-50" />
+                    <CalendarIcon class="mr-2 size-4 opacity-50" />
                     <span>{{ value ? df.format(toDate(value)) : placeholder }}</span>
                 </Button>
                 <input hidden>

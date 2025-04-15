@@ -1,5 +1,10 @@
 import type { Prisma } from "@prisma/client";
 
+export enum TaskAssignmentStatus {
+  OPEN = "open",
+  ASSIGNED = "assigned",
+}
+
 const taskIncludingOccurrences = {
   include: {
     occurrences: true,

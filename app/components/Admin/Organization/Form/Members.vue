@@ -11,7 +11,6 @@ interface AdminOrganizationFormMemberProps {
 const { name } = defineProps<AdminOrganizationFormMemberProps>();
 
 const userInput = ref()
-const userInputCommand = ref()
 </script>
 
 <template>
@@ -29,29 +28,27 @@ const userInputCommand = ref()
                     }" :disabled="loading" />
                 <Button type="button" variant="outline" size="sm" @click="() => {
                     push({
-                        user: userInput,
+                        user: userInput.value,
                         role: OrganizationMemberRole.MEMBER
                     })
                     userInput = null
-                    userInputCommand?.reset();
                 }">
                     Hinzufügen
                 </Button>
             </div>
             <div v-if="fields?.length" class="grid gap-3 mt-4">
-                <div v-for="({ value }, index) in fields" class="flex items-center justify-between">
+                <div v-for="({ value }, index) in fields" class="flex items-baseline justify-between">
                     <div class="flex flex-col gap-px">
                         <span class="font-medium">{{ value.user.username ?? 'username' }}</span>
                         <span class="text-sm">{{ value.user.email }}</span>
                     </div>
 
-                    <div class="min-w-32">
+                    <div class="flex items-center gap-2">
                         <AdminOrganizationFormMemberRoles v-model="value.role" placeholder="Member Role" />
+                        <Button variant="ghost" size="icon" @click="remove(index)">
+                            <Minus class="size-4" />
+                        </Button>
                     </div>
-
-                    <Button variant="ghost" size="icon" @click="remove(index)">
-                        <Minus class="w-4 h-4" />
-                    </Button>
                 </div>
             </div>
         </FieldArray>

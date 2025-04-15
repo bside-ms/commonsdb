@@ -1,9 +1,8 @@
-import { serverSupabaseUser } from "#supabase/server";
+import { TaskResponsibilityStatus } from "@prisma/client";
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, "id");
-
-  const user = await serverSupabaseUser(event);
+  const taskId = getRouterParam(event, "id");
+  const { user } = await getUserSession(event);
   if (!user) {
     throw createError({
       statusCode: 401,
@@ -11,50 +10,47 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const task = await prisma.task.findFirst({
-    where: {
-      id,
-    },
-    include: {
-      responsibilities: true,
-      occurrences: {
-        where: {
-          dueEndDate: {
-            gt: new Date(),
+  await prisma.$transaction(async (tx) => {
+    // add responsibility for not fully assigned task
+    const task = await tx.task.update({
+      where: {
+        id: taskId,
+        responsibilityStatus: {
+          not: TaskResponsibilityStatus.FULLY_ASSIGNED,
+        },
+      },
+      data: {
+        responsibilities: {
+          create: {
+            userId: user.id,
+            assignedBy: "self",
           },
         },
-        orderBy: {
-          dueEndDate: "asc",
+      },
+      include: {
+        _count: {
+          select: {
+            responsibilities: true,
+          },
         },
       },
-    },
-  });
-
-  if (!task) {
-    throw createError({
-      statusCode: 404,
-      message: "Task not found",
     });
-  }
 
-  if (task.maxResponsibilities <= task.responsibilities.length) {
-    throw createError({
-      statusCode: 400,
-      message: "Task already taken",
-    });
-  }
+    // if task was updated, update task.responsibilityStatus
+    if (task) {
+      const responsibilityStatus =
+        task.maxResponsibilities < task._count.responsibilities + 1
+          ? TaskResponsibilityStatus.PARTLY_ASSIGNED
+          : TaskResponsibilityStatus.FULLY_ASSIGNED;
 
-  await prisma.task.update({
-    where: {
-      id: task.id,
-    },
-    data: {
-      responsibilities: {
-        create: {
-          userId: user.user_metadata.sub,
-          assignedBy: "self",
+      await tx.task.update({
+        where: {
+          id: task.id,
         },
-      },
-    },
+        data: {
+          responsibilityStatus,
+        },
+      });
+    }
   });
 });

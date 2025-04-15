@@ -26,9 +26,24 @@
       "ASSIGNED": "zugewiesen"
     },
     "actions": {
-      "accept": "Annehmen",
-      "settle": "Als erledigt markieren",
-      "resign": "Zurücktreten"
+      "accept": "Aufgabe annehmen",
+      "settle": "Aufgabe als erledigt markieren",
+      "resign": "Von Aufgabe zurücktreten",
+      "create": "Neue Aufgabe anlegen"
+    }
+  },
+  "organizations": {
+    "actions": {
+      "join": "Einer Initiative beitreten",
+      "create": "Neue Initiative anlegen",
+      "edit": "Initiative bearbeiten",
+      "book": "Ressource für Initiative buchen"
+    },
+    "member": {
+      "role": {
+        "USER": "User",
+        "ADMIN": "Admin"
+      }
     }
   },
   "sort": "Sortierung",

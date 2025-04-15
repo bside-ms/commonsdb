@@ -37,7 +37,7 @@ import {
 } from 'lucide-vue-next'
 import { Button } from '../ui/button'
 
-const user = useSupabaseUser();
+const { user } = useUserSession();
 </script>
 
 <template>
@@ -71,6 +71,30 @@ const user = useSupabaseUser();
                                 </div>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton tooltip="Aufgaben" as-child>
+                                <div class="flex justify-between">
+                                    <NuxtLink to="/admin/organizations" class="flex-1">Ressourcen</NuxtLink>
+                                    <Button variant="ghost" size="icon" as-child>
+                                        <NuxtLink to="/admin/organizations/new">
+                                            <Plus class="size-4" />
+                                        </NuxtLink>
+                                    </Button>
+                                </div>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton tooltip="Aufgaben" as-child>
+                                <div class="flex justify-between">
+                                    <NuxtLink to="/admin/organizations" class="flex-1">Qualifikationen</NuxtLink>
+                                    <Button variant="ghost" size="icon" as-child>
+                                        <NuxtLink to="/admin/organizations/new">
+                                            <Plus class="size-4" />
+                                        </NuxtLink>
+                                    </Button>
+                                </div>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
@@ -81,7 +105,7 @@ const user = useSupabaseUser();
                             <DropdownMenuTrigger as-child>
                                 <SidebarMenuButton size="lg"
                                     class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                                    <Avatar class="h-8 w-8 rounded-lg">
+                                    <Avatar class="size-8 rounded-lg">
                                         <AvatarImage src="https://api.dicebear.com/9.x/lorelei/svg?seed=Sarah"
                                             :alt="user?.email" />
                                         <AvatarFallback class="rounded-lg">

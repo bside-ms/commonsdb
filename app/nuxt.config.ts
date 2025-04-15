@@ -1,3 +1,5 @@
+import tailwindcss from "@tailwindcss/vite";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2024-04-03",
@@ -5,6 +7,7 @@ export default defineNuxtConfig({
   experimental: {
     asyncContext: true,
   },
+  css: ["~/assets/css/main.css"],
   app: {
     head: {
       link: [
@@ -39,14 +42,16 @@ export default defineNuxtConfig({
     public: {
       baseUrl: "http://localhost:3000",
     },
+    oauth: {
+      keycloak: {
+        serverUrl: "",
+        realm: "",
+        clientId: "",
+        clientSecret: "",
+      },
+    },
   },
-  modules: [
-    "@nuxtjs/tailwindcss",
-    "shadcn-nuxt",
-    "@nuxt/fonts",
-    "@nuxtjs/i18n",
-    "@nuxtjs/supabase",
-  ],
+  modules: ["shadcn-nuxt", "@nuxt/fonts", "@nuxtjs/i18n", "nuxt-auth-utils"],
   shadcn: {
     prefix: "",
     componentDir: "./components/ui",
@@ -57,6 +62,7 @@ export default defineNuxtConfig({
   },
   // https://github.com/nuxt/nuxt/issues/24690#issuecomment-2254528534
   vite: {
+    plugins: [tailwindcss()],
     ssr: {
       external: ["@prisma/client"],
     },
