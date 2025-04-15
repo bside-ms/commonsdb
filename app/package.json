@@ -15,7 +15,6 @@
   "dependencies": {
     "@nuxt/fonts": "^0.11.1",
     "@nuxtjs/i18n": "9.5.2",
-    "prisma": "^6.2.1",
     "@prisma/client": "^6.3.0",
     "@tiptap/core": "^2.8.0",
     "@tiptap/extension-text-style": "^2.8.0",
@@ -54,10 +53,15 @@
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
-    "@types/jsonwebtoken": "^9.0.8",
+    "@tiptap/core": "^2.8.0",
+    "@tiptap/extension-text-style": "^2.8.0",
     "@types/lodash": "^4.17.16",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.6",
+    "prisma": "^6.2.1",
     "typescript": "^5.6.2"
+  },
+  "prisma": {
+    "schema": "prisma/schema"
   }
 }

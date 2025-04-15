@@ -1,3 +1,5 @@
+import { isAdminUser } from "~/server/utils/auth";
+
 export default defineEventHandler(async (event) => {
   const isAdmin = await isAdminUser(event);
   if (!isAdmin) {
