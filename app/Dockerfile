@@ -1,3 +1,4 @@
+# BUILD
 FROM node:22-alpine as build
 
 WORKDIR /app
@@ -11,8 +12,17 @@ COPY . .
 
 RUN yarn build
 
+# RUN MIGRATIONS
+FROM build as migrate
 
-FROM node:22.8-alpine AS run
+WORKDIR /app
+
+COPY . /app
+
+CMD ["sh", "-c", "npx prisma migrate deploy"]
+
+# RUN APP
+FROM migrate AS run
 
 COPY --from=build /app/.output /app/.output
 

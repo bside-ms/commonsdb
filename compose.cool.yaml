@@ -1,0 +1,36 @@
+services:
+  app:
+    build:
+      context: ./app
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 100m
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - NUXT_PUBLIC_BASE_URL=${NUXT_PUBLIC_BASE_URL}
+      - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - NUXT_OAUTH_KEYCLOAK_CLIENT_ID=${NUXT_OAUTH_KEYCLOAK_CLIENT_ID}
+      - NUXT_OAUTH_KEYCLOAK_CLIENT_SECRET=${NUXT_OAUTH_KEYCLOAK_CLIENT_SECRET}
+      - NUXT_OAUTH_KEYCLOAK_SERVER_URL=${NUXT_OAUTH_KEYCLOAK_SERVER_URL}
+      - NUXT_OAUTH_KEYCLOAK_REALM=${NUXT_OAUTH_KEYCLOAK_REALM}
+
+  db:
+    image: postgres:16.8-alpine
+    restart: unless-stopped
+    shm_size: 128mb
+    environment:
+      - POSTGRES_PASSWORD=${DB_POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+
+volumes:
+  db_data:
