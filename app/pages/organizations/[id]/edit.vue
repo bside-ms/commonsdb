@@ -16,7 +16,7 @@ useSeoMeta({
 
 <template>
     <div class="grid lg:grid-cols-6">
-        <AdminOrganizationForm v-if="organization" class="lg:col-span-3" :organization="organization"
+        <OrganizationForm v-if="organization" class="lg:col-span-3" :organization="organization"
             @submit="navigateTo(`/organizations/${organization.id}`)"
             @cancel="navigateTo(`/organizations/${organization.id}`)" />
     </div>

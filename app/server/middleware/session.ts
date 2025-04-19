@@ -61,10 +61,20 @@ export default defineEventHandler(async (event) => {
         },
         loggedInAt: Date.now(),
       });
+
       return;
     }
   }
 
   // no session or valid tokens
   await clearUserSession(event);
+
+  // do redirect to login, if path is not auth related
+  if (
+    !getRequestURL(event).pathname.startsWith("/auth") &&
+    getRequestURL(event).pathname !== "/login" &&
+    getRequestURL(event).pathname !== "/api/_auth/session"
+  ) {
+    await sendRedirect(event, "/login");
+  }
 });

@@ -1,28 +1,13 @@
-import { TaskOccurenceStatus } from "@prisma/client";
+import { getUserTasks } from "~/server/utils/task";
 
 export default defineEventHandler(async (event) => {
   const userId = getRouterParam(event, "id");
 
-  const userTasks = await prisma.task.findMany({
-    include: {
-      categories: true,
-      occurrences: {
-        where: {
-          status: TaskOccurenceStatus.PENDING,
-        },
-        orderBy: {
-          dueEndDate: "asc",
-        },
-      },
-    },
-    where: {
-      responsibilities: {
-        some: {
-          userId,
-        },
-      },
-    },
-  });
+  if (!userId) {
+    throw createError({
+      status: 400,
+    });
+  }
 
-  return userTasks.filter((task) => task.occurrences.length);
+  return await getUserTasks(userId);
 });

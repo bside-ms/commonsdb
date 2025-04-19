@@ -1,9 +1,6 @@
-import { TaskWithCategories, TaskWithOccurrences } from "~/types/tasks";
+import { getUserTasks } from "~/server/utils/task";
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
-
-  return $fetch<(TaskWithCategories & TaskWithOccurrences)[]>(
-    `/api/users/${user.id}/tasks`
-  );
+  return await getUserTasks(user.id);
 });

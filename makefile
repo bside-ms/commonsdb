@@ -1,6 +1,6 @@
 PROJECT=bside-commons
 
-.PHONY: up-local
+.PHONY: start-local
 start-local:
 	docker compose -p ${PROJECT}_local -f compose.local.yaml up -d
 

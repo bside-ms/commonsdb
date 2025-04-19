@@ -1,4 +1,4 @@
-import { TaskType } from "@prisma/client";
+import Prisma from "@prisma/client";
 import { DateTime } from "luxon";
 
 export default defineEventHandler(async (event) => {
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (type === TaskType.RECURRING && !dueDateTime.endDateTime) {
+  if (type === Prisma.TaskType.RECURRING && !dueDateTime.endDateTime) {
     throw new Error("Recurring Tasks need to have an end.");
   }
 
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
       type,
       dueStartDate: dueDateTime.startDateTime?.toISO(),
       dueEndDate: dueDateTime.endDateTime?.toISO(),
-      frequency: type === TaskType.RECURRING ? frequency : null,
+      frequency: type === Prisma.TaskType.RECURRING ? frequency : null,
       categories: categories?.length
         ? {
             deleteMany: {

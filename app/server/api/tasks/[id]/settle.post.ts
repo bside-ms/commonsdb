@@ -1,6 +1,7 @@
-import { TaskOccurenceStatus } from "@prisma/client";
+import Prisma from "@prisma/client";
 import { DateTime } from "luxon";
 import { isAdminUser } from "~/server/utils/auth";
+import { chargeWallet } from "~/server/utils/wallet";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
@@ -66,7 +67,7 @@ export default defineEventHandler(async (event) => {
       id: taskOccurrenceId,
     },
     data: {
-      status: TaskOccurenceStatus.COMPLETED,
+      status: Prisma.TaskOccurenceStatus.COMPLETED,
     },
   });
 
@@ -81,13 +82,7 @@ export default defineEventHandler(async (event) => {
     const comment = `'${taskOccurrence.task.title}' am ${DateTime.now().toFormat("dd.LL.yyyy 'um' HH:mm 'Uhr'")} erledigt`;
     taskOccurrence.task.responsibilities.map(async (r) => {
       if (r.user.walletId) {
-        await $fetch(`/api/wallets/${r.user.walletId}/charge`, {
-          method: "POST",
-          body: {
-            amount: reward,
-            comment,
-          },
-        });
+        await chargeWallet(r.user.walletId, reward, comment);
       }
     });
   }

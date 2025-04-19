@@ -1,8 +1,8 @@
-import { TaskFrequency, TaskOccurenceStatus, TaskType } from "@prisma/client";
+import Prisma from "@prisma/client";
 import { TaskWithOccurrences } from "~/types/tasks";
 
 const updateOccurrences = async (task: TaskWithOccurrences) => {
-  if (task.type === TaskType.SINGLE) {
+  if (task.type === Prisma.TaskType.SINGLE) {
     if (!task.occurrences?.length) {
       await runTask("task:occurrences:create", {
         payload: { taskId: task.id },
@@ -14,7 +14,7 @@ const updateOccurrences = async (task: TaskWithOccurrences) => {
       const res = await prisma.taskOccurrence.update({
         where: {
           id: singleOccurrence!.id,
-          status: TaskOccurenceStatus.PENDING,
+          status: Prisma.TaskOccurenceStatus.PENDING,
         },
         data: {
           dueStartDate: task.dueStartDate,
@@ -25,11 +25,12 @@ const updateOccurrences = async (task: TaskWithOccurrences) => {
     return;
   }
 
-  if (task.type === TaskType.RECURRING) {
+  if (task.type === Prisma.TaskType.RECURRING) {
     if (
       !task.dueEndDate ||
       !task.frequency ||
-      (task.frequency === TaskFrequency.IRREGULAR && task.occurrences?.length)
+      (task.frequency === Prisma.TaskFrequency.IRREGULAR &&
+        task.occurrences?.length)
     ) {
       return;
     }
@@ -38,7 +39,7 @@ const updateOccurrences = async (task: TaskWithOccurrences) => {
     await prisma.taskOccurrence.deleteMany({
       where: {
         taskId: task.id,
-        status: TaskOccurenceStatus.PENDING,
+        status: Prisma.TaskOccurenceStatus.PENDING,
       },
     });
 

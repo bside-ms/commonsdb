@@ -1,4 +1,4 @@
-import { TaskOccurenceStatus } from "@prisma/client";
+import Prisma from "@prisma/client";
 import { TaskFull } from "~/types/tasks";
 
 export default defineEventHandler(async (event): Promise<TaskFull | null> => {
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event): Promise<TaskFull | null> => {
       },
       occurrences: {
         where: {
-          status: TaskOccurenceStatus.PENDING,
+          status: Prisma.TaskOccurenceStatus.PENDING,
         },
         orderBy: {
           dueEndDate: "asc",

@@ -1,9 +1,8 @@
+import { upsertUser } from "~/server/utils/user";
+
 export default defineOAuthKeycloakEventHandler({
   async onSuccess(event, { user, tokens }) {
-    await $fetch("/api/users", {
-      method: "POST",
-      body: user,
-    });
+    await upsertUser(user);
 
     await setUserSession(event, {
       user: {

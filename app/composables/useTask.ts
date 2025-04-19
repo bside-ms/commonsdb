@@ -1,6 +1,7 @@
-import { TaskOccurenceStatus, type TaskOccurrence } from "@prisma/client";
-import { DateTime } from "luxon";
+import Prisma from "@prisma/client";
+import type { TaskOccurrence } from "@prisma/client";
 import type { TaskWithOccurrences } from "~/types/tasks";
+import { DateTime } from "luxon";
 
 export const useTask = () => {
   const getDueEndDateFormatted = (
@@ -20,16 +21,17 @@ export const useTask = () => {
     }
 
     return task.occurrences.find(
-      (o) => o.status === TaskOccurenceStatus.PENDING && o.dueEndDate
+      (o) => o.status === Prisma.TaskOccurenceStatus.PENDING && o.dueEndDate
     );
   };
+
   const getNextPendingOccurrence = (task: TaskWithOccurrences) => {
     if (!task.occurrences?.length) {
       return null;
     }
 
     return task.occurrences.find(
-      (o) => o.status === TaskOccurenceStatus.PENDING
+      (o) => o.status === Prisma.TaskOccurenceStatus.PENDING
     );
   };
   const getNextPendingDueEndDateFormatted = (

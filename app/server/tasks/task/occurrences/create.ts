@@ -1,4 +1,4 @@
-import { TaskFrequency, TaskType } from "@prisma/client";
+import Prisma from "@prisma/client";
 import { DateTime } from "luxon";
 import {
   getFutureOccurrences,
@@ -8,7 +8,7 @@ import {
 import { TaskWithOccurrences } from "~/types/tasks";
 
 const createOccurrences = async (task: TaskWithOccurrences) => {
-  if (task.type === TaskType.SINGLE) {
+  if (task.type === Prisma.TaskType.SINGLE) {
     if (!task.occurrences?.length) {
       // create one occurrence
       await prisma.taskOccurrence.create({
@@ -22,13 +22,14 @@ const createOccurrences = async (task: TaskWithOccurrences) => {
     return;
   }
 
-  if (task.type === TaskType.RECURRING) {
+  if (task.type === Prisma.TaskType.RECURRING) {
     const futureOccurrences = await getFutureOccurrences(task);
 
     if (
       !task.dueEndDate ||
       !task.frequency ||
-      (task.frequency === TaskFrequency.IRREGULAR && task.occurrences?.length)
+      (task.frequency === Prisma.TaskFrequency.IRREGULAR &&
+        task.occurrences?.length)
     ) {
       return;
     }
@@ -100,9 +101,9 @@ export default defineTask({
     } else {
       const tasks = await prisma.task.findMany({
         where: {
-          type: TaskType.RECURRING,
+          type: Prisma.TaskType.RECURRING,
           frequency: {
-            not: TaskFrequency.IRREGULAR,
+            not: Prisma.TaskFrequency.IRREGULAR,
           },
         },
         include: {

@@ -1,4 +1,5 @@
-import { Prisma, TaskResponsibilityStatus } from "@prisma/client";
+import Prisma from "@prisma/client";
+import type { Prisma as PrismaType } from "@prisma/client";
 import { getTasksWithOccurrences } from "~/server/utils/task";
 
 export default defineEventHandler(async (event) => {
@@ -20,10 +21,10 @@ export default defineEventHandler(async (event) => {
   const skip = 0;
   const take = 25;
 
-  const query: Prisma.TaskFindManyArgs = {
+  const query: PrismaType.TaskFindManyArgs = {
     where: {
       responsibilityStatus: {
-        not: TaskResponsibilityStatus.FULLY_ASSIGNED,
+        not: Prisma.TaskResponsibilityStatus.FULLY_ASSIGNED,
       },
       id: {
         notIn: userResponsibilityTaskIds.map((r) => r.taskId),

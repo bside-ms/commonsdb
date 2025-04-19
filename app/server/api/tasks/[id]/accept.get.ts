@@ -1,4 +1,4 @@
-import { TaskResponsibilityStatus } from "@prisma/client";
+import Prisma from "@prisma/client";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
       where: {
         id: taskId,
         responsibilityStatus: {
-          not: TaskResponsibilityStatus.FULLY_ASSIGNED,
+          not: Prisma.TaskResponsibilityStatus.FULLY_ASSIGNED,
         },
       },
       data: {
@@ -40,8 +40,8 @@ export default defineEventHandler(async (event) => {
     if (task) {
       const responsibilityStatus =
         task.maxResponsibilities < task._count.responsibilities + 1
-          ? TaskResponsibilityStatus.PARTLY_ASSIGNED
-          : TaskResponsibilityStatus.FULLY_ASSIGNED;
+          ? Prisma.TaskResponsibilityStatus.PARTLY_ASSIGNED
+          : Prisma.TaskResponsibilityStatus.FULLY_ASSIGNED;
 
       await tx.task.update({
         where: {

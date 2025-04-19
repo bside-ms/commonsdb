@@ -1,4 +1,4 @@
-import { TaskOccurenceStatus } from "@prisma/client";
+import Prisma from "@prisma/client";
 
 export default defineTask({
   meta: {
@@ -8,7 +8,7 @@ export default defineTask({
   run: async () => {
     await prisma.taskOccurrence.updateMany({
       data: {
-        status: TaskOccurenceStatus.MISSED,
+        status: Prisma.TaskOccurenceStatus.MISSED,
       },
       where: {
         dueEndDate: {

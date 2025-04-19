@@ -1,4 +1,5 @@
-import { Task, TaskFrequency, TaskOccurrence } from "@prisma/client";
+import Prisma from "@prisma/client";
+import type { Task, TaskFrequency, TaskOccurrence } from "@prisma/client";
 import { DateTime, WeekdayNumbers } from "luxon";
 
 export const getNextDueEndDate = (
@@ -7,21 +8,21 @@ export const getNextDueEndDate = (
 ) => {
   const dt = DateTime.fromJSDate(dueEndDate);
   switch (frequency) {
-    case TaskFrequency.DAILY:
+    case Prisma.TaskFrequency.DAILY:
       return dt.plus({ days: 1 });
-    case TaskFrequency.WEEKLY:
+    case Prisma.TaskFrequency.WEEKLY:
       return dt
         .plus({ weeks: 1 })
         .set({ weekday: dt.weekday as WeekdayNumbers });
-    case TaskFrequency.MONTHLY:
+    case Prisma.TaskFrequency.MONTHLY:
       return dt
         .plus({ months: 1 })
         .set({ weekday: dt.weekday as WeekdayNumbers });
-    case TaskFrequency.QUARTERLY:
+    case Prisma.TaskFrequency.QUARTERLY:
       return dt
         .plus({ quarters: 1 })
         .set({ weekday: dt.weekday as WeekdayNumbers });
-    case TaskFrequency.YEARLY:
+    case Prisma.TaskFrequency.YEARLY:
       return dt
         .plus({ years: 1 })
         .set({ weekday: dt.weekday as WeekdayNumbers });
@@ -49,17 +50,17 @@ export const getNumberOfFutureOccurrencesToCreate = (
   occurrences: TaskOccurrence[]
 ) => {
   switch (task.frequency) {
-    case TaskFrequency.IRREGULAR:
+    case Prisma.TaskFrequency.IRREGULAR:
       return 1;
-    case TaskFrequency.DAILY:
+    case Prisma.TaskFrequency.DAILY:
       return 90 - occurrences.length;
-    case TaskFrequency.WEEKLY:
+    case Prisma.TaskFrequency.WEEKLY:
       return 12 - occurrences.length;
-    case TaskFrequency.MONTHLY:
+    case Prisma.TaskFrequency.MONTHLY:
       return 6 - occurrences.length;
-    case TaskFrequency.QUARTERLY:
+    case Prisma.TaskFrequency.QUARTERLY:
       return 4 - occurrences.length;
-    case TaskFrequency.YEARLY:
+    case Prisma.TaskFrequency.YEARLY:
       return 2 - occurrences.length;
     default:
       return 0;
@@ -162,4 +163,29 @@ export const getTasksWithOccurrences = async (
     skip,
     take,
   };
+};
+
+export const getUserTasks = async (userId: string) => {
+  const userTasks = await prisma.task.findMany({
+    include: {
+      categories: true,
+      occurrences: {
+        where: {
+          status: Prisma.TaskOccurenceStatus.PENDING,
+        },
+        orderBy: {
+          dueEndDate: "asc",
+        },
+      },
+    },
+    where: {
+      responsibilities: {
+        some: {
+          userId,
+        },
+      },
+    },
+  });
+
+  return userTasks.filter((task) => task.occurrences.length);
 };

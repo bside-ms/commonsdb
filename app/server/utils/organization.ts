@@ -1,5 +1,4 @@
 import Prisma from "@prisma/client";
-const { OrganizationMemberRole } = Prisma;
 
 export const getOrganizations = async (
   where: any = {},
@@ -56,7 +55,7 @@ export const isOrganizationAdmin = async (
       where: {
         organizationId,
         userId,
-        role: OrganizationMemberRole.ADMIN,
+        role: Prisma.OrganizationMemberRole.ADMIN,
       },
     })) > 0
   );
