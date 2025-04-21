@@ -4,8 +4,6 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package.json yarn.lock ./
-# copying prisma here, so prisma generation can run after install (post-hook)
-COPY prisma ./prisma
 RUN yarn install
 
 COPY . .
