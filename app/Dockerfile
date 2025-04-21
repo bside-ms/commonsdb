@@ -1,4 +1,5 @@
-FROM node:22-alpine as build
+# BUILD
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
@@ -10,31 +11,16 @@ RUN yarn install
 COPY . .
 RUN yarn build
 
-FROM node:22.8-alpine AS run
+# RUN APP (with drizzle migration)
+FROM node:22-alpine AS run
 
-COPY --from=build /app/.output /app/.output
-COPY --from=build /app/prisma /app/.output/prisma
+WORKDIR /app
 
-EXPOSE 3000
-
-WORKDIR /app/.output
+COPY --from=build /app /app
 
 ENV NUXT_HOST=0.0.0.0
 ENV NUXT_PORT=3000
 
-CMD sh -c "npx prisma migrate deploy && node /app/.output/server/index.mjs"
+EXPOSE 3000
 
-# FROM node:22-alpine as run
-
-# WORKDIR /app
-
-# # Copy everything including .output and node_modules
-# COPY --from=build /app /app
-
-# # Prisma needs access to the schema and node_modules
-# ENV NUXT_HOST=0.0.0.0
-# ENV NUXT_PORT=3000
-
-# EXPOSE 3000
-
-# CMD sh -c "npx prisma migrate deploy && node .output/server/index.mjs"
+CMD sh -c "yarn drizzle-kit migrate && node .output/server/index.mjs"

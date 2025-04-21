@@ -1,22 +1,16 @@
-import type { WalletTransaction } from "@prisma/client";
-import { USER_ROLES, type UserFull } from "~/types/users";
+import { USER_ROLES, type User } from "~/types/users";
+import type { Wallet, WalletTransaction } from "~/types/wallets";
 
 export const useUser = () => {
-  const user: Ref<UserFull | null> = useState("current-user", () => null);
+  const user: Ref<User | null> = useState("current-user", () => null);
+  const wallet: Ref<
+    | (Wallet & { balance: number; transactions?: WalletTransaction[] | null })
+    | null
+  > = useState("current-user-wallet", () => null);
 
   const { user: sessionUser } = useUserSession();
   const isAdminUser = computed(() =>
     sessionUser.value?.roles.includes(USER_ROLES.ADMIN)
-  );
-
-  const wallet = computed(() => user.value?.wallet);
-  const walletBalance: Ref<number> = useState(
-    "current-user-wallet-balance",
-    () => 0
-  );
-  const walletTransactions: Ref<WalletTransaction[]> = useState(
-    "current-user-wallet-transactions",
-    () => []
   );
 
   const fetch = async () => {
@@ -24,15 +18,20 @@ export const useUser = () => {
 
     const { user: me, balance } = data.value ?? {};
     user.value = me ?? null;
-    walletBalance.value = balance ?? 0;
+    wallet.value = me?.wallet
+      ? {
+          ...me.wallet,
+          balance: balance ?? 0,
+        }
+      : null;
   };
 
   const fetchWallet = async () => {
     const { data } = await useFetch(`/api/wallets/${wallet.value?.id}`);
 
-    const { transactions, balance } = data.value ?? {};
-    walletTransactions.value = transactions ?? [];
-    walletBalance.value = balance ?? 0;
+    // const { transactions, balance } = data.value ?? {};
+    // walletTransactions.value = transactions ?? [];
+    // walletBalance.value = balance ?? 0;
   };
 
   return {
@@ -40,8 +39,6 @@ export const useUser = () => {
     isAdminUser,
     fetch,
     wallet,
-    walletBalance,
-    walletTransactions,
     fetchWallet,
   };
 };

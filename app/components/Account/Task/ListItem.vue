@@ -15,18 +15,8 @@ const { getNextPendingOccurrenceWithDueDate, getNextPendingDueEndDateFormatted }
         <NuxtLink :to="`/tasks/${task.id}`" class="block group">
             <div class="flex gap-4 px-2 py-3">
                 <div class="flex-1">
-                    <div class="flex items-center gap-2">
-                        <TaskInfoPriority v-if="task.priority" :priority="task.priority" :hide-label="true" />
-                        <div class="font-serif font-semibold">{{ task.title }}</div>
-                    </div>
-                    <div>
-                        <TaskInfoEffort :task="task" />
-                        <div v-if="getNextPendingOccurrenceWithDueDate(task)" class="flex items-center gap-2 mt-2">
-                            <CircleCheckBig class="size-3 stroke-3" />
-                            <span class="font-semibold text-sm">
-                                zu erledigen bis {{ getNextPendingDueEndDateFormatted(task) }}</span>
-                        </div>
-                    </div>
+                    <div class="font-serif font-semibold">{{ task.title }}</div>
+                    <TaskInfo :task="task" />
                 </div>
                 <div
                     class="flex items-center transition-transform text-muted-foreground group-hover:text-black group-hover:scale-125">

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { TaskFull } from '~/types/tasks';
+import type { Task } from '~/types/tasks';
 
 const { id } = useRoute().params
 
-const { data, refresh } = await useFetch<TaskFull | null>(`/api/tasks/${id}`)
+const { data, refresh } = await useFetch<Task | null>(`/api/tasks/${id}`)
 const task = computed(() => data.value)
 
 const title = usePageTitle();

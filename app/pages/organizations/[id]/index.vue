@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import type { Organization, OrganizationMember } from '~/types/organizations';
+import type { User } from '~/types/users';
+import type { Wallet, WithBalance } from '~/types/wallets';
+
 const { id } = useRoute().params
 
-const { data: organization } = await useFetch(`/api/organizations/${id}`)
+const { data: organization } = await useFetch<Organization & { wallet: Wallet & WithBalance, members: (OrganizationMember & { user: User })[] }>(`/api/organizations/${id}`)
 
 const title = usePageTitle();
 title.value = organization.value?.name ? `Initiative: ${organization.value.name}` : "Initiative"
@@ -19,7 +23,7 @@ useSeoMeta({
         <div class="grid gap-6 lg:col-start-9 lg:col-span-4">
             <div>
                 <Box title="Nächste Termine">
-                    keine anstehende Termine
+                    {{ $t("organizations.bookings.none") }}
                 </Box>
             </div>
             <div>
@@ -29,9 +33,12 @@ useSeoMeta({
             </div>
             <div>
                 <Box title="Member">
-                    <div class="flex flex-wrap gap-y-2 gap-x-6">
+                    <div v-if="organization?.members?.length" class="flex flex-wrap gap-y-2 gap-x-6">
                         <UserListItem v-for="{ user } in organization?.members" :user="user" />
                     </div>
+                    <p v-else>
+                        {{ $t("organizations.member.none") }}
+                    </p>
                 </Box>
             </div>
         </div>

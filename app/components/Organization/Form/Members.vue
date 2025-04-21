@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { OrganizationMemberRole } from '@prisma/client';
 import { Minus } from 'lucide-vue-next';
 import { FieldArray } from 'vee-validate';
 import { Button } from '~/components/ui/button';
+import { OrganizationMemberRole } from '~/types/organizations';
 
 interface AdminOrganizationFormMemberProps {
     name: string;

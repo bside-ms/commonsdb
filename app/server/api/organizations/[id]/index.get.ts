@@ -1,5 +1,7 @@
-import { getOrganizationWithMembers } from "~/server/utils/organization";
-import { getWalletBalance } from "~/server/utils/wallet";
+import {
+  getOrganizationWithMembers,
+  isOrganizationMember,
+} from "~/server/utils/organization";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "id");
@@ -7,30 +9,22 @@ export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
   const isAdmin = await isAdminUser(event);
 
-  let where: any = {
-    id: organizationId,
-  };
-  if (!isAdmin) {
-    where = {
-      ...where,
-      members: {
-        some: {
-          userId: {
-            equals: user.id,
-          },
-        },
-      },
-    };
+  if (!organizationId || organizationId === "undefined") {
+    throw createError({ status: 400 });
   }
 
-  const organization = await getOrganizationWithMembers(where);
-  const balance = await getWalletBalance(organization.walletId);
+  if (!isAdmin) {
+    const isMember = await isOrganizationMember(organizationId, user.id);
+    if (!isMember) {
+      throw createError({ status: 405 });
+    }
+  }
+
+  const organization = await getOrganizationWithMembers(organizationId);
+  const wallet = await getWalletWithBalance(organization.walletId);
 
   return {
     ...organization,
-    wallet: {
-      ...organization.wallet,
-      balance,
-    },
+    wallet,
   };
 });

@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
   //     id: taskOccurrenceId,
   //   },
   //   data: {
-  //     status: TaskOccurenceStatus.COMPLETED,
+  //     status: TaskOccurrenceStatus.COMPLETED,
   //   },
   // });
   // // DEPOSIT REWARDS TO RESPONSIBLE PERSONS

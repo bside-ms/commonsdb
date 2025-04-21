@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Organization, OrganizationMember } from '@prisma/client';
+import type { Organization, OrganizationMember } from '~/types/organizations';
 
 interface OrganizationInfoProps {
     organization: Organization & { members: OrganizationMember[] }

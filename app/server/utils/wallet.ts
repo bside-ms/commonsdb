@@ -1,21 +1,40 @@
-import Prisma from "@prisma/client";
+import { sum, eq } from "drizzle-orm";
+import { wallets, walletTransactions } from "../database/schema";
+import { WalletTransactionType } from "~/types/wallets";
 
-export const getWalletBalance = async (walletId: string | null) => {
+export const getWalletWithBalance = async (walletId: string) => {
+  if (!walletId) {
+    return null;
+  }
+
+  const { wallet, balance } =
+    (
+      await useDrizzle
+        .select({ balance: sum(walletTransactions.amount), wallet: wallets })
+        .from(walletTransactions)
+        .innerJoin(wallets, eq(walletTransactions.walletId, wallets.id))
+        .groupBy(walletTransactions.walletId, wallets.id)
+        .having(eq(walletTransactions.walletId, walletId))
+    ).at(0) ?? {};
+
+  return {
+    ...wallet,
+    balance: balance ?? 0,
+  };
+};
+
+export const getWalletBalance = async (walletId: string) => {
   if (!walletId) return 0;
 
-  const groupBy = await prisma.walletTransaction.groupBy({
-    by: ["walletId"],
-    where: {
-      walletId,
-    },
-    _sum: {
-      amount: true,
-    },
-  });
+  const { balance } = (
+    await useDrizzle
+      .select({ balance: sum(walletTransactions.amount) })
+      .from(walletTransactions)
+      .groupBy(walletTransactions.walletId)
+      .having(eq(walletTransactions.walletId, walletId))
+  ).at(0) ?? { balance: 0 };
 
-  if (!groupBy.length) return 0;
-
-  return groupBy.find((x) => x.walletId === walletId)?._sum.amount;
+  return (balance as number) ?? 0;
 };
 
 export const chargeWallet = async (
@@ -23,10 +42,8 @@ export const chargeWallet = async (
   amount: number,
   comment?: string
 ) => {
-  const wallet = await prisma.wallet.findUnique({
-    where: {
-      id: walletId,
-    },
+  const wallet = await useDrizzle.query.wallets.findFirst({
+    where: eq(wallets.id, walletId),
   });
 
   if (!wallet) {
@@ -36,12 +53,10 @@ export const chargeWallet = async (
     });
   }
 
-  await prisma.walletTransaction.create({
-    data: {
-      type: Prisma.WalletTransactionType.TRANSFER_IN,
-      amount,
-      comment,
-      walletId: wallet.id,
-    },
+  await useDrizzle.insert(walletTransactions).values({
+    type: WalletTransactionType.TRANSFER_IN,
+    amount,
+    comment,
+    walletId: wallet.id,
   });
 };

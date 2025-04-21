@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   await requireUserSession(event);
 
-  if (!organizationId) {
+  if (!organizationId || organizationId === "undefined") {
     throw createError({
       status: 400,
       message: "OrganizationId is required",

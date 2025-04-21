@@ -1,24 +1,11 @@
+import { getWalletWithBalance } from "~/server/utils/wallet";
+
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
 
-  const [wallet, balance] = await prisma.$transaction([
-    prisma.wallet.findUniqueOrThrow({
-      where: {
-        id,
-      },
-      include: {
-        transactions: true,
-      },
-    }),
-    prisma.walletTransaction.aggregate({
-      _sum: {
-        amount: true,
-      },
-      where: {
-        walletId: id,
-      },
-    }),
-  ]);
+  if (!id || id === "undefined") {
+    throw createError({ status: 400 });
+  }
 
-  return { ...wallet, balance: balance?._sum.amount ?? 0 };
+  return await getWalletWithBalance(id);
 });

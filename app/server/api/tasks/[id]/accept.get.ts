@@ -1,56 +1,46 @@
-import Prisma from "@prisma/client";
+import { eq } from "drizzle-orm";
+import { taskAssignments, tasks } from "~/server/database/schema";
+import { TaskAssignmentStatus } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
-  const { user } = await getUserSession(event);
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      message: "Cannot load user",
-    });
+  const { user } = await requireUserSession(event);
+
+  if (!taskId || taskId === "undefined") {
+    throw createError({ statusCode: 400 });
   }
 
-  await prisma.$transaction(async (tx) => {
-    // add responsibility for not fully assigned task
-    const task = await tx.task.update({
-      where: {
-        id: taskId,
-        responsibilityStatus: {
-          not: Prisma.TaskResponsibilityStatus.FULLY_ASSIGNED,
-        },
+  const assignmentCount = await useDrizzle.$count(
+    taskAssignments,
+    eq(taskAssignments.taskId, taskId)
+  );
+  const { maxAssignmentCount } =
+    (await useDrizzle.query.tasks.findFirst({
+      where: eq(tasks.id, taskId),
+      columns: {
+        maxAssignmentCount: true,
       },
-      data: {
-        responsibilities: {
-          create: {
-            userId: user.id,
-            assignedBy: "self",
-          },
-        },
-      },
-      include: {
-        _count: {
-          select: {
-            responsibilities: true,
-          },
-        },
-      },
-    });
+    })) ?? {};
 
-    // if task was updated, update task.responsibilityStatus
-    if (task) {
-      const responsibilityStatus =
-        task.maxResponsibilities < task._count.responsibilities + 1
-          ? Prisma.TaskResponsibilityStatus.PARTLY_ASSIGNED
-          : Prisma.TaskResponsibilityStatus.FULLY_ASSIGNED;
-
-      await tx.task.update({
-        where: {
-          id: task.id,
-        },
-        data: {
-          responsibilityStatus,
-        },
+  if (maxAssignmentCount && assignmentCount < maxAssignmentCount) {
+    await useDrizzle.transaction(async (tx) => {
+      // add assignment
+      await tx.insert(taskAssignments).values({
+        taskId,
+        userId: user.id,
+        assignedBy: "self",
       });
-    }
-  });
+
+      // update taskAssignmentStatus accordingly
+      await tx
+        .update(tasks)
+        .set({
+          assignmentStatus:
+            assignmentCount + 1 < maxAssignmentCount
+              ? TaskAssignmentStatus.PARTLY_ASSIGNED
+              : TaskAssignmentStatus.FULLY_ASSIGNED,
+        })
+        .where(eq(tasks.id, taskId));
+    });
+  }
 });

@@ -9,6 +9,11 @@
     "HIGH": "hohe",
     "URGENT": "höchste"
   },
+  "users": {
+    "tasks": {
+      "none": "Du hast aktuell keine offene Aufgaben."
+    }
+  },
   "tasks": {
     "frequency": {
       "IRREGULAR": "unregelmäßig",
@@ -25,6 +30,9 @@
       "OPEN": "offen",
       "ASSIGNED": "zugewiesen"
     },
+    "due": {
+      "noEndDate": "keine Frist"
+    },
     "actions": {
       "accept": "Aufgabe annehmen",
       "settle": "Aufgabe als erledigt markieren",
@@ -35,15 +43,20 @@
   "organizations": {
     "actions": {
       "join": "Einer Initiative beitreten",
+      "list": "Alle Initiativen ansehen",
       "create": "Neue Initiative anlegen",
       "edit": "Initiative bearbeiten",
       "book": "Ressource für Initiative buchen"
     },
     "member": {
+      "none": "keine",
       "role": {
         "USER": "User",
         "ADMIN": "Admin"
       }
+    },
+    "bookings": {
+      "none": "keine"
     }
   },
   "sort": "Sortierung",

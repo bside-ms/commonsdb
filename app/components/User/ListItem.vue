@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { User } from '@prisma/client';
+import type { User } from '~/types/users';
 
 defineProps<{
     user?: Partial<User> | null

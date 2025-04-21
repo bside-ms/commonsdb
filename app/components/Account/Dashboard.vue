@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { walletBalance } = useUser()
+const { wallet } = useUser()
 </script>
 
 <template>
@@ -8,7 +8,7 @@ const { walletBalance } = useUser()
             <AccountTaskList />
         </Box>
         <Box title="Reprostunden" link="/wallet" class="col-span-full lg:col-span-2">
-            <WalletBalance :wallet-balance="walletBalance" />
+            <WalletBalance :wallet-balance="wallet?.balance ?? 0" />
         </Box>
     </div>
 </template>

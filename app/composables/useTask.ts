@@ -1,7 +1,9 @@
-import Prisma from "@prisma/client";
-import type { TaskOccurrence } from "@prisma/client";
-import type { TaskWithOccurrences } from "~/types/tasks";
 import { DateTime } from "luxon";
+import {
+  TaskOccurrenceStatus,
+  type Task,
+  type TaskOccurrence,
+} from "~/types/tasks";
 
 export const useTask = () => {
   const getDueEndDateFormatted = (
@@ -15,42 +17,48 @@ export const useTask = () => {
     return null;
   };
 
-  const getNextPendingOccurrenceWithDueDate = (task: TaskWithOccurrences) => {
+  const getNextPendingOccurrenceWithDueDate = (
+    task: Task & { occurrences: TaskOccurrence[] }
+  ) => {
     if (!task.occurrences?.length) {
       return null;
     }
 
     return task.occurrences.find(
-      (o) => o.status === Prisma.TaskOccurenceStatus.PENDING && o.dueEndDate
+      (o) => o.status === TaskOccurrenceStatus.PENDING && o.dueEndDate
     );
   };
 
-  const getNextPendingOccurrence = (task: TaskWithOccurrences) => {
+  const getNextPendingOccurrence = (
+    task: Task & { occurrences: TaskOccurrence[] }
+  ) => {
     if (!task.occurrences?.length) {
       return null;
     }
 
     return task.occurrences.find(
-      (o) => o.status === Prisma.TaskOccurenceStatus.PENDING
+      (o) => o.status === TaskOccurrenceStatus.PENDING
     );
   };
+
   const getNextPendingDueEndDateFormatted = (
-    task: TaskWithOccurrences
+    task: Task & { occurrences: TaskOccurrence[] }
   ): string | null => {
     const nextPendingOccurrence = getNextPendingOccurrence(task);
     if (!nextPendingOccurrence) return null;
     return getDueEndDateFormatted(nextPendingOccurrence);
   };
 
-  const getNextOccurrence = (task: TaskWithOccurrences) => {
+  const getNextOccurrence = (task: Task & { occurrences: TaskOccurrence[] }) => {
     if (!task.occurrences?.length) {
       return null;
     }
 
     return task.occurrences.at(0);
   };
+
   const getNextDueEndDateFormatted = (
-    task: TaskWithOccurrences
+    task: Task & { occurrences: TaskOccurrence[] }
   ): string | null => {
     const nextOccurrence = getNextOccurrence(task);
     if (!nextOccurrence) return null;

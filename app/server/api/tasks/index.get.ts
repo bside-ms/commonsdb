@@ -1,6 +1,6 @@
-import Prisma from "@prisma/client";
-import type { Prisma as PrismaType } from "@prisma/client";
-import { getTasksWithOccurrences } from "~/server/utils/task";
+import { and, eq, inArray, not, sql } from "drizzle-orm";
+import { taskAssignments, tasks } from "~/server/database/schema";
+import { TaskStatus } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
   // TODO maybe: add 'for user' filter, to only show tasks not taken by the user
@@ -11,44 +11,36 @@ export default defineEventHandler(async (event) => {
 
   // 'for user'
   const { user } = await requireUserSession(event);
-  const userResponsibilityTaskIds = await prisma.taskResponsibility.groupBy({
-    by: "taskId",
-    where: {
-      userId: user.id,
-    },
-  });
+  const userAssignmentTaskIds = (
+    await useDrizzle.query.taskAssignments.findMany({
+      columns: {
+        taskId: true,
+      },
+      where: eq(taskAssignments.userId, user.id),
+    })
+  ).map((ta) => ta.taskId);
 
   const skip = 0;
   const take = 25;
 
-  const query: PrismaType.TaskFindManyArgs = {
-    where: {
-      responsibilityStatus: {
-        not: Prisma.TaskResponsibilityStatus.FULLY_ASSIGNED,
-      },
-      id: {
-        notIn: userResponsibilityTaskIds.map((r) => r.taskId),
-      },
-    },
-    include: {
-      occurrences: true,
-    },
-    orderBy: {
-      priority: "desc",
-      // dueEndDate: "asc",
-    },
-    skip,
-    take,
-  };
-
-  const [tasks, count] = await prisma.$transaction([
-    prisma.task.findMany(query),
-    prisma.task.count({ where: query.where }),
-  ]);
+  const results = await useDrizzle
+    .select({
+      items: tasks,
+      totalCount: sql<number>`count(*) over()`,
+    })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.status, TaskStatus.PROCESSING),
+        not(inArray(tasks.id, userAssignmentTaskIds))
+      )
+    )
+    .limit(take)
+    .offset(skip);
 
   return {
-    items: tasks,
-    totalCount: count,
+    items: results.map((x) => x.items),
+    totalCount: results.at(0)?.totalCount ?? 0,
     skip,
     take,
   };

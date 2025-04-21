@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { TaskType } from '@prisma/client';
 import { CircleCheckBig } from 'lucide-vue-next';
-import type { TaskWithOccurrences } from '~/types/tasks';
+import { TaskType, type Task, type TaskOccurrence } from '~/types/tasks';
 
 interface TaskListItemProps {
-    task: TaskWithOccurrences
+    task: Task & { occurrences: TaskOccurrence[] }
 }
 const { task } = defineProps<TaskListItemProps>()
 
@@ -29,7 +28,7 @@ const { getNextPendingOccurrenceWithDueDate, getNextPendingDueEndDateFormatted }
             </li>
         </ul>
         <div v-if="getNextPendingOccurrenceWithDueDate(task)" class="flex items-center gap-2">
-            <CircleCheckBig class="size-4 stroke-3" />
+            <CircleCheckBig class="size-3 stroke-3" />
             <span class="font-semibold text-sm">
                 zu erledigen bis {{ getNextPendingDueEndDateFormatted(task) }}</span>
         </div>

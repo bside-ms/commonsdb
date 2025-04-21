@@ -1,33 +1,39 @@
-export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, "id");
+import { asc, eq } from "drizzle-orm";
+import { taskOccurrences, tasks } from "~/server/database/schema";
 
-  return prisma.task.findUniqueOrThrow({
-    where: {
-      id,
-    },
-    include: {
+export default defineEventHandler(async (event) => {
+  const taskId = getRouterParam(event, "id");
+
+  if (!taskId || taskId === "undefined") {
+    throw createError({ status: 400 });
+  }
+
+  const task = await useDrizzle.query.tasks.findFirst({
+    with: {
       links: true,
-      categories: {
-        include: {
-          category: true,
-        },
-      },
+      categories: true,
       occurrences: {
         // maybe only future occurrences ?
-        orderBy: {
-          dueEndDate: "asc",
-        },
+        orderBy: asc(taskOccurrences.dueEndDate),
       },
-      responsibilities: {
-        include: {
+      assignments: {
+        with: {
           user: true,
         },
       },
-      _count: {
-        select: {
-          responsibilities: true,
-        },
-      },
+      // TODO: only maxAssignmentCount < count(assignments)
+      //     _count: {
+      //       select: {
+      //         responsibilities: true,
+      //       },
+      //     },
     },
+    where: eq(tasks.id, taskId),
   });
+
+  if (!task) {
+    throw createError({ status: 404 });
+  }
+
+  return task;
 });

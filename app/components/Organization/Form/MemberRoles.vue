@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { OrganizationMemberRole } from '@prisma/client';
 import type { ModelRef } from 'vue';
+import { OrganizationMemberRole } from '~/types/organizations';
 
 defineProps<{
     placeholder: string;

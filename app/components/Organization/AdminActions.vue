@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import type { Organization, OrganizationMember } from '@prisma/client';
+import type { Organization, OrganizationMember } from '~/types/organizations';
 
 interface OrganizationInfoProps {
     organization: Organization & { members: OrganizationMember[] }
 }
 const { organization } = defineProps<OrganizationInfoProps>()
 const { user } = await useUserSession()
+const { isAdminUser } = useUser()
 
-const isAdmin = computed(() => !!organization.members.find(m => m.userId === user.value?.id))
+const isAdmin = computed(() => !!organization.members.find(m => m.userId === user.value?.id) || isAdminUser)
 </script>
 
 <template>

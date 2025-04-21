@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Clock } from 'lucide-vue-next';
-import type { TaskWithOccurrences } from '~/types/tasks';
+import type { Task, WithOccurences } from '~/types/tasks';
 
 interface TaskEffortProps {
-    task: TaskWithOccurrences
+    task: Task & WithOccurences
 }
 defineProps<TaskEffortProps>()
 </script>

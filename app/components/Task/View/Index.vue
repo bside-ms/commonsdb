@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ExternalLink } from 'lucide-vue-next';
 import { Button } from '~/components/ui/button';
-import type { TaskFull } from '~/types/tasks';
+import type { Task, TaskLink, TaskOccurrence } from '~/types/tasks';
 
 interface TaskViewProps {
-    task: TaskFull;
+    task: Task & { occurrences: TaskOccurrence[] } & { links: TaskLink[] };
 }
 const { task } = defineProps<TaskViewProps>();
 </script>
@@ -25,7 +25,7 @@ const { task } = defineProps<TaskViewProps>();
                         <li v-for="link in task.links">
                             <NuxtLink :to="link.url" target="_blank" external class="flex gap-1 items-center">
                                 <span>{{ link.label }}</span>
-                                <ExternalLink class="size-4" />
+                                <ExternalLink class="size-3" />
                             </NuxtLink>
                         </li>
                     </ul>

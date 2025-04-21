@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TaskPriority } from '@prisma/client';
+import { TaskPriority } from '~/types/tasks';
 
 const { t: $t } = useI18n();
 

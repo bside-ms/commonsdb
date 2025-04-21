@@ -1,16 +1,16 @@
+import { eq } from "drizzle-orm";
+import { organizationMembers } from "~/server/database/schema";
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
 
-  const organizationMemberships = await prisma.organizationMember.findMany({
-    where: {
-      userId: {
-        equals: user.id,
+  const organizationMemberships =
+    await useDrizzle.query.organizationMembers.findMany({
+      with: {
+        organization: true,
       },
-    },
-    include: {
-      organization: true,
-    },
-  });
+      where: eq(organizationMembers.userId, user.id),
+    });
 
   return organizationMemberships;
 });

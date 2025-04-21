@@ -1,18 +1,12 @@
-export default defineEventHandler(async (event) => {
-  const { user } = await getUserSession(event);
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      message: "Cannot load user",
-    });
-  }
+import { eq } from "drizzle-orm";
+import { users } from "~/server/database/schema";
 
-  const userEntity = await prisma.user.findUnique({
-    where: {
-      id: user.id,
-    },
-    include: {
-      responsibilities: true,
+export default defineEventHandler(async (event) => {
+  const { user } = await requireUserSession(event);
+
+  const userEntity = await useDrizzle.query.users.findFirst({
+    where: eq(users.id, user.id),
+    with: {
       wallet: true,
     },
   });
@@ -20,18 +14,11 @@ export default defineEventHandler(async (event) => {
   if (!userEntity) {
     throw createError({
       statusCode: 404,
-      message: "Cannot find user",
+      message: "User Not Found",
     });
   }
 
-  const balance = await prisma.walletTransaction.aggregate({
-    _sum: {
-      amount: true,
-    },
-    where: {
-      walletId: userEntity.wallet?.id,
-    },
-  });
+  const balance = await getWalletBalance(userEntity?.walletId);
 
-  return { user: userEntity, balance: balance?._sum.amount ?? 0 };
+  return { user: userEntity, balance };
 });

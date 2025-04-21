@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Task } from '@prisma/client';
 import { Currency } from 'lucide-vue-next';
+import type { Task } from '~/types/tasks';
 
 interface TaskRewardProps {
     task: Task

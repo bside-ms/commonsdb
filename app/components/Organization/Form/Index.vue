@@ -2,9 +2,8 @@
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod';
-import { type Organization } from '@prisma/client'
 import { toast } from 'vue-sonner';
-
+import type { Organization } from '~/types/organizations';
 
 interface OrganizationFormProps {
     organization?: Organization

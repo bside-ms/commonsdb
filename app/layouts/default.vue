@@ -6,6 +6,7 @@ const title = usePageTitle()
 </script>
 
 <template>
+    <NuxtLoadingIndicator />
     <SidebarProvider :defaultOpen="false">
         <AppSidebar />
         <SidebarInset>

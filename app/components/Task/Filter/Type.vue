@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TaskType } from '@prisma/client';
+import { TaskType } from '~/types/tasks';
 
 const { t: $t } = useI18n();
 

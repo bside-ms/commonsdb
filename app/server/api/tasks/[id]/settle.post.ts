@@ -1,7 +1,18 @@
-import Prisma from "@prisma/client";
+import { and, eq } from "drizzle-orm";
 import { DateTime } from "luxon";
+import { taskOccurrences, tasks } from "~/server/database/schema";
 import { isAdminUser } from "~/server/utils/auth";
 import { chargeWallet } from "~/server/utils/wallet";
+import {
+  Task,
+  TaskAssignment,
+  TaskFrequency,
+  TaskOccurrence,
+  TaskOccurrenceStatus,
+  TaskStatus,
+  TaskType,
+} from "~/types/tasks";
+import { User } from "~/types/users";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
@@ -10,12 +21,10 @@ export default defineEventHandler(async (event) => {
     userIds?: string[];
   }>(event);
 
-  const { user } = await getUserSession(event);
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      message: "Cannot load user",
-    });
+  const { user } = await requireUserSession(event);
+
+  if (!taskId || taskId === "undefined") {
+    throw createError({ status: 400 });
   }
 
   // only admin user can settle a task for another user
@@ -26,19 +35,14 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const taskOccurrence = await prisma.taskOccurrence.findUniqueOrThrow({
-    where: {
-      id: taskOccurrenceId,
-      taskId,
-    },
-    include: {
+  const taskOccurrence = (await useDrizzle.query.taskOccurrences.findFirst({
+    with: {
       task: {
-        include: {
-          responsibilities: {
-            select: {
-              userId: true,
+        with: {
+          assignments: {
+            with: {
               user: {
-                select: {
+                columns: {
                   walletId: true,
                 },
               },
@@ -47,12 +51,22 @@ export default defineEventHandler(async (event) => {
         },
       },
     },
-  });
+    where: and(
+      eq(taskOccurrences.id, taskOccurrenceId),
+      eq(taskOccurrences.taskId, taskId)
+    ),
+  })) as TaskOccurrence & {
+    task: Task & { assignments: (TaskAssignment & { user: User })[] };
+  };
+
+  if (!taskOccurrence) {
+    throw createError({ status: 404 });
+  }
 
   // check if settling user is assigned
   if (
-    !taskOccurrence.task.responsibilities.some((r) =>
-      userIds ? userIds.includes(r.userId) : r.userId === user.id
+    !taskOccurrence.task.assignments.some((a: TaskAssignment) =>
+      userIds ? userIds.includes(a.userId) : a.userId === user.id
     )
   ) {
     throw createError({
@@ -61,28 +75,33 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // set occurrence as complete
-  await prisma.taskOccurrence.update({
-    where: {
-      id: taskOccurrenceId,
-    },
-    data: {
-      status: Prisma.TaskOccurenceStatus.COMPLETED,
-    },
+  await useDrizzle.transaction(async (tx) => {
+    // set occurrence as complete
+    await tx
+      .update(taskOccurrences)
+      .set({ status: TaskOccurrenceStatus.COMPLETED })
+      .where(eq(taskOccurrences.id, taskOccurrenceId));
+
+    // update task status, if not recurring
+    if (taskOccurrence.task.type === TaskType.SINGLE) {
+      await tx
+        .update(tasks)
+        .set({ status: TaskStatus.COMPLETE })
+        .where(eq(tasks.id, taskOccurrence.taskId));
+    }
   });
 
   // TODO: maybe we should not reward all assignees, but only these who completed the tasks?
-
   // deposit reward
   const reward =
     taskOccurrence.task.expense && taskOccurrence.task.factor
-      ? taskOccurrence.task.expense * taskOccurrence.task.factor
+      ? taskOccurrence.task.expense * parseFloat(taskOccurrence.task.factor)
       : 0;
   if (reward > 0) {
     const comment = `'${taskOccurrence.task.title}' am ${DateTime.now().toFormat("dd.LL.yyyy 'um' HH:mm 'Uhr'")} erledigt`;
-    taskOccurrence.task.responsibilities.map(async (r) => {
-      if (r.user.walletId) {
-        await chargeWallet(r.user.walletId, reward, comment);
+    taskOccurrence.task.assignments.map(async (a) => {
+      if (a.user.walletId) {
+        await chargeWallet(a.user.walletId, reward, comment);
       }
     });
   }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Task } from '@prisma/client';
 import type { PaginatedResult } from '~/types';
+import type { Task } from '~/types/tasks';
 
 const title = usePageTitle();
 title.value = "Aufgaben";
@@ -10,7 +10,7 @@ useSeoMeta({
 
 const { appliedSort, apply: applySort } = useQuerySort();
 const { appliedFilter, apply: applyFilter } = useQueryFilter();
-const { data } = await useAsyncData(
+const { status, data } = await useAsyncData(
     'tasks',
     () => $fetch<PaginatedResult<Task>>('/api/tasks', {
         query: {
@@ -18,7 +18,7 @@ const { data } = await useAsyncData(
             sort: appliedSort.value
         }
     }),
-    { watch: [appliedFilter, appliedSort] }
+    { watch: [appliedFilter, appliedSort], server: false }
 );
 
 const tasks = computed(() => data.value?.items ?? []);
@@ -42,7 +42,7 @@ const onSortChanged = (sort: string) => {
                 </div>
                 <TaskSort @sort:changed="onSortChanged" />
             </div>
-            <TaskList :tasks="tasks" type="grid" />
+            <TaskList :tasks="tasks" :loading="status === 'idle'" type="grid" />
             <div class="mt-8 text-sm text-destructive">Todo: Paginierung</div>
         </div>
         <div class="col-span-full md:col-span-3">

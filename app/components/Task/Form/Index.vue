@@ -6,15 +6,14 @@ import { Separator } from '~/components/ui/separator';
 import { Clock } from 'lucide-vue-next';
 import { type ComboboxItem } from '~/components/Form/Combobox.vue';
 import { linkListSchema } from '~/components/Form/schema';
-import { TaskType, TaskPriority, TaskFrequency, type Task } from '@prisma/client'
-import type { TaskWithCategories, TaskWithOccurrences } from '~/types/tasks';
 import { DateTime } from 'luxon';
 import { toast } from 'vue-sonner';
 import { Switch } from '~/components/ui/switch';
+import { TaskFrequency, TaskPriority, TaskType, type Task, type TaskCategory, type TaskOccurrence } from '~/types/tasks';
 
 interface TaskProps {
-    task?: TaskWithCategories & TaskWithOccurrences
-    loading?: boolean,
+    task?: Task & { categories: TaskCategory[] } | Task & { occurrences: TaskOccurrence[] };
+    loading?: boolean;
 }
 const { task } = defineProps<TaskProps>()
 const emit = defineEmits(['submit', 'cancel'])
@@ -35,7 +34,7 @@ const schema = toTypedSchema(
         factor: z.string().default("1"), // z.union([z.string(), z.number()]).pipe(z.coerce.number()).nullable(),
         links: z.array(linkListSchema).optional(),
         isAssignableToMany: z.boolean().optional(),
-        maxResponsibilities: z.number().positive().min(1).optional(),
+        maxAssignmentCount: z.number().positive().min(1).optional(),
         // task type
         type: z.nativeEnum(TaskType).default(TaskType.SINGLE).nullable(),
         hasDueDate: z.boolean().default(false),
@@ -71,11 +70,11 @@ const schema = toTypedSchema(
                 });
             }
         }
-        if (data.isAssignableToMany && !data.maxResponsibilities) {
+        if (data.isAssignableToMany && !data.maxAssignmentCount) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: "Pflichtfeld",
-                path: ["maxResponsibilities"],
+                path: ["maxAssignmentCount"],
             });
         }
     })
@@ -122,7 +121,7 @@ const { errors, values, setFieldValue, handleSubmit } = useForm({
     validationSchema: schema,
     initialValues: {
         ...task,
-        categories: task?.categories?.map(tc => ({ value: tc.categoryId, label: tc.category.name })),
+        categories: task?.categories?.map(tc => ({ value: tc.categoryId, label: tc.category.name })) ?? [],
         factor: task?.factor?.toString() ?? "1",
         expense: task?.expense ? task.expense / 60 : null,
         hasDueDate: task?.dueEndDate || task?.dueStartDate ? true : false,
@@ -472,7 +471,7 @@ const onTypeCheckedChange = (checked: boolean) => {
             </div>
             <template v-if="values.isAssignableToMany">
                 <div class="col-span-full lg:col-span-3">
-                    <FormField v-slot="{ componentField }" name="maxResponsibilities">
+                    <FormField v-slot="{ componentField }" name="maxAssignmentCount">
                         <FormItem class="grid gap">
                             <FormLabel>Anzahl Menschen</FormLabel>
                             <FormControl>

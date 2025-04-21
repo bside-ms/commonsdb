@@ -1,22 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
+import type { users } from "~/server/database/schema";
 
-const userIncludingWallet = {
-  include: {
-    wallet: true,
-  },
-} satisfies Prisma.UserDefaultArgs;
-export type UserWithWallet = Prisma.UserGetPayload<typeof userIncludingWallet>;
-
-const userIncludingResponsibilities = {
-  include: {
-    responsibilities: true,
-  },
-} satisfies Prisma.UserDefaultArgs;
-export type UserWithResponsibilities = Prisma.UserGetPayload<
-  typeof userIncludingResponsibilities
->;
-
-export type UserFull = UserWithWallet & UserWithResponsibilities;
+export type User = InferSelectModel<typeof users>;
+export type InsertUser = InferInsertModel<typeof users>;
 
 export enum USER_ROLES {
   USER = "commonsdb_user",

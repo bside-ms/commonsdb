@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { TaskPriority } from '@prisma/client';
 import { Flame } from 'lucide-vue-next';
+import { TaskPriority } from '~/types/tasks';
 
 interface TaskPriorityProps {
     priority: TaskPriority;

@@ -63,15 +63,6 @@ export default defineNuxtConfig({
   // https://github.com/nuxt/nuxt/issues/24690#issuecomment-2254528534
   vite: {
     plugins: [tailwindcss()],
-    ssr: {
-      external: ["@prisma/client"],
-    },
-    resolve: {
-      alias: {
-        ".prisma/client/index-browser":
-          "./node_modules/.prisma/client/index-browser.js",
-      },
-    },
   },
   nitro: {
     experimental: {

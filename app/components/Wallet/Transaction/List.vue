@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { WalletTransaction } from '@prisma/client';
-
+import type { WalletTransaction } from '~/types/wallets';
 
 interface WalletTransactionListProps {
     transactions: WalletTransaction[]

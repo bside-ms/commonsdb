@@ -1,5 +1,6 @@
-import Prisma from "@prisma/client";
 import { DateTime } from "luxon";
+import { taskLinks, tasks } from "~/server/database/schema";
+import { TaskLink, TaskType } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -10,7 +11,7 @@ export default defineEventHandler(async (event) => {
     due,
     frequency,
     isAssignableToMany,
-    maxResponsibilities,
+    maxAssignmentCount,
     categories,
     links,
     ...taskData
@@ -37,37 +38,48 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (type === Prisma.TaskType.RECURRING && !dueDateTime.endDateTime) {
-    throw new Error("Recurring Tasks need to have an end.");
+  if (type === TaskType.RECURRING && !dueDateTime.endDateTime) {
+    throw createError({
+      status: 400,
+      message: "Recurring Tasks need to have an end.",
+    });
   }
 
-  const task = await prisma.task.create({
-    data: {
-      ...taskData,
-      maxResponsibilities: isAssignableToMany ? maxResponsibilities : 1,
-      type,
-      dueStartDate: dueDateTime.startDateTime?.toISO(),
-      dueEndDate: dueDateTime.endDateTime?.toISO(),
-      frequency: type === Prisma.TaskType.RECURRING ? frequency : null,
-      categories: categories?.length
-        ? {
-            create: categories.map((c: any) => ({
-              category: { connect: { id: c.value } },
-            })),
-          }
-        : {},
-      links: links?.length
-        ? {
-            create: links,
-          }
-        : {},
-    },
+  const task = await useDrizzle.transaction(async (tx) => {
+    const task = (
+      await tx
+        .insert(tasks)
+        .values({
+          ...taskData,
+          maxAssignmentCount: isAssignableToMany ? maxAssignmentCount : 1,
+          type,
+          dueStartDate: dueDateTime.startDateTime?.toISO(),
+          dueEndDate: dueDateTime.endDateTime?.toISO(),
+          frequency: type === TaskType.RECURRING ? frequency : null,
+        })
+        .returning()
+    ).at(0);
+
+    // TODO: categories
+
+    if (task && links?.length) {
+      await tx.insert(taskLinks).values(
+        links.map((l: TaskLink) => ({
+          ...l,
+          taskId: task.id,
+        }))
+      );
+    }
+
+    return task;
   });
 
-  // trigger occurrence creation
-  await runTask("task:occurrences:create", {
-    payload: { taskId: task.id },
-  });
+  if (task) {
+    // trigger occurrence creation
+    await runTask("task:occurrences:create", {
+      payload: { taskId: task.id },
+    });
+  }
 
   return task;
 });

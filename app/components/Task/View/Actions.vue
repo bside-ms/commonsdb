@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { DateTime } from 'luxon';
 import { toast } from 'vue-sonner';
-import type { TaskFull, TaskWithOccurrences } from '~/types/tasks';
+import { TaskAssignmentStatus, type Task, type TaskAssignment, type TaskOccurrence } from '~/types/tasks';
 
 interface TaskActionsProps {
-    task: TaskFull;
+    task: Task & { assignments: TaskAssignment[] } & { occurrences: TaskOccurrence[] };
     refresh: () => Promise<void>;
 }
 const { task, refresh } = defineProps<TaskActionsProps>();
 
 const loading = ref(false);
 const { getNextOccurrence } = useTask()
-const nextOccurrence = getNextOccurrence(task as TaskWithOccurrences);
+const nextOccurrence = getNextOccurrence(task);
 
 // @ts-ignore
-const canAccept = computed(() => (task.maxResponsibilities ?? 0) > task._count.responsibilities)
+const canAccept = computed(() => task.assignmentStatus !== TaskAssignmentStatus.FULLY_ASSIGNED)
 const onAccept = async () => {
     loading.value = true;
 
@@ -32,8 +32,8 @@ const onAccept = async () => {
 }
 
 const { user } = useUserSession()
-const isUserResponsible = computed(() =>
-    task.responsibilities?.some(r => r.userId === user.value?.id)
+const isUserAssigned = computed(() =>
+    task.assignments?.some((a: TaskAssignment) => a.userId === user.value?.id)
 )
 const canSettle = computed(() => {
     if (!nextOccurrence?.dueEndDate) {
@@ -81,6 +81,9 @@ const onSettle = async () => {
 const onResign = async () => {
     await $fetch(`/api/tasks/${task.id}/resign`, {
         method: "POST",
+        body: {
+            userId: user.value?.id
+        }
     })
     toast("Von Aufgabe zurückgetreten", {
         description: "Du bist nicht mehr für diese Aufgabe verantwortlich."
@@ -95,7 +98,7 @@ const onResign = async () => {
             <Button variant="outline" size="sm" class="lg:hidden" @click="$router.back()">
                 {{ $t("actions.back") }}
             </Button>
-            <template v-if="!isUserResponsible">
+            <template v-if="!isUserAssigned">
                 <Button @click="onAccept" :disabled="loading || !canAccept">{{
                     $t("tasks.actions.accept")
                 }}</Button>

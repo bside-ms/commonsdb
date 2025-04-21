@@ -1,8 +1,17 @@
-import Prisma from "@prisma/client";
-import { TaskWithOccurrences } from "~/types/tasks";
+import { and, eq } from "drizzle-orm";
+import { taskOccurrences, tasks } from "~/server/database/schema";
+import {
+  Task,
+  TaskFrequency,
+  TaskOccurrence,
+  TaskOccurrenceStatus,
+  TaskType,
+} from "~/types/tasks";
 
-const updateOccurrences = async (task: TaskWithOccurrences) => {
-  if (task.type === Prisma.TaskType.SINGLE) {
+const updateOccurrences = async (
+  task: Task & { occurrences: TaskOccurrence[] }
+) => {
+  if (task.type === TaskType.SINGLE) {
     if (!task.occurrences?.length) {
       await runTask("task:occurrences:create", {
         payload: { taskId: task.id },
@@ -11,37 +20,41 @@ const updateOccurrences = async (task: TaskWithOccurrences) => {
       const singleOccurrence = task.occurrences.at(0);
 
       // update pending occurrences
-      const res = await prisma.taskOccurrence.update({
-        where: {
-          id: singleOccurrence!.id,
-          status: Prisma.TaskOccurenceStatus.PENDING,
-        },
-        data: {
+      await useDrizzle
+        .update(taskOccurrences)
+        .set({
           dueStartDate: task.dueStartDate,
           dueEndDate: task.dueEndDate,
-        },
-      });
+        })
+        .where(
+          and(
+            eq(taskOccurrences.id, singleOccurrence!.id),
+            eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING)
+          )
+        );
     }
+
     return;
   }
 
-  if (task.type === Prisma.TaskType.RECURRING) {
+  if (task.type === TaskType.RECURRING) {
     if (
       !task.dueEndDate ||
       !task.frequency ||
-      (task.frequency === Prisma.TaskFrequency.IRREGULAR &&
-        task.occurrences?.length)
+      (task.frequency === TaskFrequency.IRREGULAR && task.occurrences?.length)
     ) {
       return;
     }
 
     // delete pending tasks...
-    await prisma.taskOccurrence.deleteMany({
-      where: {
-        taskId: task.id,
-        status: Prisma.TaskOccurenceStatus.PENDING,
-      },
-    });
+    await useDrizzle
+      .delete(taskOccurrences)
+      .where(
+        and(
+          eq(taskOccurrences.taskId, task.id),
+          eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING)
+        )
+      );
 
     // ...and create new
     await runTask("task:occurrences:create", {
@@ -59,16 +72,14 @@ export default defineTask({
     const { taskId } = payload ?? {};
 
     if (taskId) {
-      const task = await prisma.task.findFirstOrThrow({
-        where: {
-          id: taskId,
-        },
-        include: {
+      const task = await useDrizzle.query.tasks.findFirst({
+        with: {
           occurrences: true,
         },
+        where: eq(tasks.id, taskId as string),
       });
 
-      await updateOccurrences(task);
+      await updateOccurrences(task as Task & { occurrences: TaskOccurrence[] });
     }
 
     return { result: "success" };

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Separator } from '~/components/ui/separator';
+
 const { isAdminUser } = useUser();
 
 const onJoinOrganization = () => {
@@ -13,6 +15,10 @@ const onJoinOrganization = () => {
                 {{ $t('organizations.actions.join') }}
             </Button>
             <template v-if="isAdminUser">
+                <Separator label="Admin Actions" />
+                <Button as-child>
+                    <NuxtLink to="/organizations">{{ $t('organizations.actions.list') }}</NuxtLink>
+                </Button>
                 <Button as-child>
                     <NuxtLink to="/organizations/create">{{ $t('organizations.actions.create') }}</NuxtLink>
                 </Button>
