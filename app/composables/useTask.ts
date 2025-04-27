@@ -3,6 +3,7 @@ import {
   TaskOccurrenceStatus,
   type Task,
   type TaskOccurrence,
+  type WithOccurrences,
 } from "~/types/tasks";
 
 export const useTask = () => {
@@ -10,7 +11,10 @@ export const useTask = () => {
     occurrence?: TaskOccurrence
   ): string | null => {
     if (occurrence?.dueEndDate) {
-      const nextDueEnd = DateTime.fromISO(occurrence.dueEndDate.toString());
+      // when using users/me/task-occurrences it's an SQL Type, else ISO
+      const nextDueEnd = DateTime.fromISO(occurrence.dueEndDate).isValid
+        ? DateTime.fromISO(occurrence.dueEndDate)
+        : DateTime.fromSQL(occurrence.dueEndDate);
       return nextDueEnd.toFormat("dd.LL.yyyy HH:mm");
     }
 
@@ -42,14 +46,16 @@ export const useTask = () => {
   };
 
   const getNextPendingDueEndDateFormatted = (
-    task: Task & { occurrences: TaskOccurrence[] }
+    task: Task & WithOccurrences
   ): string | null => {
     const nextPendingOccurrence = getNextPendingOccurrence(task);
     if (!nextPendingOccurrence) return null;
     return getDueEndDateFormatted(nextPendingOccurrence);
   };
 
-  const getNextOccurrence = (task: Task & { occurrences: TaskOccurrence[] }) => {
+  const getNextOccurrence = (
+    task: Task & { occurrences: TaskOccurrence[] }
+  ) => {
     if (!task.occurrences?.length) {
       return null;
     }

@@ -6,12 +6,14 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
   const {
+    description,
     type,
     hasDueDate,
     due,
     frequency,
-    isAssignableToMany,
-    maxAssignmentCount,
+    endsAfter,
+    endsAfterCount,
+    endsAfterDate,
     categories,
     links,
     ...taskData
@@ -51,11 +53,25 @@ export default defineEventHandler(async (event) => {
         .insert(tasks)
         .values({
           ...taskData,
-          maxAssignmentCount: isAssignableToMany ? maxAssignmentCount : 1,
+          description:
+            description?.length && description !== "<p></p>"
+              ? description
+              : null,
           type,
-          dueStartDate: dueDateTime.startDateTime?.toISO(),
-          dueEndDate: dueDateTime.endDateTime?.toISO(),
-          frequency: type === TaskType.RECURRING ? frequency : null,
+          ...(hasDueDate
+            ? {
+                dueStartDate: dueDateTime.startDateTime?.toISO(),
+                dueEndDate: dueDateTime.endDateTime?.toISO(),
+              }
+            : {}),
+          ...(type === TaskType.RECURRING
+            ? {
+                frequency,
+                endsAfter,
+                endsAfterCount,
+                endsAfterDate,
+              }
+            : {}),
         })
         .returning()
     ).at(0);
@@ -76,7 +92,7 @@ export default defineEventHandler(async (event) => {
 
   if (task) {
     // trigger occurrence creation
-    await runTask("task:occurrences:create", {
+    await runTask("task:occurrences:update", {
       payload: { taskId: task.id },
     });
   }

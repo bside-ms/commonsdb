@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ChevronRight, CircleCheckBig } from 'lucide-vue-next';
-import type { TaskWithCategories, TaskWithOccurrences } from '~/types/tasks';
+import { ChevronRight } from 'lucide-vue-next';
+import type { Task, TaskOccurrence } from '~/types/tasks';
 
 interface TaskListItemProps {
-    task: TaskWithOccurrences & TaskWithCategories
+    task: Task & { occurrences: TaskOccurrence[] }
 }
 const { task } = defineProps<TaskListItemProps>()
-
-const { getNextPendingOccurrenceWithDueDate, getNextPendingDueEndDateFormatted } = useTask()
 </script>
 
 <template>

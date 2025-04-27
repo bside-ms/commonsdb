@@ -43,6 +43,7 @@
   "organizations": {
     "actions": {
       "join": "Einer Initiative beitreten",
+      "resign": "Aus Initiative austreten",
       "list": "Alle Initiativen ansehen",
       "create": "Neue Initiative anlegen",
       "edit": "Initiative bearbeiten",

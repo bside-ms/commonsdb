@@ -11,6 +11,7 @@ import { Task, TaskFrequency, TaskOccurrence, TaskType } from "~/types/tasks";
 const createOccurrences = async (
   task: Task & { occurrences: TaskOccurrence[] }
 ) => {
+  console.log("create occurrences", task.type);
   if (task.type === TaskType.SINGLE) {
     if (!task.occurrences?.length) {
       // create one occurrence
@@ -26,6 +27,7 @@ const createOccurrences = async (
 
   if (task.type === TaskType.RECURRING) {
     const futureOccurrences = await getFutureOccurrences(task);
+    console.log(futureOccurrences);
 
     if (
       !task.dueEndDate ||
@@ -88,29 +90,29 @@ export default defineTask({
   run: async ({ payload, context }) => {
     const { taskId } = payload ?? {};
 
-    if (taskId) {
-      // run for single task
-      const task = await useDrizzle.query.tasks.findFirst({
-        with: {
-          occurrences: true,
-        },
-        where: eq(tasks.id, taskId as string),
-      });
+    // if (taskId) {
+    //   // run for single task
+    //   const task = await useDrizzle.query.tasks.findFirst({
+    //     with: {
+    //       occurrences: true,
+    //     },
+    //     where: eq(tasks.id, taskId as string),
+    //   });
 
-      await createOccurrences(task as Task & { occurrences: TaskOccurrence[] });
-    } else {
-      const tasksResult = await useDrizzle.query.tasks.findMany({
-        with: {
-          occurrences: true,
-        },
-        where: and(
-          eq(tasks.type, TaskType.RECURRING),
-          not(eq(tasks.frequency, TaskFrequency.IRREGULAR))
-        ),
-      });
+    //   await createOccurrences(task as Task & { occurrences: TaskOccurrence[] });
+    // } else {
+    //   const tasksResult = await useDrizzle.query.tasks.findMany({
+    //     with: {
+    //       occurrences: true,
+    //     },
+    //     where: and(
+    //       eq(tasks.type, TaskType.RECURRING),
+    //       not(eq(tasks.frequency, TaskFrequency.IRREGULAR))
+    //     ),
+    //   });
 
-      await Promise.all(tasksResult.map(createOccurrences));
-    }
+    //   await Promise.all(tasksResult.map(createOccurrences));
+    // }
 
     return { result: "success" };
   },

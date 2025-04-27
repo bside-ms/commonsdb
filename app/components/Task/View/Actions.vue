@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { DateTime } from 'luxon';
 import { toast } from 'vue-sonner';
-import { TaskAssignmentStatus, type Task, type TaskAssignment, type TaskOccurrence } from '~/types/tasks';
+import { type Task, type WithOccurrences, type WithResponsibleUsers } from '~/types/tasks';
 
 interface TaskActionsProps {
-    task: Task & { assignments: TaskAssignment[] } & { occurrences: TaskOccurrence[] };
+    task: Task & WithOccurrences & WithResponsibleUsers;
     refresh: () => Promise<void>;
 }
 const { task, refresh } = defineProps<TaskActionsProps>();
@@ -13,8 +13,8 @@ const loading = ref(false);
 const { getNextOccurrence } = useTask()
 const nextOccurrence = getNextOccurrence(task);
 
-// @ts-ignore
-const canAccept = computed(() => task.assignmentStatus !== TaskAssignmentStatus.FULLY_ASSIGNED)
+const { user } = useUserSession()
+const canAccept = computed(() => !task.responsibleUsers.some(u => u.userId === user.value?.id))
 const onAccept = async () => {
     loading.value = true;
 
@@ -31,9 +31,8 @@ const onAccept = async () => {
     }
 }
 
-const { user } = useUserSession()
 const isUserAssigned = computed(() =>
-    task.assignments?.some((a: TaskAssignment) => a.userId === user.value?.id)
+    task.responsibleUsers?.some((u) => u.userId === user.value?.id)
 )
 const canSettle = computed(() => {
     if (!nextOccurrence?.dueEndDate) {
@@ -78,6 +77,10 @@ const onSettle = async () => {
     }
 }
 
+const canResign = computed(() => {
+    // TODO: check conditions: e.g. not allowed to resign X days before dueStartDate/dueEndDate
+    return true;
+})
 const onResign = async () => {
     await $fetch(`/api/tasks/${task.id}/resign`, {
         method: "POST",
@@ -107,7 +110,7 @@ const onResign = async () => {
                 <Button size="sm" @click="onSettle" :disabled="loading || !canSettle">{{
                     $t("tasks.actions.settle")
                 }}</Button>
-                <Button size="sm" variant="destructive" @click="onResign" :disabled="loading">{{
+                <Button size="sm" variant="destructive" @click="onResign" :disabled="loading || !canResign">{{
                     $t("tasks.actions.resign")
                 }}</Button>
             </template>

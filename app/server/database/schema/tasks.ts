@@ -25,11 +25,6 @@ export const taskPublishingStatusEnum = pgEnum("task_publishing_status", [
   "PUBLISHED",
   "FOLDED", // eingestellt [beendet]
 ]);
-export const taskAssignmentStatusEnum = pgEnum("task_assignment_status", [
-  "OPEN",
-  "PARTLY_ASSIGNED",
-  "FULLY_ASSIGNED",
-]);
 export const taskFrequencyEnum = pgEnum("task_frequency", [
   "IRREGULAR",
   "DAILY",
@@ -37,6 +32,11 @@ export const taskFrequencyEnum = pgEnum("task_frequency", [
   "MONTHLY",
   "QUARTERLY",
   "YEARLY",
+]);
+export const taskEndsAfterEnum = pgEnum("task_ends_after", [
+  "NEVER",
+  "COUNT",
+  "DATE",
 ]);
 export const taskOccurrenceStatusEnum = pgEnum("task_occurrence_status", [
   "PENDING",
@@ -60,7 +60,6 @@ export const tasks = pgTable("tasks", {
 
   status: taskStatusEnum().default("PROCESSING").notNull(),
   publishingStatus: taskPublishingStatusEnum().default("DRAFT").notNull(),
-  assignmentStatus: taskAssignmentStatusEnum().default("OPEN").notNull(),
 
   title: text("title").notNull(),
   description: text("description"),
@@ -69,23 +68,24 @@ export const tasks = pgTable("tasks", {
   frequency: taskFrequencyEnum(),
   dueStartDate: timestamp("due_start_date", { mode: "string" }),
   dueEndDate: timestamp("due_end_date", { mode: "string" }),
+  endsAfter: taskEndsAfterEnum().notNull().default("NEVER"),
+  endsAfterCount: integer("ends_after_count"),
+  endsAfterDate: timestamp("ends_after_date", { mode: "string" }),
 
   priority: taskPriorityEnum(),
   expense: integer("expense"),
   factor: numeric("factor", { precision: 2 }),
-
-  maxAssignmentCount: integer("max_assignment_count").default(1).notNull(),
 });
 
 export const tasksRelations = relations(tasks, ({ many }) => ({
   categories: many(categoriesOnTasks),
   occurrences: many(taskOccurrences),
-  assignments: many(taskAssignments),
   links: many(taskLinks),
+  responsibleUsers: many(usersOnTasks),
 }));
 
-export const taskAssignments = pgTable(
-  "task_assignments",
+export const usersOnTasks = pgTable(
+  "users_on_tasks",
   {
     userId: uuid("user_id")
       .references(() => users.id)
@@ -99,7 +99,7 @@ export const taskAssignments = pgTable(
     })
       .defaultNow()
       .notNull(),
-    assignedBy: text("assigned_by"),
+    assignedByUserId: uuid("assigned_by_user_id").references(() => users.id),
 
     resignedAt: timestamp("resigned_at", {
       mode: "string",
@@ -108,19 +108,20 @@ export const taskAssignments = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.taskId] })]
 );
 
-export const taskAssignmentsRelations = relations(
-  taskAssignments,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [taskAssignments.userId],
-      references: [users.id],
-    }),
-    task: one(tasks, {
-      fields: [taskAssignments.taskId],
-      references: [tasks.id],
-    }),
-  })
-);
+export const usersOnTasksRelations = relations(usersOnTasks, ({ one }) => ({
+  user: one(users, {
+    fields: [usersOnTasks.userId],
+    references: [users.id],
+  }),
+  task: one(tasks, {
+    fields: [usersOnTasks.taskId],
+    references: [tasks.id],
+  }),
+  assignedByUser: one(users, {
+    fields: [usersOnTasks.assignedByUserId],
+    references: [users.id],
+  }),
+}));
 
 export const taskOccurrences = pgTable("task_occurrences", {
   id: uuid().primaryKey().defaultRandom().notNull(),
@@ -144,6 +145,33 @@ export const taskOccurrencesRelations = relations(
     task: one(tasks, {
       fields: [taskOccurrences.taskId],
       references: [tasks.id],
+    }),
+  })
+);
+
+export const usersOnTaskOccurrences = pgTable(
+  "users_on_task_occurrences",
+  {
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    taskOccurrenceId: uuid("task_occurrence_id")
+      .references(() => taskOccurrences.id)
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.taskOccurrenceId] })]
+);
+
+export const usersOnTaskOccurrencesRelations = relations(
+  usersOnTaskOccurrences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [usersOnTaskOccurrences.userId],
+      references: [users.id],
+    }),
+    taskOccurrence: one(taskOccurrences, {
+      fields: [usersOnTaskOccurrences.taskOccurrenceId],
+      references: [taskOccurrences.id],
     }),
   })
 );
@@ -214,7 +242,7 @@ export const categoriesOnTasksRelations = relations(
     }),
     category: one(taskCategories, {
       fields: [categoriesOnTasks.categoryId],
-      references: [categoriesOnTasks.id],
+      references: [taskCategories.id],
     }),
   })
 );

@@ -1,5 +1,5 @@
 import { sum, eq } from "drizzle-orm";
-import { wallets, walletTransactions } from "../database/schema";
+import { users, wallets, walletTransactions } from "../database/schema";
 import { WalletTransactionType } from "~/types/wallets";
 
 export const getWalletWithBalance = async (walletId: string) => {
@@ -59,4 +59,24 @@ export const chargeWallet = async (
     comment,
     walletId: wallet.id,
   });
+};
+
+export const chargeUserWallet = async (
+  userId: string,
+  amount: number,
+  comment?: string
+) => {
+  const [{ walletId }] = await useDrizzle
+    .select({ walletId: users.walletId })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  if (!walletId) {
+    throw createError({
+      status: 404,
+      message: "User not found",
+    });
+  }
+
+  await chargeWallet(walletId, amount, comment);
 };

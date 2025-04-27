@@ -22,6 +22,8 @@ const modelValue = computed({
 })
 const open = ref(false)
 const searchTerm = ref('')
+const suggestions: Ref<ComboboxItem[]> = ref([])
+const filteredSuggestions = computed(() => suggestions.value)
 
 const onSelectSuggestion = (ev: any) => {
     if (typeof ev.detail.value === 'string') {

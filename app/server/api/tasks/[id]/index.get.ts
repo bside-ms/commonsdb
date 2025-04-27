@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { taskOccurrences, tasks } from "~/server/database/schema";
+import { TaskOccurrenceStatus } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
@@ -13,12 +14,12 @@ export default defineEventHandler(async (event) => {
       links: true,
       categories: true,
       occurrences: {
-        // maybe only future occurrences ?
+        where: eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING),
         orderBy: asc(taskOccurrences.dueEndDate),
       },
-      assignments: {
-        with: {
-          user: true,
+      responsibleUsers: {
+        columns: {
+          userId: true,
         },
       },
       // TODO: only maxAssignmentCount < count(assignments)

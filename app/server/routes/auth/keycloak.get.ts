@@ -1,7 +1,20 @@
+import { KeycloakUserRoles } from "~/server/types/keycloak";
 import { upsertUser } from "~/server/utils/user";
 
 export default defineOAuthKeycloakEventHandler({
   async onSuccess(event, { user, tokens }) {
+    if (
+      !user.roles ||
+      !Object.values(KeycloakUserRoles).some((r) => user.roles.includes(r))
+    ) {
+      console.log("throws error");
+      throw createError({
+        status: 403,
+        message:
+          "Your B-Side Account is not activated to use Commons. Please contact an admin.",
+      });
+    }
+
     await upsertUser(user);
 
     await setUserSession(event, {

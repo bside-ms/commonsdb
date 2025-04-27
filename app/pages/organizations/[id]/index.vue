@@ -15,11 +15,10 @@ useSeoMeta({
 </script>
 
 <template>
-    <div class="grid gap-6 lg:grid-cols-12">
+    <div v-if="organization" class="grid gap-6 lg:grid-cols-12">
         <div class="lg:col-span-8">
             <OrganizationInfo :organization="organization" />
         </div>
-        <OrganizationAdminActions :organization="organization" class="lg:col-span-4" />
         <div class="grid gap-6 lg:col-start-9 lg:col-span-4">
             <div>
                 <Box title="Nächste Termine">
@@ -41,6 +40,10 @@ useSeoMeta({
                     </p>
                 </Box>
             </div>
+            <OrganizationViewActions :organization="organization" />
         </div>
+    </div>
+    <div v-else>
+        Could not load organization data.
     </div>
 </template>

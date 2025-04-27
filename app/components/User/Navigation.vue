@@ -21,9 +21,9 @@ const { isMobile } = useSidebar()
                     <SidebarMenuButton size="lg"
                         class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                         <Avatar class="h-8 w-8 rounded-lg">
-                            <AvatarImage src="https://api.dicebear.com/9.x/adventurer-neutral/svg"
-                                :alt="user?.username" />
-                            <AvatarFallback class="rounded-lg">
+                            <!-- <AvatarImage src="https://api.dicebear.com/9.x/adventurer-neutral/svg"
+                                :alt="user?.username" /> -->
+                            <AvatarFallback class="text-white bg-black">
                                 {{ user?.firstname?.charAt(0) }}
                             </AvatarFallback>
                         </Avatar>

@@ -1,6 +1,11 @@
-import { and, eq, inArray, not, sql } from "drizzle-orm";
-import { taskAssignments, tasks } from "~/server/database/schema";
-import { TaskStatus } from "~/types/tasks";
+import { and, eq, inArray, isNull, not, sql } from "drizzle-orm";
+import {
+  taskOccurrences,
+  tasks,
+  usersOnTaskOccurrences,
+  usersOnTasks,
+} from "~/server/database/schema";
+import { TaskOccurrenceStatus, TaskStatus } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
   // TODO maybe: add 'for user' filter, to only show tasks not taken by the user
@@ -11,28 +16,42 @@ export default defineEventHandler(async (event) => {
 
   // 'for user'
   const { user } = await requireUserSession(event);
-  const userAssignmentTaskIds = (
-    await useDrizzle.query.taskAssignments.findMany({
-      columns: {
-        taskId: true,
-      },
-      where: eq(taskAssignments.userId, user.id),
+
+  const userOpenTaskIds = await useDrizzle
+    .select({
+      id: tasks.id,
     })
-  ).map((ta) => ta.taskId);
+    .from(usersOnTasks)
+    .innerJoin(tasks, eq(usersOnTasks.taskId, tasks.id))
+    .where(
+      and(
+        eq(usersOnTasks.userId, user.id),
+        eq(tasks.status, TaskStatus.PROCESSING)
+      )
+    );
 
   const skip = 0;
   const take = 25;
 
   const results = await useDrizzle
     .select({
-      items: tasks,
+      items: {
+        ...tasks,
+      },
       totalCount: sql<number>`count(*) over()`,
     })
     .from(tasks)
+    .leftJoin(usersOnTasks, eq(usersOnTasks.taskId, tasks.id))
     .where(
       and(
         eq(tasks.status, TaskStatus.PROCESSING),
-        not(inArray(tasks.id, userAssignmentTaskIds))
+        isNull(usersOnTasks.taskId), // no responsible users
+        not(
+          inArray(
+            tasks.id,
+            userOpenTaskIds.map((x) => x.id)
+          )
+        ) // user is not already responsible
       )
     )
     .limit(take)

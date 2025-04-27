@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { pgTable, uuid, text } from "drizzle-orm/pg-core";
 import { wallets } from "./wallets";
-import { taskAssignments } from "./tasks";
+import { usersOnTaskOccurrences, usersOnTasks } from "./tasks";
 import { organizationMembers } from "./organizations";
 
 export const users = pgTable("users", {
@@ -21,6 +21,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.walletId],
     references: [wallets.id],
   }),
-  taskAssignments: many(taskAssignments),
+  taskResponsibilities: many(usersOnTasks),
+  taskOccurrenceResponsibilities: many(usersOnTaskOccurrences),
   organizationMemberships: many(organizationMembers),
 }));

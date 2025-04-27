@@ -71,10 +71,11 @@ export default defineEventHandler(async (event) => {
 
   // do redirect to login, if path is not auth related
   if (
+    getRequestURL(event).pathname !== "/__nuxt_error" &&
     !getRequestURL(event).pathname.startsWith("/auth") &&
     getRequestURL(event).pathname !== "/login" &&
     getRequestURL(event).pathname !== "/api/_auth/session"
   ) {
-    await sendRedirect(event, "/login");
+    // await sendRedirect(event, "/login");
   }
 });

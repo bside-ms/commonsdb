@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { TaskWithOccurrences } from '~/types/tasks';
+import type { Task, WithOccurrences } from '~/types/tasks';
 
-defineProps<{ task: TaskWithOccurrences }>()
+defineProps<{ task: Task & WithOccurrences }>()
 
 const { getDueEndDateFormatted } = useTask();
 </script>

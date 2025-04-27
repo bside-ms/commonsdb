@@ -1,6 +1,11 @@
-import { and, eq } from "drizzle-orm";
-import { taskAssignments, tasks } from "~/server/database/schema";
-import { TaskAssignmentStatus } from "~/types/tasks";
+import { and, eq, inArray } from "drizzle-orm";
+import {
+  taskOccurrences,
+  tasks,
+  usersOnTaskOccurrences,
+  usersOnTasks,
+} from "~/server/database/schema";
+import { TaskOccurrenceStatus } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
@@ -26,46 +31,34 @@ export default defineEventHandler(async (event) => {
   }
 
   await useDrizzle.transaction(async (tx) => {
-    const assignment = await tx
-      .delete(taskAssignments)
+    const pendingTaskOccurrenceIds = await tx
+      .select({
+        id: taskOccurrences.id,
+      })
+      .from(taskOccurrences)
       .where(
         and(
-          eq(taskAssignments.taskId, taskId),
-          eq(taskAssignments.userId, userId)
+          eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING),
+          eq(taskOccurrences.taskId, taskId)
         )
-      )
-      .returning();
-
-    // if assignment was delete/released, update task.responsibilityStatus
-    if (assignment) {
-      // OVERENGINEERED, but maybe good for future reference...
-      // const { maxAssignmentCount, assignemtCount } =
-      //   (
-      //     await useDrizzle
-      //       .select({
-      //         maxAssignmentCount: tasks.maxAssignmentCount,
-      //         assignemtCount: count(),
-      //       })
-      //       .from(taskAssignments)
-      //       .innerJoin(tasks, eq(taskAssignments.taskId, tasks.id))
-      //       .groupBy(taskAssignments.taskId, tasks.maxAssignmentCount)
-      //       .having(eq(taskAssignments.taskId, taskId))
-      //   ).at(0) ?? {};
-
-      const assignemtCount = await tx.$count(
-        taskAssignments,
-        eq(taskAssignments.taskId, taskId)
       );
 
-      await tx
-        .update(tasks)
-        .set({
-          assignmentStatus:
-            assignemtCount === 0
-              ? TaskAssignmentStatus.OPEN
-              : TaskAssignmentStatus.PARTLY_ASSIGNED,
-        })
-        .where(eq(tasks.id, taskId));
-    }
+    // remove user from taskOccurrences
+    await tx.delete(usersOnTaskOccurrences).where(
+      and(
+        eq(usersOnTaskOccurrences.userId, user.id),
+        inArray(
+          usersOnTaskOccurrences.taskOccurrenceId,
+          pendingTaskOccurrenceIds.map((x) => x.id)
+        )
+      )
+    );
+
+    // remove user from task
+    await tx
+      .delete(usersOnTasks)
+      .where(
+        and(eq(usersOnTasks.userId, user.id), eq(usersOnTasks.taskId, taskId))
+      );
   });
 });

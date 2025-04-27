@@ -1,6 +1,11 @@
 <script setup lang="ts">
-const { data } = await useFetch('/api/users/me/tasks')
-const tasks = computed(() => data.value)
+import type { Task, TaskOccurrence } from '~/types/tasks';
+
+const { data } = await useFetch<{ task: Task, nextOccurrence: TaskOccurrence }[]>('/api/users/me/task-occurrences')
+const tasks = computed(() => data.value?.map(row => ({
+    ...row.task,
+    occurrences: [row.nextOccurrence]
+})))
 </script>
 
 <template>

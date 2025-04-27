@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import type { Skeleton } from '~/components/ui/skeleton';
-import type { Task, WithOccurences } from '~/types/tasks';
+import type { Task, WithOccurrences } from '~/types/tasks';
 
 interface TaskListProps {
-    tasks: (Task & WithOccurences)[],
+    tasks: (Task & WithOccurrences)[],
     type: "list" | "grid"
     loading?: boolean
 }

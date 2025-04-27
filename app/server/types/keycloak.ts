@@ -16,3 +16,8 @@ export interface KeycloakToken {
   refresh_token: string;
   refresh_expires_in: number;
 }
+
+export enum KeycloakUserRoles {
+  USER = "commonsdb_user",
+  ADMIN = "commonsdb_admin",
+}

@@ -9,7 +9,9 @@ import { linkListSchema } from '~/components/Form/schema';
 import { DateTime } from 'luxon';
 import { toast } from 'vue-sonner';
 import { Switch } from '~/components/ui/switch';
-import { TaskFrequency, TaskPriority, TaskType, type Task, type TaskCategory, type TaskOccurrence } from '~/types/tasks';
+import { TaskEndsAfter, TaskFrequency, TaskPriority, TaskType, type Task, type TaskCategory, type TaskOccurrence } from '~/types/tasks';
+import { FormField, FormItem, FormControl, FormLabel } from '~/components/ui/form';
+import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '~/components/ui/tags-input'
 
 interface TaskProps {
     task?: Task & { categories: TaskCategory[] } | Task & { occurrences: TaskOccurrence[] };
@@ -33,8 +35,6 @@ const schema = toTypedSchema(
         expense: z.number().positive().nullable(),
         factor: z.string().default("1"), // z.union([z.string(), z.number()]).pipe(z.coerce.number()).nullable(),
         links: z.array(linkListSchema).optional(),
-        isAssignableToMany: z.boolean().optional(),
-        maxAssignmentCount: z.number().positive().min(1).optional(),
         // task type
         type: z.nativeEnum(TaskType).default(TaskType.SINGLE).nullable(),
         hasDueDate: z.boolean().default(false),
@@ -46,6 +46,9 @@ const schema = toTypedSchema(
         }).optional(),
         // task type 'recurring'
         frequency: z.nativeEnum(TaskFrequency).nullable().optional(),
+        endsAfter: z.nativeEnum(TaskEndsAfter).nullable().optional(),
+        endsAfterCount: z.number().positive().nullable().optional(),
+        endsAfterDate: z.string().nullable().optional(),
     }).superRefine((data, ctx) => {
         if (data.type === TaskType.RECURRING) {
             if (!data.frequency) {
@@ -69,13 +72,20 @@ const schema = toTypedSchema(
                     path: ["due.endTime"],
                 });
             }
-        }
-        if (data.isAssignableToMany && !data.maxAssignmentCount) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Pflichtfeld",
-                path: ["maxAssignmentCount"],
-            });
+            if (data.endsAfter === TaskEndsAfter.COUNT && !data.endsAfterCount) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Pflichtfeld",
+                    path: ["endsAfterCount"],
+                });
+            }
+            if (data.endsAfter === TaskEndsAfter.DATE && !data.endsAfterDate) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Pflichtfeld",
+                    path: ["endsAfterDate"],
+                });
+            }
         }
     })
 )
@@ -121,7 +131,7 @@ const { errors, values, setFieldValue, handleSubmit } = useForm({
     validationSchema: schema,
     initialValues: {
         ...task,
-        categories: task?.categories?.map(tc => ({ value: tc.categoryId, label: tc.category.name })) ?? [],
+        // categories: task?.categories?.map(tc => ({ value: tc.categoryId, label: tc.category.name })) ?? [],
         factor: task?.factor?.toString() ?? "1",
         expense: task?.expense ? task.expense / 60 : null,
         hasDueDate: task?.dueEndDate || task?.dueStartDate ? true : false,
@@ -175,13 +185,15 @@ const createCategory = async (name: string): Promise<ComboboxItem> => {
     }
 }
 
-const onTypeCheckedChange = (checked: boolean) => {
-    if (checked) {
-        setFieldValue('type', TaskType.RECURRING)
-        setFieldValue('hasDueDate', true)
-        return
+const onHasDueDateCheckedChange = (checked: boolean) => {
+    // if not due date, then it cannot be recurring
+    if (!checked) {
+        setFieldValue('type', TaskType.SINGLE)
     }
-    setFieldValue('type', TaskType.SINGLE)
+    setFieldValue('hasDueDate', checked)
+}
+const onTypeCheckedChange = (checked: boolean) => {
+    setFieldValue('type', checked ? TaskType.RECURRING : TaskType.SINGLE)
 }
 </script>
 
@@ -217,25 +229,6 @@ const onTypeCheckedChange = (checked: boolean) => {
             <Separator class="col-span-full my-2" />
 
             <div class="col-span-full">
-                <FormField v-slot="{ value }" name="type">
-                    <FormItem class="flex items-center justify-between">
-                        <div class="space-y-0.5">
-                            <FormLabel class="text-base">
-                                Wiederkehrende Aufgabe
-                            </FormLabel>
-                            <FormDescription>
-                                Wird diese Aufgabe in regelmäßigen Abständen fällig?
-                            </FormDescription>
-                        </div>
-                        <FormControl>
-                            <Switch :model-value="value === TaskType.RECURRING"
-                                @update:model-value="onTypeCheckedChange" />
-                        </FormControl>
-                    </FormItem>
-                </FormField>
-            </div>
-
-            <div class="col-span-full">
                 <FormField v-slot="{ value, handleChange }" name="hasDueDate">
                     <FormItem class="flex items-center justify-between">
                         <div class="space-y-0.5">
@@ -247,7 +240,7 @@ const onTypeCheckedChange = (checked: boolean) => {
                             </FormDescription>
                         </div>
                         <FormControl>
-                            <Switch :model-value="value" @update:model-value="handleChange" />
+                            <Switch :model-value="value" @update:model-value="onHasDueDateCheckedChange" />
                         </FormControl>
                     </FormItem>
                 </FormField>
@@ -312,37 +305,109 @@ const onTypeCheckedChange = (checked: boolean) => {
                 </div>
             </template>
 
-            <div v-if="values.type === TaskType.RECURRING" class="col-span-full">
-                <FormField v-slot="{ componentField }" name="frequency">
-                    <FormItem>
-                        <FormLabel>Rhythmus</FormLabel>
-                        <Select v-bind="componentField">
-                            <FormControl>
-                                <SelectTrigger class="w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectItem :value="TaskFrequency.IRREGULAR">
-                                        unregelmäßig
-                                    </SelectItem>
-                                    <SelectItem :value="TaskFrequency.WEEKLY">
-                                        wöchentlich
-                                    </SelectItem>
-                                    <SelectItem :value="TaskFrequency.MONTHLY">
-                                        monatlich
-                                    </SelectItem>
-                                    <SelectItem :value="TaskFrequency.QUARTERLY">
-                                        quartalsweise
-                                    </SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage class="text-xs" />
+            <div class="col-span-full">
+                <FormField v-slot="{ value }" name="type">
+                    <FormItem class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <FormLabel class="text-base">
+                                Wiederkehrende Aufgabe
+                            </FormLabel>
+                            <FormDescription>
+                                Wird diese Aufgabe in regelmäßigen Abständen fällig?
+                            </FormDescription>
+                        </div>
+                        <FormControl>
+                            <Switch :model-value="value === TaskType.RECURRING"
+                                @update:model-value="onTypeCheckedChange" :disabled="!values.hasDueDate" />
+                        </FormControl>
                     </FormItem>
                 </FormField>
             </div>
+
+
+
+            <template v-if="values.type === TaskType.RECURRING">
+                <div class="col-span-full">
+                    <FormField v-slot="{ componentField }" name="frequency">
+                        <FormItem>
+                            <FormLabel>Rhythmus</FormLabel>
+                            <Select v-bind="componentField">
+                                <FormControl>
+                                    <SelectTrigger class="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem :value="TaskFrequency.IRREGULAR">
+                                            unregelmäßig
+                                        </SelectItem>
+                                        <SelectItem :value="TaskFrequency.WEEKLY">
+                                            wöchentlich
+                                        </SelectItem>
+                                        <SelectItem :value="TaskFrequency.MONTHLY">
+                                            monatlich
+                                        </SelectItem>
+                                        <SelectItem :value="TaskFrequency.QUARTERLY">
+                                            quartalsweise
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage class="text-xs" />
+                        </FormItem>
+                    </FormField>
+                </div>
+                <div class="col-span-full lg:col-span-3">
+                    <FormField v-slot="{ componentField }" name="endsAfter">
+                        <FormItem>
+                            <FormLabel>Aufgabe endet</FormLabel>
+                            <FormControl>
+                                <Select v-bind="componentField">
+                                    <FormControl>
+                                        <SelectTrigger class="w-full">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectItem :value="TaskEndsAfter.NEVER">
+                                                nie
+                                            </SelectItem>
+                                            <SelectItem :value="TaskEndsAfter.COUNT">
+                                                nach X Malen
+                                            </SelectItem>
+                                            <SelectItem :value="TaskEndsAfter.DATE">
+                                                nach Datum
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </FormControl>
+                        </FormItem>
+                    </FormField>
+                </div>
+                <div v-if="values.endsAfter === TaskEndsAfter.COUNT" class="col-span-full lg:col-span-3">
+                    <FormField v-slot="{ componentField }" name="endsAfterCount">
+                        <FormItem>
+                            <FormLabel>Nach X Malen</FormLabel>
+                            <FormControl>
+                                <Input v-bind="componentField" type="number" step="1" :disabled="loading" />
+                            </FormControl>
+                        </FormItem>
+                    </FormField>
+                </div>
+                <div v-if="values.endsAfter === TaskEndsAfter.DATE" class="col-span-full lg:col-span-3">
+                    <FormField name="endsAfterDate">
+                        <FormItem>
+                            <FormLabel>Nach Datum</FormLabel>
+                            <FormDatePicker name="endsAfterDate" placeholder="Datum" :form-values="values"
+                                :set-field-value="setFieldValue" :disabled="loading" />
+                            <FormMessage class="text-xs" />
+                        </FormItem>
+                    </FormField>
+                </div>
+            </template>
 
             <div v-if="task?.id && task?.type === TaskType.RECURRING" class="col-span-full">
                 <p class="text-destructive text-sm">
@@ -353,17 +418,28 @@ const onTypeCheckedChange = (checked: boolean) => {
             <Separator class="col-span-full my-2" />
 
             <div class="col-span-full">
-                <FormField name="categories">
+                <FormField v-slot="{ componentField }" name="categories">
                     <FormItem class="grid gap">
                         <FormLabel>Kategorien</FormLabel>
-                        <FormTagsCombobox name="categories" :form-values="values" :set-field-value="setFieldValue"
+                        <FormControl>
+                            <TagsInput :model-value="componentField.modelValue"
+                                @update:model-value="componentField['onUpdate:modelValue']" :disabled="loading">
+                                <TagsInputItem v-for="item in componentField.modelValue" :key="item" :value="item">
+                                    <TagsInputItemText />
+                                    <TagsInputItemDelete />
+                                </TagsInputItem>
+
+                                <TagsInputInput placeholder="Kategorien..." />
+                            </TagsInput>
+                        </FormControl>
+                        <!-- <FormTagsCombobox name="categories" :form-values="values" :set-field-value="setFieldValue"
                             placeholder="Kategorie..." :create="createCategory" :fetch-suggestions="async () => {
                                 const { data } = await useFetch('/api/tasks/categories');
                                 return data.value?.map(c => ({
                                     value: c.id,
                                     label: c.name
                                 })) ?? []
-                            }" :disabled="loading" />
+                            }" :disabled="loading" /> -->
                         <FormMessage class="text-xs" />
                     </FormItem>
                 </FormField>
@@ -376,7 +452,7 @@ const onTypeCheckedChange = (checked: boolean) => {
                     <FormItem class="grid gap">
                         <FormLabel>Aufwand</FormLabel>
                         <FormControl>
-                            <Input v-bind="componentField" type="number" step="0.5" :disabled="loading" />
+                            <Input v-bind="componentField" type="number" step="0.25" :disabled="loading" />
                         </FormControl>
                         <FormDescription>in Stunden</FormDescription>
                         <FormMessage class="text-xs" />
@@ -451,39 +527,6 @@ const onTypeCheckedChange = (checked: boolean) => {
                     </FormItem>
                 </FormField>
             </div>
-
-            <div class="col-span-full">
-                <FormField v-slot="{ value, handleChange }" name="isAssignableToMany">
-                    <FormItem class="flex items-center justify-between">
-                        <div class="space-y-0.5">
-                            <FormLabel class="text-base">
-                                Gemeinschaftsarbeit
-                            </FormLabel>
-                            <FormDescription>
-                                Benötigt es mehr Menschen für diese Aufgabe?
-                            </FormDescription>
-                        </div>
-                        <FormControl>
-                            <Switch :model-value="value" @update:model-value="handleChange" />
-                        </FormControl>
-                    </FormItem>
-                </FormField>
-            </div>
-            <template v-if="values.isAssignableToMany">
-                <div class="col-span-full lg:col-span-3">
-                    <FormField v-slot="{ componentField }" name="maxAssignmentCount">
-                        <FormItem class="grid gap">
-                            <FormLabel>Anzahl Menschen</FormLabel>
-                            <FormControl>
-                                <Input v-bind="componentField" type="number" :disabled="loading" />
-                            </FormControl>
-                            <FormMessage class="text-xs" />
-                        </FormItem>
-                    </FormField>
-                </div>
-                <div class="hidden lg:block lg:col-span-3">
-                </div>
-            </template>
 
             <Separator class="col-span-full my-2" />
 

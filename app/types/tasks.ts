@@ -1,18 +1,14 @@
 import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
 import {
   categoriesOnTasks,
-  taskAssignments,
   taskCategories,
   taskLinks,
   taskOccurrences,
   tasks,
+  usersOnTaskOccurrences,
+  usersOnTasks,
 } from "~/server/database/schema";
 
-export enum TaskAssignmentStatus {
-  OPEN = "OPEN",
-  PARTLY_ASSIGNED = "PARTLY_ASSIGNED",
-  FULLY_ASSIGNED = "FULLY_ASSIGNED",
-}
 export enum TaskOccurrenceStatus {
   PENDING = "PENDING",
   COMPLETED = "COMPLETED",
@@ -45,16 +41,28 @@ export enum TaskFrequency {
   QUARTERLY = "QUARTERLY",
   YEARLY = "YEARLY",
 }
+export enum TaskEndsAfter {
+  NEVER = "NEVER",
+  COUNT = "COUNT",
+  DATE = "DATE",
+}
 
 export type Task = InferSelectModel<typeof tasks>;
-export type InsertTask = InferInsertModel<typeof tasks>;
+export type UserOnTask = InferSelectModel<typeof usersOnTasks>;
 
 export type TaskOccurrence = InferSelectModel<typeof taskOccurrences>;
-export type TaskAssignment = InferSelectModel<typeof taskAssignments>;
+export type TaskOccurrenceInsert = InferInsertModel<typeof taskOccurrences>;
+export type UserOnTaskOccurrence = InferSelectModel<
+  typeof usersOnTaskOccurrences
+>;
+
 export type TaskLink = InferSelectModel<typeof taskLinks>;
 export type TaskCategory = InferSelectModel<typeof taskCategories>;
 export type CategoryOnTask = InferSelectModel<typeof categoriesOnTasks>;
 
-export interface WithOccurences {
+export interface WithOccurrences {
   occurrences: TaskOccurrence[];
+}
+export interface WithResponsibleUsers {
+  responsibleUsers: UserOnTask[];
 }

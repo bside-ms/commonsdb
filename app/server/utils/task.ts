@@ -2,12 +2,29 @@ import { and, asc, eq, gt } from "drizzle-orm";
 import { DateTime, WeekdayNumbers } from "luxon";
 import {
   Task,
+  TaskEndsAfter,
   TaskFrequency,
   TaskOccurrence,
+  TaskOccurrenceInsert,
   TaskOccurrenceStatus,
   TaskStatus,
 } from "~/types/tasks";
-import { taskAssignments, taskOccurrences, tasks } from "../database/schema";
+import { categoriesOnTasks, taskOccurrences, tasks } from "../database/schema";
+
+enum DEFAULT_OCCURRENCE_CREATION_COUNT {
+  "ONCE" = 1,
+  "IRREGULAR" = 1,
+  "DAILY" = 180,
+  "WEEKLY" = 104,
+  "MONTHLY" = 24,
+  "QUARTERLY" = 8,
+  "YEARLY" = 4,
+}
+
+interface DueDateTime {
+  start?: DateTime | null;
+  end: DateTime;
+}
 
 export const getNextDueEndDate = (dueEndDate: string, frequency: any) => {
   const dt = DateTime.fromSQL(dueEndDate);
@@ -39,10 +56,107 @@ export const getFutureOccurrences = async (task: Task) => {
   return await useDrizzle.query.taskOccurrences.findMany({
     where: and(
       eq(taskOccurrences.taskId, task.id),
+      eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING),
       gt(taskOccurrences.dueEndDate, new Date().toISOString())
     ),
     orderBy: asc(taskOccurrences.dueEndDate),
   });
+};
+
+/**
+ *
+ * @param task
+ * @param initialDueDate: tasks due dates or least past occurrence dates
+ */
+export const getNextTaskOccurrencesData = (
+  task: Task,
+  initialDueDateTime: DueDateTime
+) => {
+  const taskOccurrences: TaskOccurrenceInsert[] = [];
+
+  if (!task.frequency) {
+    return taskOccurrences;
+  }
+
+  let dueDateTime = initialDueDateTime;
+
+  if (
+    task.endsAfter &&
+    task.endsAfter === TaskEndsAfter.DATE &&
+    task.endsAfterDate
+  ) {
+    const endsAfterDateTime = DateTime.fromSQL(task.endsAfterDate);
+    do {
+      taskOccurrences.push({
+        taskId: task.id,
+        status: TaskOccurrenceStatus.PENDING,
+        dueStartDate: dueDateTime.start?.toISO() ?? null,
+        dueEndDate: dueDateTime.end.toISO(),
+      });
+
+      dueDateTime = getNextDueDateTime(task, dueDateTime);
+    } while (dueDateTime.end < endsAfterDateTime); // do while date not matched
+  } else {
+    const occurrencesToCreateCount =
+      !task.endsAfter || task.endsAfter === TaskEndsAfter.NEVER
+        ? DEFAULT_OCCURRENCE_CREATION_COUNT[task.frequency ?? "ONCE"]
+        : task.endsAfterCount;
+
+    for (let index = 0; index < (occurrencesToCreateCount ?? 1); index++) {
+      taskOccurrences.push({
+        taskId: task.id,
+        status: TaskOccurrenceStatus.PENDING,
+        dueStartDate: dueDateTime.start?.toISO() ?? null,
+        dueEndDate: dueDateTime.end.toISO(),
+      });
+
+      dueDateTime = getNextDueDateTime(task, dueDateTime);
+    }
+  }
+
+  return taskOccurrences;
+};
+
+export const getNextDueDateTime = (
+  task: Task,
+  due: DueDateTime
+): DueDateTime => {
+  let plus: any = { days: 1 };
+  switch (task.frequency) {
+    case TaskFrequency.DAILY:
+      plus = { days: 1 };
+      break;
+    case TaskFrequency.WEEKLY:
+      plus = { weeks: 1 };
+      break;
+    case TaskFrequency.MONTHLY:
+      plus = { months: 1 };
+      break;
+    case TaskFrequency.QUARTERLY:
+      plus = { quarters: 1 };
+      break;
+    case TaskFrequency.YEARLY:
+      plus = { years: 1 };
+      break;
+  }
+
+  if (task.frequency === TaskFrequency.DAILY) {
+    return {
+      start: due.start ? due.start.plus(plus) : null,
+      end: due.end.plus(plus),
+    };
+  } else {
+    return {
+      start: due.start
+        ? due.start
+            .plus(plus)
+            .set({ weekday: due.start.weekday as WeekdayNumbers })
+        : null,
+      end: due.end
+        .plus(plus)
+        .set({ weekday: due.end.weekday as WeekdayNumbers }),
+    };
+  }
 };
 
 export const getNumberOfFutureOccurrencesToCreate = (
@@ -53,7 +167,7 @@ export const getNumberOfFutureOccurrencesToCreate = (
     case TaskFrequency.IRREGULAR:
       return 1;
     case TaskFrequency.DAILY:
-      return 90 - occurrences.length;
+      return 180;
     case TaskFrequency.WEEKLY:
       return 12 - occurrences.length;
     case TaskFrequency.MONTHLY:
@@ -159,23 +273,34 @@ export const getTasksWithOccurrences = async (
 };
 
 export const getUserTasks = async (userId: string) => {
-  const openUserAssignments = await useDrizzle.query.taskAssignments.findMany({
-    with: {
-      task: {
-        with: {
-          categories: true,
-          occurrences: {
-            where: eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING),
-            orderBy: asc(taskOccurrences.dueEndDate),
-          },
-        },
-      },
-    },
-    where: and(
-      eq(taskAssignments.userId, userId),
-      eq(tasks.status, TaskStatus.PROCESSING)
-    ),
-  });
-
-  return openUserAssignments.map((x) => x.task);
+  // const openUserAssignments = await useDrizzle
+  //   .select()
+  //   .from(taskAssignments)
+  //   .innerJoin(tasks, eq(tasks.id, taskAssignments.taskId))
+  //   .innerJoin(categoriesOnTasks, eq(categoriesOnTasks.taskId, tasks.id))
+  //   .innerJoin(
+  //     taskOccurrences,
+  //     and(
+  //       eq(taskOccurrences.taskId, tasks.id),
+  //       eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING)
+  //     )
+  //   );
+  // await useDrizzle.query.taskAssignments.findMany({
+  //   with: {
+  //     task: {
+  //       with: {
+  //         categories: true,
+  //         occurrences: {
+  //           where: eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING),
+  //           orderBy: asc(taskOccurrences.dueEndDate),
+  //         },
+  //       },
+  //     },
+  //   },
+  //   where: and(
+  //     eq(taskAssignments.userId, userId),
+  //     eq(tasks.status, TaskStatus.PROCESSING)
+  //   ),
+  // });
+  // return openUserAssignments.map((x) => x.task);
 };

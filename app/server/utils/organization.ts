@@ -111,10 +111,10 @@ export const createOrganization = async (data: any, members?: any) => {
     if (org) {
       // add members
       if (members?.length) {
-        tx.insert(organizationMembers).values(
+        await tx.insert(organizationMembers).values(
           members.map((m: any) => ({
-            organization: org.id,
-            user: m.userId,
+            organizationId: org.id,
+            userId: m.userId,
             role: m.role,
           }))
         );

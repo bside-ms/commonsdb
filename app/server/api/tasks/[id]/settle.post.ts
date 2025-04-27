@@ -2,17 +2,14 @@ import { and, eq } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { taskOccurrences, tasks } from "~/server/database/schema";
 import { isAdminUser } from "~/server/utils/auth";
-import { chargeWallet } from "~/server/utils/wallet";
+import { chargeUserWallet } from "~/server/utils/wallet";
 import {
   Task,
-  TaskAssignment,
-  TaskFrequency,
   TaskOccurrence,
   TaskOccurrenceStatus,
   TaskStatus,
   TaskType,
 } from "~/types/tasks";
-import { User } from "~/types/users";
 
 export default defineEventHandler(async (event) => {
   const taskId = getRouterParam(event, "id");
@@ -37,26 +34,14 @@ export default defineEventHandler(async (event) => {
 
   const taskOccurrence = (await useDrizzle.query.taskOccurrences.findFirst({
     with: {
-      task: {
-        with: {
-          assignments: {
-            with: {
-              user: {
-                columns: {
-                  walletId: true,
-                },
-              },
-            },
-          },
-        },
-      },
+      task: true,
     },
     where: and(
       eq(taskOccurrences.id, taskOccurrenceId),
       eq(taskOccurrences.taskId, taskId)
     ),
   })) as TaskOccurrence & {
-    task: Task & { assignments: (TaskAssignment & { user: User })[] };
+    task: Task;
   };
 
   if (!taskOccurrence) {
@@ -64,16 +49,16 @@ export default defineEventHandler(async (event) => {
   }
 
   // check if settling user is assigned
-  if (
-    !taskOccurrence.task.assignments.some((a: TaskAssignment) =>
-      userIds ? userIds.includes(a.userId) : a.userId === user.id
-    )
-  ) {
-    throw createError({
-      statusCode: 405,
-      message: "User not assigned to task",
-    });
-  }
+  // if (
+  //   !taskOccurrence.task.assignments.some((a: TaskAssignment) =>
+  //     userIds ? userIds.includes(a.userId) : a.userId === user.id
+  //   )
+  // ) {
+  //   throw createError({
+  //     statusCode: 405,
+  //     message: "User not assigned to task",
+  //   });
+  // }
 
   await useDrizzle.transaction(async (tx) => {
     // set occurrence as complete
@@ -89,20 +74,15 @@ export default defineEventHandler(async (event) => {
         .set({ status: TaskStatus.COMPLETE })
         .where(eq(tasks.id, taskOccurrence.taskId));
     }
-  });
 
-  // TODO: maybe we should not reward all assignees, but only these who completed the tasks?
-  // deposit reward
-  const reward =
-    taskOccurrence.task.expense && taskOccurrence.task.factor
-      ? taskOccurrence.task.expense * parseFloat(taskOccurrence.task.factor)
-      : 0;
-  if (reward > 0) {
-    const comment = `'${taskOccurrence.task.title}' am ${DateTime.now().toFormat("dd.LL.yyyy 'um' HH:mm 'Uhr'")} erledigt`;
-    taskOccurrence.task.assignments.map(async (a) => {
-      if (a.user.walletId) {
-        await chargeWallet(a.user.walletId, reward, comment);
-      }
-    });
-  }
+    // deposit reward
+    const reward =
+      taskOccurrence.task.expense && taskOccurrence.task.factor
+        ? taskOccurrence.task.expense * parseFloat(taskOccurrence.task.factor)
+        : 0;
+    if (reward > 0) {
+      const comment = `'${taskOccurrence.task.title}' am ${DateTime.now().toFormat("dd.LL.yyyy 'um' HH:mm 'Uhr'")} erledigt`;
+      await chargeUserWallet(user.id, reward, comment);
+    }
+  });
 });

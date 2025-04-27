@@ -9,9 +9,9 @@ export const useUser = () => {
   > = useState("current-user-wallet", () => null);
 
   const { user: sessionUser } = useUserSession();
-  const isAdminUser = computed(() =>
-    sessionUser.value?.roles.includes(USER_ROLES.ADMIN)
-  );
+  const isAdminUser = computed(() => {
+    return sessionUser.value?.roles?.includes(USER_ROLES.ADMIN);
+  });
 
   const fetch = async () => {
     const { data } = await useFetch("/api/users/me");
