@@ -26,21 +26,22 @@ export const getWalletWithBalance = async (walletId: string) => {
 export const getWalletBalance = async (walletId: string) => {
   if (!walletId) return 0;
 
-  const { balance } = (
-    await useDrizzle
-      .select({ balance: sum(walletTransactions.amount) })
-      .from(walletTransactions)
-      .groupBy(walletTransactions.walletId)
-      .having(eq(walletTransactions.walletId, walletId))
-  ).at(0) ?? { balance: 0 };
+  const { balance } =
+    (
+      await useDrizzle
+        .select({ balance: sum(walletTransactions.amount) })
+        .from(walletTransactions)
+        .groupBy(walletTransactions.walletId)
+        .having(eq(walletTransactions.walletId, walletId))
+    ).at(0) ?? {};
 
-  return (balance as number) ?? 0;
+  return balance ? parseInt(balance) : 0;
 };
 
 export const chargeWallet = async (
   walletId: string,
   amount: number,
-  comment?: string
+  comment?: string,
 ) => {
   const wallet = await useDrizzle.query.wallets.findFirst({
     where: eq(wallets.id, walletId),
@@ -64,7 +65,7 @@ export const chargeWallet = async (
 export const chargeUserWallet = async (
   userId: string,
   amount: number,
-  comment?: string
+  comment?: string,
 ) => {
   const [{ walletId }] = await useDrizzle
     .select({ walletId: users.walletId })

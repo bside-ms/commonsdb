@@ -26,8 +26,8 @@ export default defineEventHandler(async (event) => {
     .where(
       and(
         eq(usersOnTasks.userId, user.id),
-        eq(tasks.status, TaskStatus.PROCESSING)
-      )
+        eq(tasks.status, TaskStatus.PROCESSING),
+      ),
     );
 
   const skip = 0;
@@ -49,10 +49,10 @@ export default defineEventHandler(async (event) => {
         not(
           inArray(
             tasks.id,
-            userOpenTaskIds.map((x) => x.id)
-          )
-        ) // user is not already responsible
-      )
+            userOpenTaskIds.map((x) => x.id),
+          ),
+        ), // user is not already responsible
+      ),
     )
     .limit(take)
     .offset(skip);

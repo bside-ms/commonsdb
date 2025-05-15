@@ -49,6 +49,15 @@ export enum TaskEndsAfter {
 
 export type Task = InferSelectModel<typeof tasks>;
 export type UserOnTask = InferSelectModel<typeof usersOnTasks>;
+export interface WithOccurrences {
+  occurrences: TaskOccurrence[];
+}
+export interface WithResponsibleUsers {
+  responsibleUsers: UserOnTask[];
+}
+export interface WithLinks {
+  links: TaskLink[];
+}
 
 export type TaskOccurrence = InferSelectModel<typeof taskOccurrences>;
 export type TaskOccurrenceInsert = InferInsertModel<typeof taskOccurrences>;
@@ -59,10 +68,9 @@ export type UserOnTaskOccurrence = InferSelectModel<
 export type TaskLink = InferSelectModel<typeof taskLinks>;
 export type TaskCategory = InferSelectModel<typeof taskCategories>;
 export type CategoryOnTask = InferSelectModel<typeof categoriesOnTasks>;
-
-export interface WithOccurrences {
-  occurrences: TaskOccurrence[];
+export interface WithTask {
+  task: Task;
 }
-export interface WithResponsibleUsers {
-  responsibleUsers: UserOnTask[];
+export interface WithTaskAndLinks {
+  task: Task & WithLinks;
 }

@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { Flame } from 'lucide-vue-next';
-import { TaskPriority } from '~/types/tasks';
+import { TaskPriority, type Task } from '~/types/tasks';
 
 interface TaskPriorityProps {
-    priority: TaskPriority;
+    task: Task;
     hideLabel?: boolean;
 }
-const { priority } = defineProps<TaskPriorityProps>()
+const { task } = defineProps<TaskPriorityProps>()
 
 const priorityColorClass = computed(() => {
-    switch (priority) {
+    switch (task.priority) {
         case TaskPriority.LOW:
             return 'bg-b-green';
         case TaskPriority.MEDIUM:
@@ -27,7 +27,7 @@ const priorityColorClass = computed(() => {
 <template>
     <div class="flex items-center gap-2">
         <div :class="['size-3 rounded-full', priorityColorClass]"></div>
-        <Flame v-if="priority === TaskPriority.URGENT" class="size-4" />
-        <span v-if="!hideLabel">{{ $t(`priorities.${priority}`) }} {{ $t('priority') }}</span>
+        <Flame v-if="task.priority === TaskPriority.URGENT" class="size-4" />
+        <span v-if="!hideLabel">{{ $t(`priorities.${task.priority}`) }} {{ $t('priority') }}</span>
     </div>
 </template>

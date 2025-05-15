@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { usersOnTasks } from "~/server/database/schema";
 
 export default defineEventHandler(async (event) => {
-  const taskId = getRouterParam(event, "id");
+  const taskId = getRouterParam(event, "taskId");
   const { user } = await requireUserSession(event);
 
   if (!taskId || taskId === "undefined") {

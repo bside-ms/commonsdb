@@ -35,7 +35,7 @@ const updateOccurrences = async (task: TaskToUpdate) => {
       });
     } else {
       const firstPendingOccurrence = task.occurrences.find(
-        (o) => o.status === TaskOccurrenceStatus.PENDING
+        (o) => o.status === TaskOccurrenceStatus.PENDING,
       );
 
       if (firstPendingOccurrence) {
@@ -58,7 +58,7 @@ const updateOccurrences = async (task: TaskToUpdate) => {
     const lastOccurrence = await useDrizzle.query.taskOccurrences.findFirst({
       where: and(
         eq(taskOccurrences.taskId, task.id),
-        lt(taskOccurrences.dueEndDate, new Date().toISOString())
+        lt(taskOccurrences.dueEndDate, new Date().toISOString()),
       ),
       orderBy: [desc(taskOccurrences.dueEndDate)],
     });
@@ -77,7 +77,7 @@ const updateOccurrences = async (task: TaskToUpdate) => {
               ? DateTime.fromSQL(task.dueStartDate)
               : null,
             end: DateTime.fromSQL(task.dueEndDate),
-          }
+          },
     );
 
     // TRANSACTION START
@@ -95,15 +95,15 @@ const updateOccurrences = async (task: TaskToUpdate) => {
               ? DateTime.fromSQL(to.dueStartDate).toISO() === x.dueStartDate
               : to.dueStartDate === x.dueStartDate && to.dueEndDate
                 ? DateTime.fromSQL(to.dueEndDate).toISO() === x.dueEndDate
-                : to.dueEndDate === x.dueEndDate
-          )
+                : to.dueEndDate === x.dueEndDate,
+          ),
       );
 
       await tx.delete(taskOccurrences).where(
         inArray(
           taskOccurrences.id,
-          taskOccurrencesToDelete.map((x) => x.id)
-        )
+          taskOccurrencesToDelete.map((x) => x.id),
+        ),
       );
 
       const newTaskOccurrences = nextOccurrencesData.filter(
@@ -113,8 +113,8 @@ const updateOccurrences = async (task: TaskToUpdate) => {
               ? DateTime.fromSQL(to.dueStartDate).toISO() === x.dueStartDate
               : to.dueStartDate === x.dueStartDate && to.dueEndDate
                 ? DateTime.fromSQL(to.dueEndDate).toISO() === x.dueEndDate
-                : to.dueEndDate === x.dueEndDate
-          )
+                : to.dueEndDate === x.dueEndDate,
+          ),
       );
 
       if (!newTaskOccurrences.length) {
@@ -135,13 +135,13 @@ const updateOccurrences = async (task: TaskToUpdate) => {
       .from(taskOccurrences)
       .leftJoin(
         usersOnTaskOccurrences,
-        eq(usersOnTaskOccurrences.taskOccurrenceId, taskOccurrences.id)
+        eq(usersOnTaskOccurrences.taskOccurrenceId, taskOccurrences.id),
       )
       .where(
         and(
           isNull(usersOnTaskOccurrences.taskOccurrenceId),
-          eq(taskOccurrences.taskId, task.id)
-        )
+          eq(taskOccurrences.taskId, task.id),
+        ),
       );
 
     if (noUserTaskOccurrenceIds.length) {
@@ -174,11 +174,30 @@ export default defineTask({
         },
         where: and(
           eq(tasks.id, taskId as string),
-          eq(tasks.status, TaskStatus.PROCESSING)
+          eq(tasks.status, TaskStatus.PROCESSING),
         ),
       });
 
       await updateOccurrences(task as TaskToUpdate);
+    } else {
+      const tasksToUpdate = await useDrizzle.query.tasks.findMany({
+        with: {
+          occurrences: true,
+          responsibleUsers: {
+            where: isNull(usersOnTasks.resignedAt),
+          },
+        },
+        where: and(
+          eq(tasks.id, taskId as string),
+          eq(tasks.status, TaskStatus.PROCESSING),
+          eq(tasks.type, TaskType.RECURRING),
+          eq(tasks.frequency, TaskFrequency.IRREGULAR),
+        ),
+      });
+
+      tasksToUpdate.map((t) => {
+        updateOccurrences(t as TaskToUpdate);
+      });
     }
 
     return { result: "success" };

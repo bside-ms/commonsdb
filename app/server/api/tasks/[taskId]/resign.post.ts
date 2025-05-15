@@ -8,7 +8,7 @@ import {
 import { TaskOccurrenceStatus } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
-  const taskId = getRouterParam(event, "id");
+  const taskId = getRouterParam(event, "taskId");
   const { userId } = (await readBody(event)) ?? {};
 
   if (!taskId || taskId === "undefined") {
@@ -39,8 +39,8 @@ export default defineEventHandler(async (event) => {
       .where(
         and(
           eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING),
-          eq(taskOccurrences.taskId, taskId)
-        )
+          eq(taskOccurrences.taskId, taskId),
+        ),
       );
 
     // remove user from taskOccurrences
@@ -49,16 +49,16 @@ export default defineEventHandler(async (event) => {
         eq(usersOnTaskOccurrences.userId, user.id),
         inArray(
           usersOnTaskOccurrences.taskOccurrenceId,
-          pendingTaskOccurrenceIds.map((x) => x.id)
-        )
-      )
+          pendingTaskOccurrenceIds.map((x) => x.id),
+        ),
+      ),
     );
 
     // remove user from task
     await tx
       .delete(usersOnTasks)
       .where(
-        and(eq(usersOnTasks.userId, user.id), eq(usersOnTasks.taskId, taskId))
+        and(eq(usersOnTasks.userId, user.id), eq(usersOnTasks.taskId, taskId)),
       );
   });
 });

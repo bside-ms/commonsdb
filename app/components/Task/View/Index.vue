@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ExternalLink } from 'lucide-vue-next';
 import { Button } from '~/components/ui/button';
-import type { Task, TaskLink, TaskOccurrence } from '~/types/tasks';
+import type { Task, TaskOccurrence, WithLinks } from '~/types/tasks';
 
 interface TaskViewProps {
-    task: Task & { occurrences: TaskOccurrence[] } & { links: TaskLink[] };
+    task: Task & WithLinks;
+    taskOccurrence?: TaskOccurrence;
 }
 const { task } = defineProps<TaskViewProps>();
 </script>
@@ -14,7 +15,7 @@ const { task } = defineProps<TaskViewProps>();
         <TaskTitle>{{ task.title }}</TaskTitle>
         <div class="flex flex-col gap-6 px-2">
             <div class="space-y-8">
-                <TaskInfo :task="task" />
+                <TaskInfo :task="task" :task-occurrence="taskOccurrence" />
                 <div v-if="task.description?.length">
                     <div class="text-xl font-serif font-semibold mb-3">Aufgabenbeschreibung</div>
                     <div class="prose" v-html="task.description" />

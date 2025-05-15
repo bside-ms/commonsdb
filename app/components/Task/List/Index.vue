@@ -1,21 +1,17 @@
 <script setup lang="ts">
-import type { Task, WithOccurrences } from '~/types/tasks';
+import type { TaskOccurrence, WithTask } from '~/types/tasks';
 
 interface TaskListProps {
-    tasks: (Task & WithOccurrences)[],
-    type: "list" | "grid"
+    taskOccurrences: (TaskOccurrence & WithTask)[],
     loading?: boolean
 }
 defineProps<TaskListProps>()
 </script>
 
 <template>
-    <div v-if="tasks?.length || loading"
-        :class="[{ 'space-y-6': type === 'list', 'grid gap-5 md:grid-cols-2': type === 'grid' }]">
-        <Skeleton v-if="loading" class="w-full h-44" />
-        <TaskListItem v-else v-for="task in tasks" :task="task" />
+    <div v-if="taskOccurrences?.length || loading" class="grid gap-2">
+        <Skeleton v-if="loading" class="w-full h-20" />
+        <TaskListItem v-else v-for="to in taskOccurrences" :task-occurrence="to" />
     </div>
-    <div v-else>
-        <p class="font-light">Gerade sind keine offenen Aufgaben gepflegt.</p>
-    </div>
+    <p v-else class="font-light">Gerade sind keine offenen Aufgaben gepflegt.</p>
 </template>

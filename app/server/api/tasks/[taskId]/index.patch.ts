@@ -4,7 +4,7 @@ import { categoriesOnTasks, taskLinks, tasks } from "~/server/database/schema";
 import { TaskType } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
-  const taskId = getRouterParam(event, "id");
+  const taskId = getRouterParam(event, "taskId");
   const body = await readBody(event);
 
   if (!taskId || taskId === "undefined") {

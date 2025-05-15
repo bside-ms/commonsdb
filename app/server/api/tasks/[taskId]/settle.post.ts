@@ -12,7 +12,7 @@ import {
 } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
-  const taskId = getRouterParam(event, "id");
+  const taskId = getRouterParam(event, "taskId");
   const { taskOccurrenceId, userIds } = await readBody<{
     taskOccurrenceId: string;
     userIds?: string[];
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     },
     where: and(
       eq(taskOccurrences.id, taskOccurrenceId),
-      eq(taskOccurrences.taskId, taskId)
+      eq(taskOccurrences.taskId, taskId),
     ),
   })) as TaskOccurrence & {
     task: Task;

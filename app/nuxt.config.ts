@@ -69,7 +69,7 @@ export default defineNuxtConfig({
       tasks: true,
     },
     scheduledTasks: {
-      "0 0 * * *": ["task:occurrences:create"],
+      "0 0 * * *": ["task:occurrences:update"],
       "*/5 * * * *": ["task:occurrences:missed"],
     },
   },

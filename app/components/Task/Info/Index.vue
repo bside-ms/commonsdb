@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { CircleCheckBig } from 'lucide-vue-next';
-import { TaskType, type Task, type TaskOccurrence } from '~/types/tasks';
+import { TaskType, type Task, type TaskOccurrence, type WithLinks, type WithOccurrences } from '~/types/tasks';
 
 interface TaskListItemProps {
-    task: Task & { occurrences: TaskOccurrence[] }
+    task: Task & WithLinks;
+    taskOccurrence?: TaskOccurrence;
 }
 const { task } = defineProps<TaskListItemProps>()
-
-const { getNextPendingOccurrenceWithDueDate, getNextPendingDueEndDateFormatted } = useTask()
 </script>
 
 <template>
@@ -16,9 +14,12 @@ const { getNextPendingOccurrenceWithDueDate, getNextPendingDueEndDateFormatted }
             <span class="font-serif font-semibold pr-1">Regelmäßige Aufgabe</span>
             <span class="text-xs">({{ $t(`tasks.frequency.${task.frequency}`) }})</span>
         </div>
+        <div v-if="taskOccurrence" :class="[{ '-mt-2': task.type === TaskType.RECURRING }]">
+            <TaskInfoPeriod :task-occurrence="taskOccurrence" class="text-sm" />
+        </div>
         <ul class="space-y-px">
-            <li v-if="task.priority">
-                <TaskInfoPriority :priority="task.priority" />
+            <li>
+                <TaskInfoPriority :task="task" />
             </li>
             <li>
                 <TaskInfoEffort :task="task" />
@@ -27,10 +28,5 @@ const { getNextPendingOccurrenceWithDueDate, getNextPendingDueEndDateFormatted }
                 <TaskInfoReward :task="task" />
             </li>
         </ul>
-        <div v-if="getNextPendingOccurrenceWithDueDate(task)" class="flex items-center gap-2">
-            <CircleCheckBig class="size-3 stroke-3" />
-            <span class="font-semibold text-sm">
-                zu erledigen bis {{ getNextPendingDueEndDateFormatted(task) }}</span>
-        </div>
     </div>
 </template>

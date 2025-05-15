@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { Task } from '~/types/tasks';
+import type { Task, WithOccurrences } from '~/types/tasks';
 
-const { id } = useRoute().params
+const { taskId } = useRoute().params
 
-const { data, refresh } = await useFetch<Task | null>(`/api/tasks/${id}`)
+const { data, refresh } = await useFetch<Task & WithOccurrences | null>(`/api/tasks/${taskId}`)
 const task = computed(() => data.value)
 
 const title = usePageTitle();
@@ -16,7 +16,7 @@ useSeoMeta({
 <template>
     <div v-if="task" class="grid gap-6 grid-cols-12">
         <TaskView :task="task" :refresh="refresh" class="col-span-full lg:col-span-9">
-            <TaskInfoNextOccurrences :task="task" />
+            <TaskInfoOccurrences :task-occurrences="task.occurrences" />
         </TaskView>
         <TaskViewActions class="col-span-full lg:col-span-3" :task="task" :refresh="refresh" />
     </div>

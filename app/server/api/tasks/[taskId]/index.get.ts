@@ -3,11 +3,14 @@ import { taskOccurrences, tasks } from "~/server/database/schema";
 import { TaskOccurrenceStatus } from "~/types/tasks";
 
 export default defineEventHandler(async (event) => {
-  const taskId = getRouterParam(event, "id");
+  const taskId = getRouterParam(event, "taskId");
 
   if (!taskId || taskId === "undefined") {
     throw createError({ status: 400 });
   }
+
+  const query = getQuery(event);
+  const occurrencesLimit = (query.occurrencesLimit as number) ?? 6;
 
   const task = await useDrizzle.query.tasks.findFirst({
     with: {
@@ -16,6 +19,7 @@ export default defineEventHandler(async (event) => {
       occurrences: {
         where: eq(taskOccurrences.status, TaskOccurrenceStatus.PENDING),
         orderBy: asc(taskOccurrences.dueEndDate),
+        limit: occurrencesLimit,
       },
       responsibleUsers: {
         columns: {

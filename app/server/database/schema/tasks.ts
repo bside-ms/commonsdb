@@ -153,10 +153,10 @@ export const usersOnTaskOccurrences = pgTable(
   "users_on_task_occurrences",
   {
     userId: uuid("user_id")
-      .references(() => users.id)
+      .references(() => users.id, { onDelete: "cascade" })
       .notNull(),
     taskOccurrenceId: uuid("task_occurrence_id")
-      .references(() => taskOccurrences.id)
+      .references(() => taskOccurrences.id, { onDelete: "cascade" })
       .notNull(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.taskOccurrenceId] })]
