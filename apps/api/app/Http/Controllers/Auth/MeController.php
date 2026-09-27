@@ -24,7 +24,7 @@ class MeController extends Controller
     {
         $user = $request->user();
 
-        $user->profile->update($request->validated());
+        $user->profile->update($request->toProfileAttributes());
 
         return new UserResource($user->load('profile'));
     }

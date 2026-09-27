@@ -21,19 +21,43 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'display_name' => ['required', 'string', 'max:120'],
+            'displayName' => ['required', 'string', 'max:120'],
             'pronoun' => ['nullable', 'string', 'max:40'],
             'phone' => ['nullable', 'string', 'max:40'],
-            'accessibility_note' => ['nullable', 'string', 'max:2000'],
+            'accessibilityNote' => ['nullable', 'string', 'max:2000'],
 
             'interests' => ['array'],
             'interests.*' => ['string', 'max:64'],
 
             'visibility' => ['required', Rule::in(['members', 'admins'])],
-            'photo_visibility' => ['required', Rule::in(['members', 'admins', 'nobody'])],
+            'photoVisibility' => ['required', Rule::in(['members', 'admins', 'nobody'])],
 
-            'notify_by_email' => ['boolean'],
-            'notify_new_tasks' => ['boolean'],
+            'notifyByEmail' => ['boolean'],
+            'notifyNewTasks' => ['boolean'],
+        ];
+    }
+
+    /**
+     * The wire is camelCase; the columns are snake_case. Mapped here so
+     * the controller stays a controller and there's one obvious place to
+     * look when a field doesn't save.
+     *
+     * @return array<string, mixed>
+     */
+    public function toProfileAttributes(): array
+    {
+        $data = $this->validated();
+
+        return [
+            'display_name' => $data['displayName'],
+            'pronoun' => $data['pronoun'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'accessibility_note' => $data['accessibilityNote'] ?? null,
+            'interests' => $data['interests'] ?? [],
+            'visibility' => $data['visibility'],
+            'photo_visibility' => $data['photoVisibility'],
+            'notify_by_email' => $data['notifyByEmail'] ?? true,
+            'notify_new_tasks' => $data['notifyNewTasks'] ?? false,
         ];
     }
 }

@@ -15,8 +15,7 @@ export default defineConfig({
 	input: '../api/storage/app/openapi.json',
 	output: {
 		path: 'src/lib/api/generated',
-		format: 'prettier',
-		lint: 'eslint'
+		format: 'prettier'
 	},
 	plugins: [
 		'@hey-api/typescript',

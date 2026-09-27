@@ -9,6 +9,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
 class SessionController extends Controller
@@ -41,7 +42,7 @@ class SessionController extends Controller
 
         return response()->json([
             'user' => new UserResource($user),
-            'token' => $user->createToken($request->input('device_name', 'web'))->plainTextToken,
+            'token' => $user->createToken($request->input('deviceName', 'web'))->plainTextToken,
         ]);
     }
 
@@ -49,10 +50,10 @@ class SessionController extends Controller
      * Sign out, revoking only the token used for this request.
      * Other devices stay signed in.
      */
-    public function destroy(Request $request, AuthProviderContract $provider): JsonResponse
+    public function destroy(Request $request, AuthProviderContract $provider): Response
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(status: 204);
+        return response()->noContent();
     }
 }

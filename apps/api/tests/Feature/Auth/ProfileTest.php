@@ -32,14 +32,14 @@ class ProfileTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson('/api/me', [
-                'display_name' => 'Jo',
+                'displayName' => 'Jo',
                 'pronoun' => 'they/them',
-                'accessibility_note' => 'Kann nicht schwer heben.',
+                'accessibilityNote' => 'Kann nicht schwer heben.',
                 'interests' => ['sc1'],
                 'visibility' => 'admins',
-                'photo_visibility' => 'nobody',
-                'notify_by_email' => false,
-                'notify_new_tasks' => true,
+                'photoVisibility' => 'nobody',
+                'notifyByEmail' => false,
+                'notifyNewTasks' => true,
             ])
             ->assertOk()
             ->assertJsonPath('profile.displayName', 'Jo')
@@ -51,9 +51,9 @@ class ProfileTest extends TestCase
     {
         $this->actingAs($this->member())
             ->patchJson('/api/me', [
-                'display_name' => 'Jo',
+                'displayName' => 'Jo',
                 'visibility' => 'everyone',
-                'photo_visibility' => 'members',
+                'photoVisibility' => 'members',
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('visibility');
@@ -64,10 +64,10 @@ class ProfileTest extends TestCase
         $user = $this->member();
 
         $this->actingAs($user)->patchJson('/api/me', [
-            'display_name' => 'Jo',
+            'displayName' => 'Jo',
             'visibility' => 'members',
-            'photo_visibility' => 'members',
-            'platform_role' => 'superadmin',
+            'photoVisibility' => 'members',
+            'platformRole' => 'superadmin',
         ])->assertOk();
 
         $this->assertSame('member', $user->fresh()->platform_role->value);

@@ -18,8 +18,7 @@ class RegisterController extends Controller
      */
     public function __invoke(RegisterRequest $request, RegistersUsers $registrar): JsonResponse
     {
-        $user = $registrar->create($request->validated());
-
+        $user = $registrar->create($request->toUserData());
         $token = $user->createToken('registration')->plainTextToken;
 
         return response()->json([

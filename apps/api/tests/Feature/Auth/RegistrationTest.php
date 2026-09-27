@@ -17,8 +17,8 @@ class RegistrationTest extends TestCase
             'name' => 'Jo Beispiel',
             'email' => 'jo@b-side.test',
             'password' => 'correct-horse-battery',
-            'password_confirmation' => 'correct-horse-battery',
-            'accepts_rules' => true,
+            'passwordConfirmation' => 'correct-horse-battery',
+            'acceptsRules' => true,
         ], $overrides);
     }
 
@@ -44,6 +44,15 @@ class RegistrationTest extends TestCase
         $this->assertNotNull($user->profile);
     }
 
+    public function test_it_rejects_a_mismatched_password_confirmation(): void
+    {
+        $this->postJson('/api/register', $this->payload([
+            'passwordConfirmation' => 'something-else',
+        ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('password');
+    }
+
     public function test_it_never_returns_the_password_hash(): void
     {
         $response = $this->postJson('/api/register', $this->payload());
@@ -53,9 +62,9 @@ class RegistrationTest extends TestCase
 
     public function test_it_requires_the_house_rules_to_be_accepted(): void
     {
-        $this->postJson('/api/register', $this->payload(['accepts_rules' => false]))
+        $this->postJson('/api/register', $this->payload(['acceptsRules' => false]))
             ->assertStatus(422)
-            ->assertJsonValidationErrors('accepts_rules');
+            ->assertJsonValidationErrors('acceptsRules');
     }
 
     public function test_it_rejects_a_duplicate_email(): void

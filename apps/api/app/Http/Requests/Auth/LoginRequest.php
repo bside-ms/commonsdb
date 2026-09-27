@@ -21,7 +21,7 @@ class LoginRequest extends FormRequest
             'password' => ['required', 'string'],
             // Shown in the token name so people can recognise a
             // session in a future "your devices" screen.
-            'device_name' => ['nullable', 'string', 'max:120'],
+            'deviceName' => ['nullable', 'string', 'max:120'],
         ];
     }
 }
