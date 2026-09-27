@@ -1,12 +1,18 @@
-// See https://svelte.dev/docs/kit/types#app.d.ts
-// for information about these interfaces
+import type { UserResource } from '$lib/api/generated/types.gen';
+
 declare global {
 	namespace App {
-		// interface Error {}
-		// interface Locals {}
-		// interface PageData {}
-		// interface PageState {}
-		// interface Platform {}
+		interface Locals {
+			/**
+			 * The Laravel API token for this request, read from the
+			 * httpOnly cookie in hooks.server.ts. Server-side only — it never reaches the browser.
+			 */
+			accessToken: string | null;
+		}
+
+		interface PageData {
+			user?: UserResource;
+		}
 	}
 }
 

@@ -1,6 +1,6 @@
 import { getRequestEvent } from '$app/server';
 import * as generated from '../../api/generated/sdk.gen';
-import { toApiError } from './errors';
+import { toApiError, ApiError } from './errors';
 
 /**
  * The only module that talks to Laravel.
@@ -12,43 +12,51 @@ import { toApiError } from './errors';
  *
  * Usage inside a .remote.ts:
  *
- *   import { api } from '$api/client';
- *   const tasks = await api(sdk.listTasks, { query: { category } });
+ *   import { api, sdk } from '$api/client';
+ *   const result = await api(sdk.listTasks, { query: { category } });
+ *
+ * Types are inferred from the SDK function itself rather than
+ * hand-declared, because @hey-api/openapi-ts's generated signatures
+ * (Options, RequestResult) have enough generic machinery that a
+ * hand-written equivalent drifts out of sync with what's actually
+ * generated — which is exactly what broke here three times over.
  */
 
-type SdkFn<Options, Data> = (options: Options) => Promise<{
-	data?: Data;
-	error?: unknown;
-	response: Response;
-}>;
+type AnySdkFn = (options: never) => Promise<{ data?: unknown; error?: unknown; response?: Response }>;
 
-/**
- * Calls a generated SDK function with the current request's auth and
- * fetch, unwraps { data, error }, and turns failures into ApiError.
- */
-export async function api<Options extends Record<string, unknown>, Data>(
-	fn: SdkFn<Options & { fetch?: typeof fetch; headers?: HeadersInit }, Data>,
-	options: Options = {} as Options
-): Promise<Data> {
+type SdkOptions<Fn extends AnySdkFn> = Parameters<Fn>[0];
+type SdkResult<Fn extends AnySdkFn> = NonNullable<Awaited<ReturnType<Fn>>['data']>;
+
+export async function api<Fn extends AnySdkFn>(
+	fn: Fn,
+	options?: SdkOptions<Fn>
+): Promise<SdkResult<Fn>> {
 	const event = getRequestEvent();
 	const token = event.locals.accessToken;
 
 	const result = await fn({
-		...options,
+		...(options as object),
 		fetch: event.fetch,
 		headers: {
 			Accept: 'application/json',
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
-			...(options.headers as Record<string, string> | undefined)
+			...((options as { headers?: HeadersInit })?.headers as Record<string, string> | undefined)
 		}
-	});
+	} as never);
 
-	if (result.error !== undefined || !result.response.ok) {
+	if (result.error !== undefined) {
+		// response is absent when the error happened building the
+		// request or on a network failure (DNS, connection refused) —
+		// not something Laravel said, something that stopped us
+		// reaching it at all.
+		if (!result.response) {
+			throw new ApiError(0, 'Die API ist nicht erreichbar.', {});
+		}
 		throw toApiError(result.response.status, result.error);
 	}
 
-	return result.data as Data;
+	return result.data as SdkResult<Fn>;
 }
 
 /** Re-exported so features write `sdk.listTasks` with one import. */
-export * as sdk from '../../api/generated/sdk.gen';
+export const sdk = generated;

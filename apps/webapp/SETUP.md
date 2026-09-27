@@ -30,10 +30,6 @@ it to `"@sveltejs/kit": "2.63.0"` and upgrade deliberately.
 <Toaster />
 ```
 
-Archivo goes in `static/fonts/` at weights 400, 500 and 600, declared
-with `@font-face` in `app.css`. The prototype embeds it as base64 —
-fine for a single-file mockup, not for a real build.
-
 ## Conventions
 
 1. **A component enters `$lib/ui` on its second use.** Until then it

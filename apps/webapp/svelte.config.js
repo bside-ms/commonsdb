@@ -2,17 +2,10 @@ import adapter from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /**
- * The single config location. vite.config.ts handles Vite and Vitest;
- * everything framework-level is here.
- *
- * @type {import('@sveltejs/kit').Config}
- */
-const config = {
+ @type {import('@sveltejs/kit').Config} */ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		// Node, not auto: the BFF holds Keycloak tokens in httpOnly
-		// cookies, which needs a real server.
 		adapter: adapter(),
 
 		alias: {
@@ -28,6 +21,9 @@ const config = {
 	},
 
 	compilerOptions: {
+		// Force runes mode for the project, except for libraries.
+		// Can be removed in svelte 6.
+		runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true),
 		experimental: {
 			async: true
 		}
