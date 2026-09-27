@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Auth\Contracts\AuthProviderContract;
 use App\Auth\Providers\KeycloakAuthProvider;
 use App\Auth\Providers\LocalAuthProvider;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Off globally: with it on, `me` returns { data: {...} } while
+        // register returns { user, token }. One shape per endpoint is
+        // worse than no wrapper at all, especially once Scramble turns
+        // these into TypeScript.
+        JsonResource::withoutWrapping();
     }
 }
