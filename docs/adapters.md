@@ -31,7 +31,7 @@ needs to provide, reference to `KeycloakAuthProvider` /
 Use this if your space:
 
 - Already runs Keycloak or another OIDC provider → likely just
-  config, see `backend/README.md`
+  config, see `apps/api/README.md`
 - Has no identity system yet → use the local-accounts fallback as a
   starting point
 - Runs something else entirely → implement the contract; see

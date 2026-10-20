@@ -1,42 +1,36 @@
-# sv
+# Web app (SvelteKit)
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+The app members and admins use. Admin views are role-gated routes in the
+same app, not a separate tool. Part of the
+[commonsdb monorepo](../../README.md).
 
-## Creating a project
+## Local setup
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+Requires Node.js and [pnpm](https://pnpm.io). The API should be running
+(see [apps/api](../api/README.md)).
 
 ```sh
-# recreate this project
-pnpm dlx sv@0.17.1 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" playwright --install pnpm webapp
+cd apps/webapp
+pnpm install
+cp .env.example .env
+pnpm dev
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Tests:
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm test:unit   # unit and component tests (Vitest)
+pnpm test:e2e    # end-to-end tests (Playwright)
+pnpm test        # both
 ```
 
-## Building
+## Docs
 
-To create a production version of your app:
+- [docs/structure.md](docs/structure.md) — how the code is organised
+- [docs/setup.md](docs/setup.md) — setup notes and fixes to the generated project
+- [docs/groundwork.md](docs/groundwork.md) — API types from OpenAPI, testing habits
+- [docs/slice-1.md](docs/slice-1.md) — slice 1: sign-in and profile
 
-```sh
-npm run build
-```
+## License
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+GPL-3.0-or-later, see [LICENSE](../../LICENSE).

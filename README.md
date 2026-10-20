@@ -1,41 +1,94 @@
 # B-Side commonsdb
-Status: early development / pre-release.
 
-<!-- One paragraph: what this is, for whom, in plain language. Written for someone from another space who lands here via a search engine, not just for us. -->
-Idea
-<!-- Short version of ARCHITECTURE.md's "Purpose" section: - tasks for maintaining a shared space - booking system for resources (rooms, kitchen, cargo bikes, ...) - certificates/qualifications as prerequisites for resource use - an internal currency ("repros") earned by contributing, spent to use resources - users, and initiatives/organizations users can belong to or admin Link out to ARCHITECTURE.md for the full picture. -->
-Why open source
-<!-- Fördergeld context, "offene Veröffentlichung unter GPL-3" per the Stiftung agreement — briefly, factually. Link to LICENSE. -->
-Repo structure
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
+![Status: early development](https://img.shields.io/badge/status-early%20development-orange.svg)
+
+A platform for running a shared community space together. It is built for
+the B-Side in Münster and designed so that other
+spaces can run their own copy with their own login and calendar systems.
+
+> **Status:** early development / pre-release. Not ready for production use.
+
+## What it does
+
+- **Tasks** for maintaining the shared space, split into shifts that
+  members can take on
+- **Repros**, an internal time currency: earned by contributing, spent to
+  use resources
+- **Users and initiatives**: people can belong to and run one or more
+  initiatives (groups) within the space
+- **Resources and bookings** (rooms, kitchen, cargo bikes, …), with access
+  rules such as required qualifications _(planned after the first release)_
+
+The full picture, including design decisions, is in
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Why open source
+
+The project is published openly under the GPL-3.0, so that other community spaces can
+use, adapt and improve it, and improvements flow back.
+
+## Stack
+
+| Part     | Technology        | Why                                                                  |
+| -------- | ----------------- | -------------------------------------------------------------------- |
+| API      | Laravel (PHP)     | Widely known, readable, cheap to host, mature and actively developed |
+| Web app  | SvelteKit         | One app for members and admins (role-gated `/admin` routes)          |
+| Login    | Pluggable adapter | Built-in local accounts, or your own OIDC provider (we use Keycloak) |
+| Calendar | Pluggable adapter | Built-in, or an existing calendar via CalDAV etc.                    |
+
+## Repository structure
+
+```
+commonsdb/
 ├── apps/
-│   ├── backend/     # Laravel API
-│   └── webapp/      # SvelteKit — end-user PWA + guarded /admin routes
-├── docs/            # cross-cutting docs (adapters, deployment, decisions)
-├── infra/           # docker, deploy scripts, CI
-├── ARCHITECTURE.md   # conceptual/architectural decisions, living doc
-└── CONTRIBUTING.md
+│   ├── api/              Laravel API           → apps/api/README.md
+│   └── webapp/           SvelteKit web app     → apps/webapp/README.md
+├── docs/                 Cross-cutting docs    → docs/README.md
+├── ARCHITECTURE.md       How the system is built and why
+├── ROADMAP.md            What gets built in which order
+├── CONTRIBUTING.md       How to contribute
+├── LICENSE               GPL-3.0-or-later
+├── docker-compose.yml    Local services (Keycloak for login testing)
+└── Makefile              Shortcuts for the local services
+```
 
-Each pillar (apps/backend/, apps/webapp/) has its own README with setup and pillar-specific docs. This root README is for orientation, not detail.
+## Where to find what
 
-Adapting this for your space
+| You want to …                                 | Read                                                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| get an overview                               | this README                                                                              |
+| understand the system and its decisions       | [ARCHITECTURE.md](ARCHITECTURE.md)                                                       |
+| know what comes next                          | [ROADMAP.md](ROADMAP.md)                                                                 |
+| run it with your own login or calendar system | [docs/adapters.md](docs/adapters.md)                                                     |
+| set up the API or the web app locally         | [apps/api/README.md](apps/api/README.md), [apps/webapp/README.md](apps/webapp/README.md) |
+| contribute                                    | [CONTRIBUTING.md](CONTRIBUTING.md)                                                       |
 
-If you're running a different identity provider or calendar system than we are, start at docs/adapters.md — the platform is built so only auth and calendar integration need to change; everything else (ledger, tasks, initiatives, resource rules) works the same.
+## Adapting it for your space
 
-Getting started
+Only two things differ between spaces: how people log in, and where
+calendar data lives. Those are swappable adapters. Everything else
+(tasks, repros, initiatives, resource rules) works the same everywhere.
+Start at [docs/adapters.md](docs/adapters.md).
 
-Local development uses DDEV per app (see apps/backend/README.md for the backend quickstart). DDEV is dev/local tooling only — it doesn't affect how the project is deployed in production; see docs/deployment/ for that.
+## Getting started
 
-<!-- Fill in once apps/webapp/ setup is decided too. -->
-Releases & versioning
+Local development uses [DDEV](https://ddev.com), set up per app. See
+[apps/api/README.md](apps/api/README.md) and
+[apps/webapp/README.md](apps/webapp/README.md). DDEV is local tooling
+only and does not affect how the platform is deployed.
 
-Pillars are released together — one version number covers the whole monorepo (backend + app), so "which version am I running" is a single answer even after a space has forked and customized their adapters.
+## Releases & versioning
 
-Infrastructure
-<!-- Our own deployment notes / what we run in production, vs. what other spaces might realistically run (cheap shared hosting vs. docker). Link to docs/deployment/. -->
-License
+API and web app are released together under one version number, so
+"which version am I running?" has a single answer, even after a space has
+customized its adapters.
 
-GPL-3.0. See LICENSE.
+## License
 
-Contributing
+Copyright © B-Side Münster and contributors.
 
-See CONTRIBUTING.md.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option)
+any later version. See [LICENSE](LICENSE).

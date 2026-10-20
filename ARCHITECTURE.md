@@ -1,30 +1,24 @@
 # Architecture Overview — Space Management Platform
 
-Status: conceptual, pre-implementation. This doc captures decisions made so
+Status: living document, updated as decisions are made. This doc captures decisions made so
 far so they survive across separate chats/contexts (backend, admin
 dashboard, frontend/PWA) and stay legible to future contributors.
 
 ## Purpose
 
-A platform for a shared community space (Münster) to organize:
+A platform for shared community spaces to organize itself:
 
 - Tasks for maintaining the common space
-- Booking of resources (meeting rooms, kitchen, cargo bikes, more later)
-- Certificates/qualifications as prerequisites for using certain resources
-- An internal currency ("repros", from "reproduction") earned by
-  contributing and spent to use resources
+- Booking of resources (meeting rooms, kitchen, cargo bikes, etc.)
+- Certificates/Qualifications as prerequisites for using certain resources or assigning certain tasks
+- An internal currency ("repros", from "reproduction") earned by contributing and spent to use resources
 - Users, who can belong to and/or administrate one or more Initiatives
-
-Funded via Fördergeld → must be open source and reasonably adjustable by
-other spaces with different infrastructure (some use Keycloak like bside,
-others may have no identity system at all).
 
 ## Stack
 
 - **Backend/API**: Laravel (PHP)
 - **PWA (end users)**: SvelteKit
-- **Admin dashboard**: SvelteKit — same app/stack as the PWA, not a
-  separate tool (see "Admin dashboard" below)
+- **Admin dashboard**: SvelteKit — same app/stack as the PWA, not a separate tool (see "Admin dashboard" below)
 
 Chosen because:
 
@@ -170,22 +164,22 @@ after other spaces fork and customize adapters).
 
 ```
 ├── apps/
-│   ├── backend/      # Laravel API
+│   ├── api/          # Laravel API
 │   └── webapp/       # SvelteKit — single app: end-user PWA + guarded
 │                      # /admin routes (platform-admin and
 │                      # initiative-admin both live here, gated by role
 │                      # — not a separate dashboard package)
 ├── docs/             # cross-cutting docs (adapters, deployment, decisions)
-├── infra/            # docker, deploy scripts, CI
+├── infra/            # docker, deploy scripts, CI (planned)
 ├── ARCHITECTURE.md    # this file
 ├── README.md          # project idea, structure, getting started
 ├── CONTRIBUTING.md
-└── LICENSE             # GPL-3.0 (per Stiftung/Fördergeld agreement:
+└── LICENSE            # GPL-3.0-or-later (per Stiftung/Fördergeld agreement:
                          # "offene Veröffentlichung unter GPL-3")
 ```
 
 `apps/` groups the deployable pillars separately from docs/tooling at
-the repo root. Each pillar (`apps/backend/`, `apps/webapp/`) gets its own
+the repo root. Each pillar (`apps/api/`, `apps/webapp/`) gets its own
 README for setup/detail; root README stays orientation-level.
 `docs/adapters.md` is the key open-source-adoption doc — how to
 implement `AuthProviderContract` / `CalendarProviderContract` for a
@@ -201,7 +195,7 @@ dev/local-only tooling — it has no bearing on how a space actually
 deploys to production (cheap shared hosting or self-hosted Docker in
 prod are both untouched by this choice).
 
-DDEV config lives per-app (e.g. `apps/backend/.ddev/`), initialized by
+DDEV config lives per-app (e.g. `apps/api/.ddev/`), initialized by
 running `ddev config` from within that subfolder — not one shared config
 at the repo root.
 
@@ -210,16 +204,3 @@ MariaDB; Postgres is arguably a better fit for the ledger's transactional
 needs, but MariaDB/MySQL is far more commonly available on the cheap
 shared hosting other spaces may already have. Decide consciously per
 reference-deployment goals rather than defaulting silently.
-
-## Open / to revisit in dedicated chats
-
-- Backend chat: entity/schema design for Account/User/Initiative/Role/
-  Transaction, `AuthProviderContract` / `CalendarProviderContract`
-  concrete implementations, ledger transaction semantics (hold vs.
-  charge on cancellation, credit/blocking mechanics), resource-rule
-  class design (and how account-standing checks relate to resource
-  access rules).
-- Admin dashboard chat: route/role structure for platform-admin vs.
-  initiative-admin, which components are genuinely shared vs. admin-only.
-- Frontend/PWA chat: SvelteKit app structure, TipTap integration/config,
-  booking UX, offline/PWA considerations.
