@@ -1,0 +1,19 @@
+{
+  "name": "commonsdb",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter webapp dev",
+    "build": "pnpm --filter webapp build",
+    "check": "pnpm -r check",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "db:generate": "pnpm --filter @commonsdb/db generate",
+    "db:migrate": "pnpm --filter @commonsdb/db migrate",
+    "db:studio": "pnpm --filter @commonsdb/db studio"
+  }
+}

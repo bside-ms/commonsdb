@@ -1,0 +1,8 @@
+minimumReleaseAge: 1440
+engineStrict: true
+allowBuilds:
+  esbuild: true
+
+packages:
+  - apps/*
+  - packages/*
