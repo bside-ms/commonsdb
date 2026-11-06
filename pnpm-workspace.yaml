@@ -6,3 +6,7 @@ allowBuilds:
 packages:
   - apps/*
   - packages/*
+
+catalog: {
+  "better-auth": "^1.7.17"
+}

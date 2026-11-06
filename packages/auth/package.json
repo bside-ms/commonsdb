@@ -1,0 +1,22 @@
+{
+  "name": "@commonsdb/auth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc",
+    "schema": "auth generate --config auth.config.ts --output ../db/src/schema/auth.ts --yes"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "auth": "^1.7.17",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@commonsdb/db": "workspace:*",
+    "better-auth": "catalog:"
+  }
+}
