@@ -1,0 +1,19 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+
+	"app_name": "B-Side Commons",
+
+	"login_title": "Anmelden",
+	"login_keycloak_button": "Mit B-Side-Konto anmelden",
+	"login_email_label": "E-Mail",
+	"login_password_label": "Passwort",
+	"login_submit": "Anmelden",
+	"login_error_oauth": "Die Anmeldung ist fehlgeschlagen. Bitte versuch es noch einmal.",
+	"login_error_method_disabled": "Diese Anmeldemethode ist nicht aktiviert.",
+	"login_error_start_failed": "Die Anmeldung konnte nicht gestartet werden.",
+	"login_error_invalid_credentials": "E-Mail oder Passwort stimmen nicht.",
+
+	"logout": "Abmelden",
+
+	"home_greeting": "Hallo {name}!"
+}
