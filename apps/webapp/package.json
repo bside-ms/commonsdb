@@ -41,5 +41,10 @@
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1",
 		"vite": "^8.3.0"
+	},
+	"dependencies": {
+		"@commonsdb/auth": "workspace:*",
+		"@commonsdb/db": "workspace:*",
+		"better-auth": "catalog:"
 	}
 }

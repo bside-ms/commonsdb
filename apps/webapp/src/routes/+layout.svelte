@@ -1,13 +1,22 @@
 <script lang="ts">
-	import './layout.css';
-	import favicon from '#lib/assets/favicon.svg';
-	import type { LayoutProps } from './$types';
+    import './layout.css';
+    import favicon from '#lib/assets/favicon.svg';
+    import type {LayoutProps} from './$types';
 
-	let { children }: LayoutProps = $props();
+    let {children, data}: LayoutProps = $props();
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+    <link rel="icon" href={favicon}/>
 </svelte:head>
+
+{#if data.user}
+    <header class="flex items-center justify-between border-b px-4 py-3">
+        <span>{data.user.name} · {data.user.email}</span>
+        <form method="post" action="/logout">
+            <button class="underline">Abmelden</button>
+        </form>
+    </header>
+{/if}
 
 {@render children()}
