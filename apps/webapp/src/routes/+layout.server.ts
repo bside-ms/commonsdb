@@ -1,5 +1,9 @@
+import { isAdmin } from '@commonsdb/core';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = ({ locals }) => ({
-	user: locals.user ? { name: locals.user.name, email: locals.user.email } : null
+	user:
+		locals.actor && locals.profile
+			? { displayName: locals.profile.displayName, isAdmin: isAdmin(locals.actor) }
+			: null
 });

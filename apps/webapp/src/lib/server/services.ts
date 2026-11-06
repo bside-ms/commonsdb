@@ -11,6 +11,7 @@ import { getRequestEvent } from '$app/server';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { createDb } from '@commonsdb/db';
 import { createAuth } from '@commonsdb/auth';
+import { provisionProfile } from '@commonsdb/core';
 
 export const { db } = createDb(DATABASE_URL);
 
@@ -33,5 +34,6 @@ export const auth = createAuth({
 			}
 		: undefined,
 	emailPassword: loginMethods.emailPassword,
+	onUserCreated: (user) => provisionProfile(db, user),
 	plugins: [sveltekitCookies(getRequestEvent)]
 });

@@ -22,16 +22,21 @@ adjustable by other spaces with different infrastructure.
 
 A plain TypeScript stack, one language end to end:
 
-- **App**: SvelteKit (end-user PWA + guarded `/admin` routes, server side
-  included — no separate backend service for now)
+- **App**: SvelteKit 3 (end-user PWA + guarded `/admin` routes, server
+  side included — no separate backend service for now)
 - **Domain**: framework-agnostic TypeScript package (`packages/core`)
-- **Database**: Postgres, accessed via Drizzle (schema + migrations)
-- **Auth**: Better Auth (OIDC/Keycloak via config, email/password for
-  spaces without an IdP)
+- **Database**: Postgres 17, accessed via Drizzle (schema + migrations in
+  `packages/db`)
+- **Auth**: Better Auth, wrapped in `packages/auth` (Keycloak/OIDC via
+  config, email/password behind a flag for spaces without an IdP)
+- **Validation**: valibot in `core` (Standard Schema, so the same schemas
+  can validate forms and remote functions)
+- **i18n**: Paraglide JS, German as the only locale for now
 - **Background jobs**: a small worker process (pg-boss or
   graphile-worker, both Postgres-backed, no Redis) running the same
-  `core`
-- **Rich text**: TipTap, shared between end-user and admin views
+  `core` — not built yet
+- **Rich text**: TipTap, shared between end-user and admin views — not
+  built yet
 
 ### History: why not Laravel
 
@@ -80,18 +85,24 @@ and simple.
 
 ### Pluggable boundary (ports and adapters, swappable per deployment)
 
-- **Auth** — now mostly **Better Auth configuration** rather than
-  hand-written adapters: OIDC provider (e.g. Keycloak at bside) or
-  email/password for spaces with no IdP. `core` only depends on a small
-  "current user/identity" port, so the auth library does not leak into
-  the domain.
+- **Auth** — Better Auth configuration, not hand-written adapters.
+  `packages/auth` exports `createAuth(options)`: Keycloak/OIDC (issuer,
+  client id/secret) or email/password, chosen by env vars. Two seams keep
+  the library out of the domain:
+    - `core` only sees an **`Actor`** (`{ id, platformRole }`), never a
+      Better Auth session.
+    - `createAuth` exposes an **`onUserCreated`** callback; the webapp
+      connects it to `core` (profile provisioning). `auth` never imports
+      `core`.
 - **`CalendarProvider`** — where booking events actually live. Reference
-  implementations: internal DB (default), CalDAV, Google Calendar.
+  implementations: internal DB (default), CalDAV, Google Calendar. Not
+  needed before resource booking (ROADMAP slice 10).
 
-Selection happens via config/environment variables wired at a single
-composition root (constructor injection, no DI framework needed), so
-forking spaces adjust behavior without touching core code — or add a new
-adapter if their setup isn't covered yet.
+All wiring happens in one **composition root** per app
+(`apps/webapp/src/lib/server/services.ts`): it reads env, creates `db`
+and `auth` once, and passes them on. Packages receive configuration and
+never read env vars or import framework code. A worker or test sets up
+its own root the same way.
 
 ## Slicing later
 
@@ -130,9 +141,35 @@ which UI rendered it.
 
 ## Fundamentals: Users, Initiatives, Roles, Ledger (decided)
 
-- **User** vs **Profile**: User = account/identity (via Better Auth).
-  Profile = human-facing display info (name, avatar, bio). Kept distinct
-  from auth concerns.
+- **User** vs **Profile**: `user` = identity, owned by Better Auth
+  (generated schema). `profile` = the human-facing person, owned by us,
+  one per user (PK = `user_id`), created on first login via
+  `onUserCreated`, with an `ensureProfile` fallback on each request.
+  Fields per ROADMAP slice 1: display name, pronoun, phone, accessibility
+  note (free text for shift planning, explicitly not a medical record),
+  interests (JSON of super-category ids until categories exist),
+  visibility (`members | admins`), photo visibility
+  (`members | admins | nobody`), two notification flags,
+  `onboarded_at`, `rules_accepted_at`. Collected now, no behaviour built
+  on them yet.
+- **Onboarding**: with Keycloak, registration happens at the IdP. The
+  app's equivalent is a one-time `/onboarding` screen after first login
+  (profile fields + accepting the house rules). Everything except
+  `/onboarding` and `/logout` redirects there until `onboarded_at` is
+  set. Admin approval of new members: still open (see ROADMAP).
+- **Roles — revised**: one **platform role** per user,
+  `member | admin | superadmin`, stored as `user.platform_role` via Better
+  Auth `additionalFields` (`input: false`, so it cannot be set through
+  the auth API; arrives with the session, no extra query). Managed in the
+  app, not mapped from Keycloak — mapping can become an optional auth
+  setting later.
+    - The earlier "roles as data in a table" idea is replaced: the
+      flexibility it was meant to provide lives in **category-scoped
+      capabilities** (ROADMAP slice 2), not in the platform role.
+    - Whether `admin` stays a role or becomes "has capabilities" is still
+      open (ROADMAP, "Noticed, not decided").
+    - Initiative-scoped roles (`member` / `admin` on the
+      User↔Initiative relationship) remain as planned for slice 9.
 - **Account concept**: a shared conceptual role (not necessarily a DB
   table) that both **User** and **Initiative** fulfill — anything that
   can hold a ledger balance and be the "party" on a booking. User and
@@ -146,13 +183,6 @@ which UI rendered it.
       invitations). Worth evaluating as a foundation, but the domain model
       (roles as data, Account concept, ledger) stays owned by `core`; the
       auth library must not own it.
-- **Roles — flexible by design**: roles are data, not hardcoded
-  enums/booleans. Two separate role *scopes*:
-    - Platform-scoped roles (assigned to a User directly) — for now just
-      `user` / `platform_admin`, modeled so more roles (e.g. "certificate
-      issuer") can be added later without code changes.
-    - Initiative-scoped roles (assigned on the User↔Initiative
-      relationship) — for now `member` / `admin`, same flexibility intent.
 - **Ledger (repros) — Approach B, confirmed**:
     - Both Users and Initiatives hold a balance (they're both Accounts).
     - Users earn repros (tied to completing tasks/contributions). Earning
@@ -181,50 +211,94 @@ which UI rendered it.
 
 Monorepo, coupled releases (one version number covers everything, so
 "which version am I running" stays a single answer even after other
-spaces fork and customize adapters). Package manager: pnpm workspaces.
+spaces fork and customize adapters). pnpm workspaces.
 
 ```
 ├── apps/
-│   └── webapp/        # SvelteKit — PWA + guarded /admin routes, thin
-│                       # controllers only
+│   └── webapp/         # SvelteKit — composition root, routes, UI;
+│                        # thin load/actions that call core
 ├── packages/
-│   ├── core/           # domain: ledger, resource rules, tasks,
-│   │                   # initiatives, policies, ports + adapters
-│   └── db/             # Drizzle schema + migrations (may fold into
-│                       # core — decide when scaffolding)
-├── docs/              # cross-cutting docs (adapters, deployment, decisions)
-├── infra/             # docker compose, deploy scripts, CI
-├── ARCHITECTURE.md     # this file
-├── README.md           # project idea, structure, getting started
-├── CONTRIBUTING.md
-└── LICENSE             # GPL-3.0 (per Stiftung/Fördergeld agreement:
-                         # "offene Veröffentlichung unter GPL-3")
+│   ├── db/              # Drizzle schema (incl. generated Better Auth
+│   │                    # tables), migrations, createDb(url)
+│   ├── auth/            # createAuth(options) around Better Auth
+│   └── core/            # domain services, Actor, policies, input
+│                        # schemas, domain errors
+├── docs/
+├── infra/
+├── docker-compose.yml   # Postgres (+ optional local Keycloak)
+├── tsconfig.base.json
+├── pnpm-workspace.yaml  # packages, catalog, build-script allowlist
+├── ARCHITECTURE.md
+├── ROADMAP.md
+└── ...
 ```
 
-`docs/adapters.md` is the key open-source-adoption doc — how to
-configure Better Auth for a different identity setup and how to
-implement `CalendarProvider` for a different calendar system.
+Dependencies point one way: `webapp → auth → db`, `webapp → core → db`.
+`core` and `auth` never depend on each other or on SvelteKit.
+
+### Package conventions
+
+- **No build step** for internal packages: `exports` point at
+  `src/index.ts`, consumers (Vite, drizzle-kit, Node type stripping)
+  read source directly. Relative imports use the `.ts` extension
+  (`allowImportingTsExtensions`).
+- **Shared versions via the pnpm catalog** (`better-auth`, `drizzle-orm`,
+  `typescript`, …) so packages cannot drift apart.
+- **Supply chain**: `minimumReleaseAge` and an explicit `allowBuilds`
+  allowlist in `pnpm-workspace.yaml`; install scripts are opt-in per
+  package.
+- **Better Auth schema** is generated, never hand-edited:
+  `pnpm --filter @commonsdb/auth schema` writes
+  `packages/db/src/schema/auth.ts` from `packages/auth/auth.config.ts`
+  (dummy values; the CLI only needs to know which features are on), then
+  `pnpm db:generate` / `pnpm db:migrate`. Generated schema and migrations
+  are committed.
+
+### Conventions across the stack
+
+- **`core` returns codes, never user-facing text.** Validation and
+  domain errors carry codes (`profile_display_name_required`); the
+  webapp maps them to messages via the `error_<code>` key convention in
+  Paraglide. This keeps `core` usable by a worker or a future API and
+  keeps all wording in message files.
+- **i18n**: German-only for now, but every UI string goes through
+  Paraglide (`apps/webapp/messages/de.json`) from the start. Other spaces
+  change wording by editing message files (rebuild needed, no code
+  changes); adding a language is a new message file plus one entry in
+  `project.inlang/settings.json`. No locale prefixes in URLs; a future
+  second language would be chosen per profile. Runtime-editable text (e.g.
+  the "About" page) is content in the database, not i18n.
+- **Authorization lives in `core`.** The hooks guard is coarse (session,
+  onboarding, `/admin` needs admin); services enforce the real rules
+  (e.g. "edit *own* profile" via the actor in the query).
+- **Redirects to external origins** use SvelteKit's allowlist
+  (`{ external: [keycloakOrigin] }`), never `{ external: true }`.
+-
 
 ### Local dev environment
 
-docker compose (Postgres, optional mail catcher) plus pnpm, or a
-devcontainer — to keep "clone and run" easy for contributors at other
-spaces. Replaces DDEV from the earlier Laravel plan. Dev tooling only;
-production deployment is covered in `docs/deployment/`.
+`docker compose up -d db` (Postgres) plus pnpm. One `.env` at the repo
+root for everything; the webapp reads it via SvelteKit's
+`env: { dir: '../..' }`, packages via `process.loadEnvFile`. Env vars for
+the webapp are declared and validated in `apps/webapp/src/env.ts`
+(SvelteKit 3 `defineEnvVars`). Development authenticates against the
+B-Side Keycloak `Test` realm; a local Keycloak in docker compose stays
+available for offline work.
 
-Database: Postgres, decided. No longer constrained by shared-hosting
-MySQL availability.
+Database: Postgres, decided.
 
-## Open / to revisit in dedicated chats
+## Open / next
 
-- **Core chat**: entity/schema design (Account/User/Initiative/Role/
-  Transaction), ledger transaction semantics (hold vs. charge on
-  cancellation, credit/blocking mechanics), resource-rule class design
-  and its relation to account-standing checks, `CalendarProvider`
-  interface, composition root, Better Auth organization plugin vs.
-  own model, whether `db` is its own package.
-- **Webapp chat**: SvelteKit structure, route groups for end-user vs.
-  `/admin`, TipTap integration, booking UX, PWA/offline considerations,
-  load/action patterns that keep controllers thin.
-- **Infra chat (later)**: docker compose, worker process, deployment docs
-  for VPS/Docker, CI, supply-chain hygiene (lockfile, script policy).
+- **Slice 0 — design system** in `apps/webapp/src/lib/ui/`; existing
+  screens (login, onboarding, profile) are functional but unstyled.
+- **Slice 2 — tasks**: categories, capabilities (category-scoped admin),
+  shifts in the schema.
+- **Keycloak logout**: signing out ends the app session only; decide
+  whether to also end the IdP session.
+- **Tests**: the scaffold's e2e test no longer matches (everything is
+  behind login); set up test strategy (core unit tests against a test
+  database, a few e2e flows).
+- **TypeScript 7**: packages use the native compiler; editor and
+  `svelte-check` tooling may lag — pin via catalog if it causes trouble.
+- Later: worker process, deployment docs (VPS/Docker), CI, ledger
+  semantics, Better Auth organization plugin vs. own initiative model.

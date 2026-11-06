@@ -1,4 +1,4 @@
-.PHONY: keycloak-up keycloak-down keycloak-logs keycloak-export db-up
+.PHONY: keycloak-up keycloak-down keycloak-logs keycloak-export db-up db-down
 
 keycloak-up:
 	docker compose up -d keycloak keycloak-db
@@ -15,3 +15,6 @@ keycloak-export:
 
 db-up:
 	docker compose up -d db
+
+db-down:
+	docker compose down db

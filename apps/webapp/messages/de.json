@@ -15,5 +15,49 @@
 
 	"logout": "Abmelden",
 
-	"home_greeting": "Hallo {name}!"
+	"home_greeting": "Hallo {name}!",
+
+	"nav_admin": "Admin",
+
+	"onboarding_title": "Willkommen!",
+	"onboarding_intro": "Erzähl uns kurz, wer du bist. Du kannst alles später ändern.",
+	"onboarding_accept_rules": "Ich habe die Hausregeln gelesen und akzeptiere sie.",
+	"onboarding_submit": "Los geht's",
+
+	"profile_edit": "Bearbeiten",
+	"profile_edit_title": "Profil bearbeiten",
+	"profile_save": "Speichern",
+	"profile_display_name": "Name",
+	"profile_pronoun": "Pronomen",
+	"profile_phone": "Telefon",
+	"profile_accessibility_note": "Hinweis zur Barrierefreiheit",
+	"profile_accessibility_note_hint": "Sehen nur Admins, die Schichten planen. Bitte keine medizinischen Details.",
+	"profile_visibility": "Wer sieht mein Profil?",
+	"profile_photo_visibility": "Wer sieht mein Foto?",
+	"profile_notifications": "Benachrichtigungen",
+	"profile_notify_by_email": "per E-Mail",
+	"profile_notify_new_tasks": "bei neuen Aufgaben",
+	"profile_role": "Rolle",
+
+	"visibility_members": "Alle Mitglieder",
+	"visibility_admins": "Nur Admins",
+	"visibility_nobody": "Niemandw",
+
+	"role_member": "Mitglied",
+	"role_admin": "Admin",
+	"role_superadmin": "Superadmin",
+
+	"admin_title": "Admin",
+	"admin_placeholder": "Kommt mit den Aufgaben.",
+
+	"error_unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal.",
+	"error_profile_not_found": "Profil nicht gefunden.",
+	"error_profile_display_name_required": "Bitte gib einen Namen an.",
+	"error_profile_display_name_too_long": "Der Name ist zu lang (max. 80 Zeichen).",
+	"error_profile_pronoun_too_long": "Zu lang (max. 40 Zeichen).",
+	"error_profile_phone_too_long": "Zu lang (max. 40 Zeichen).",
+	"error_profile_accessibility_note_too_long": "Zu lang (max. 1000 Zeichen).",
+	"error_profile_visibility_invalid": "Bitte wähle eine Option.",
+	"error_profile_photo_visibility_invalid": "Bitte wähle eine Option.",
+	"error_onboarding_rules_not_accepted": "Bitte akzeptiere die Hausregeln."
 }

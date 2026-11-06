@@ -26,6 +26,20 @@ export async function provisionProfile(db: Db, user: { id: string; name: string;
         .onConflictDoNothing();
 }
 
+/**
+ * Returns the profile, creating it if missing. Covers users who existed
+ * before profiles did and any hook that failed.
+ */
+export async function ensureProfile(
+    db: Db,
+    user: { id: string; name: string; email: string }
+): Promise<Profile> {
+    const existing = await db.query.profile.findFirst({where: eq(profile.userId, user.id)});
+    if (existing) return existing;
+    await provisionProfile(db, user);
+    return getProfile(db, user.id);
+}
+
 export async function getProfile(db: Db, userId: string): Promise<Profile> {
     const row = await db.query.profile.findFirst({where: eq(profile.userId, userId)});
     if (!row) throw new DomainError('profile_not_found');

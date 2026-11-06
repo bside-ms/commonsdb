@@ -19,7 +19,7 @@ export const ProfileInput = v.object({
     pronoun: optionalText(40, 'profile_pronoun_too_long'),
     phone: optionalText(40, 'profile_phone_too_long'),
     accessibilityNote: optionalText(1000, 'profile_accessibility_note_too_long'),
-    interests: v.optional(v.array(v.string()), []),
+    interests: v.optional(v.array(v.string())),
     visibility: v.picklist(PROFILE_VISIBILITY, 'profile_visibility_invalid'),
     photoVisibility: v.picklist(PHOTO_VISIBILITY, 'profile_photo_visibility_invalid'),
     notifyByEmail: v.boolean(),
