@@ -45,6 +45,7 @@
 	},
 	"dependencies": {
 		"@commonsdb/auth": "workspace:*",
+		"@commonsdb/core": "workspace:*",
 		"@commonsdb/db": "workspace:*",
 		"better-auth": "catalog:"
 	}

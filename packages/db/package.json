@@ -14,12 +14,12 @@
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.4",
+    "drizzle-orm": "catalog:",
     "postgres": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "drizzle-kit": "^0.31.11",
-    "typescript": "^7.0.2"
+    "typescript": "catalog:"
   }
 }

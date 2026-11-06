@@ -167,6 +167,12 @@ catalogs:
     better-auth:
       specifier: ^1.7.17
       version: 1.7.17
+    drizzle-orm:
+      specifier: ^0.45.4
+      version: 0.45.4
+    typescript:
+      specifier: ^7.0.2
+      version: 7.0.2
 
 importers:
 
@@ -177,6 +183,9 @@ importers:
       '@commonsdb/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@commonsdb/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@commonsdb/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -270,10 +279,29 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  packages/core:
+    dependencies:
+      '@commonsdb/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.4(kysely@0.29.8)(postgres@4.0.0)
+      valibot:
+        specifier: ^1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+
   packages/db:
     dependencies:
       drizzle-orm:
-        specifier: ^0.45.4
+        specifier: 'catalog:'
         version: 0.45.4(kysely@0.29.8)(postgres@4.0.0)
       postgres:
         specifier: ^4.0.0
@@ -286,7 +314,7 @@ importers:
         specifier: ^0.31.11
         version: 0.31.11
       typescript:
-        specifier: ^7.0.2
+        specifier: 'catalog:'
         version: 7.0.2
 
 packages:
@@ -5147,6 +5175,10 @@ snapshots:
   valibot@1.5.0(typescript@6.0.3):
     optionalDependencies:
       typescript: 6.0.3
+
+  valibot@1.5.0(typescript@7.0.2):
+    optionalDependencies:
+      typescript: 7.0.2
 
   vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15):
     dependencies:

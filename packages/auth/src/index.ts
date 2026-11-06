@@ -38,6 +38,16 @@ export function createAuth(options: AuthOptions) {
             // same email via Keycloak and a local account → one user.
             accountLinking: {enabled: true, trustedProviders: ['keycloak']}
         },
+        user: {
+            additionalFields: {
+                platformRole: {
+                    type: ['member', 'admin', 'superadmin'],
+                    defaultValue: 'member',
+                    required: true,
+                    input: false
+                }
+            }
+        },
         databaseHooks: {
             user: {
                 create: {
