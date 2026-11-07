@@ -2,6 +2,7 @@
     import {enhance} from '$app/forms';
     import {page} from '$app/state';
     import {m} from '#lib/paraglide/messages.js';
+    import {Button, FormField, Input} from "#lib/ui";
     import type {PageProps} from './$types';
     import type {LoginError} from './+page.server.ts';
 
@@ -17,31 +18,42 @@
     const query = $derived(redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : '');
 </script>
 
-<h1 class="text-2xl font-semibold">{m.login_title()}</h1>
+<h1>{m.login_title()}</h1>
 
 {#if page.url.searchParams.has('error')}
-    <p class="mt-4 text-red-700">{m.login_error_oauth()}</p>
+    <p class="mt-4 font-semibold text-danger" role="alert">{m.login_error_oauth()}</p>
 {/if}
-{#if form?.code}<p class="mt-4 text-red-700">{errorMessages[form.code]()}</p>{/if}
+{#if form?.code}
+    <p class="mt-4 font-semibold text-danger" role="alert">{errorMessages[form.code]()}</p>
+{/if}
 
 {#if data.loginMethods.keycloak}
-    <form method="post" action="?/keycloak{query}" class="mt-6">
-        <button class="w-full rounded-md bg-black px-4 py-3 text-white">
-            {m.login_keycloak_button()}
-        </button>
+    <form method="post" action="?/keycloak{query}" class="mt-8">
+        <Button type="submit" block>{m.login_keycloak_button()}</Button>
     </form>
 {/if}
 
 {#if data.loginMethods.emailPassword}
-    <form method="post" action="?/signIn{query}" use:enhance class="mt-8 grid gap-3">
-        <label class="grid gap-1">
-            {m.login_email_label()}
-            <input name="email" type="email" value={form && 'email' in form ? form.email : ''} required/>
-        </label>
-        <label class="grid gap-1">
-            {m.login_password_label()}
-            <input name="password" type="password" required/>
-        </label>
-        <button class="justify-self-start rounded-md border px-4 py-2">{m.login_submit()}</button>
+    <form
+            method="post"
+            action="?/signIn{query}"
+            use:enhance
+            class="mt-8 grid gap-4 border-t border-ink pt-8"
+    >
+        <FormField label={m.login_email_label()}>
+            <Input
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    value={form && 'email' in form ? form.email : ''}
+                    required
+            />
+        </FormField>
+        <FormField label={m.login_password_label()}>
+            <Input name="password" type="password" autocomplete="current-password" required/>
+        </FormField>
+        <div>
+            <Button type="submit" variant="ghost">{m.login_submit()}</Button>
+        </div>
     </form>
 {/if}

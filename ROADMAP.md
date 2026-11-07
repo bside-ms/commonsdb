@@ -83,15 +83,15 @@ Rules that keep it from rotting:
 
 Done when slice 1's screens are built entirely from it.
 
-**Decided (Nov 2026):** Tailwind v4 with the theme in
+**Decided:** Tailwind v4 with the theme in
 `src/lib/ui/tokens.css`, Bits UI as headless base for the interactive
 primitives, `tailwind-variants` for variants, Lucide for icons, Archivo
 via fontsource. Native form elements where they suffice. Details,
 conventions and component status: `apps/webapp/docs/design-system.md`.
 
-Status: tokens, Button, FormField, Input, Textarea, Select, Checkbox
-done (profile fields use them). Next: Card, Badge/Chip, Avatar, Modal,
-Toast, EmptyState, AppShell — then restyle login, onboarding and profile.
+Status: **done**. Tokens, all primitives listed above and the
+app shell exist; login, onboarding and profile are built from them.
+Visual reference: `apps/webapp/docs/design-system/*.pdf`.
 
 ---
 
@@ -193,6 +193,16 @@ Member inbox, admin inbox with claiming, direct messages respecting
 
 Self-contained — can move earlier or later freely.
 
+## Slice 6b — Built-in wiki
+
+Pages (title, TipTap content, parent, revisions), Postgres full-text
+search, a link picker on tasks. `KnowledgeProvider` port with the
+built-in implementation; `knowledge_links` table used by later slices
+for resources and qualifications. Markdown export per page.
+
+Outline adapter: later, when a space needs it (B-Side: once the
+built-in version has shown what's actually used).
+
 ---
 
 ## Slice 7 — Around the edges
@@ -240,17 +250,17 @@ Certificates gating tasks and resources.
 Things the prototype implies that we should *not* settle yet. Revisit
 when the design side stabilises.
 
-- **Admin scoping.** Their admins are scoped to *categories*
+- **Admin scoping.** *(decide in slice 2)* Their admins are scoped to *categories*
   (`u2: cats c5–c8`), not to functional areas or initiatives. Third shape
   we've seen. The `capabilities` table in slice 2 is built for it, but
   whether category is the only scope key stays open.
-- **Three roles or two plus capabilities.** They show
+- **Three roles or two plus capabilities.** *(decide in slice 2, together with capabilities)* They show
   `mitglied | admin | ueberadmin`. We may end up with `member |
   superadmin` plus capabilities, and "admin" is just "has capabilities".
 - **Repro storage.** Fractional values (0.5) mean decimal or integer
   tenths. Integer tenths avoids float drift in balance sums — decide
   before slice 3, it's the one thing here that's expensive later.
-- **`steps` storage.** Typed JSON column with server-side block
+- **`steps` storage.** *(decide in slice 2)* Typed JSON column with server-side block
   validation, or its own table. JSON likely, since blocks are always read
   whole. Their block set (heading/text/photo/link) is narrower than the
   TipTap plan — good, easier to validate.
@@ -261,9 +271,8 @@ when the design side stabilises.
   transfers exist in slice 9 — but decide knowingly.
 - **Tenant grace.** Guidance or enforcement? Their copy says a minus is
   normal and not an error.
-- ~~**Language.**~~ Decided: German-only, every string through Paraglide
-  (see ARCHITECTURE.md, "Conventions across the stack"). UI components
-  follow the same rule (`ui_*` message keys).
+- **Wiki permissions.** Built-in pages visible to all members, editable
+    by admins? Or editable by everyone, with revisions as the safety net?
 
 ---
 

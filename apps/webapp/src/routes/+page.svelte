@@ -5,4 +5,4 @@
     let {data}: PageProps = $props();
 </script>
 
-<h1 class="text-2xl font-semibold">{m.home_greeting({name: data.user?.displayName ?? ''})}</h1>
+<h1>{m.home_greeting({name: data.user?.displayName ?? ''})}</h1>

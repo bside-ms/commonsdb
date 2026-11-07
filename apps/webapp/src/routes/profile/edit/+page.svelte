@@ -1,6 +1,8 @@
 <script lang="ts">
     import {enhance} from '$app/forms';
+    import {resolve} from "$app/paths";
     import {m} from '#lib/paraglide/messages.js';
+    import {Button} from "#lib/ui";
     import ProfileFields from '#lib/components/ProfileFields.svelte';
     import type {PageProps} from './$types';
 
@@ -9,9 +11,12 @@
     const fields = $derived(form?.fields ?? {});
 </script>
 
-<h1 class="text-2xl font-semibold">{m.profile_edit_title()}</h1>
+<h1>{m.profile_edit_title()}</h1>
 
 <form method="post" use:enhance class="mt-6 grid gap-4">
     <ProfileFields {values} {fields}/>
-    <button class="justify-self-start rounded-md bg-black px-4 py-2 text-white">{m.profile_save()}</button>
+    <div class="flex flex-wrap gap-3">
+        <Button type="submit">{m.profile_save()}</Button>
+        <Button variant="ghost" href={resolve('/profile')}>{m.ui_cancel()}</Button>
+    </div>
 </form>

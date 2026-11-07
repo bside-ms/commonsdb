@@ -38,8 +38,10 @@ A plain TypeScript stack, one language end to end:
 - **Background jobs**: a small worker process (pg-boss or
   graphile-worker, both Postgres-backed, no Redis) running the same
   `core` — not built yet
-- **Rich text**: TipTap, shared between end-user and admin views — not
-  built yet
+- **Rich text**: TipTap, one shared editor config for messages and the
+  long-form descriptions of tasks, resources and qualifications (and the
+  built-in wiki, see below). Stored as TipTap JSON, validated server-side.
+  Not built yet.
 
 ### History: why not Laravel
 
@@ -100,6 +102,14 @@ and simple.
 - **`CalendarProvider`** — where booking events actually live. Reference
   implementations: internal DB (default), CalDAV, Google Calendar. Not
   needed before resource booking (ROADMAP slice 10).
+- **`KnowledgeProvider`** — where wiki/knowledge entries live. Entities
+  (tasks, resources, qualifications) link to entries; they never own
+  wiki content. Reference implementations: built-in (pages in our DB,
+  TipTap content, Postgres full-text search) as default, Outline via its
+  API. Links are stored provider-neutral
+  (`entity, provider, ref, cached title`), so switching providers needs
+  no schema change. Built-in pages export to Markdown so a space can move
+  to Outline later.
 
 All wiring happens in one **composition root** per app
 (`apps/webapp/src/lib/server/services.ts`): it reads env, creates `db`
@@ -292,10 +302,6 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 0 — design system** in `apps/webapp/src/lib/ui/`: tokens and
-  form primitives in place, remaining primitives and the app shell next
-  (status in `apps/webapp/docs/design-system.md`). Login, onboarding and
-  profile still need restyling with them.
 - **Slice 2 — tasks**: categories, capabilities (category-scoped admin),
   shifts in the schema.
 - **Keycloak logout**: signing out ends the app session only; decide

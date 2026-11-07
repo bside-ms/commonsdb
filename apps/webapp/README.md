@@ -1,56 +1,28 @@
-# sv
+# webapp
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit app: member PWA and the guarded `/admin` area. Thin routes
+that call `@commonsdb/core`; see the root `ARCHITECTURE.md`.
 
-## Creating a project
+## Develop
 
-If you're seeing this, you've probably already done this step. Congrats!
+From the repo root: `docker compose up -d db`, `pnpm install`, then
 
-```sh
-# create a new project
-npx sv create my-app
-```
+    pnpm --filter webapp dev
 
-To recreate this project with the same configuration:
+| Script           | What it does                                  |
+|------------------|-----------------------------------------------|
+| `dev`            | dev server; `/dev/ui` shows all UI components |
+| `check`          | svelte-check / TypeScript                     |
+| `lint`, `format` | prettier + eslint                             |
+| `test:e2e`       | Playwright                                    |
 
-```sh
-# recreate this project
-pnpm dlx sv@1.3.0 create --template minimal --types ts --add prettier eslint playwright="demo:no" tailwindcss="plugins:typography" experimental="features:async,remoteFunctions" --install pnpm webapp
-```
+## Where things are
 
-## Adding features
-
-Add features to your project with `sv add`:
-
-```sh
-npx sv add
-```
-
-For example, to add Tailwind CSS:
-
-```sh
-npx sv add tailwindcss
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+| Path                         |                                                           |
+|------------------------------|-----------------------------------------------------------|
+| `src/lib/ui/`                | design system: tokens + components, import from `#lib/ui` |
+| `src/lib/navigation.ts`      | member and admin nav items                                |
+| `src/lib/server/services.ts` | composition root (db, auth)                               |
+| `src/lib/i18n/errors.ts`     | core error code → message                                 |
+| `messages/de.json`           | all UI text (Paraglide)                                   |
+| `docs/design-system.md`      | design system conventions and status                      |

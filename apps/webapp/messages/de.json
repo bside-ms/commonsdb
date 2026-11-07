@@ -18,6 +18,8 @@
 	"home_greeting": "Hallo {name}!",
 
 	"nav_admin": "Admin",
+	"nav_start": "Start",
+	"nav_back_to_app": "Zur App",
 
 	"onboarding_title": "Willkommen!",
 	"onboarding_intro": "Erzähl uns kurz, wer du bist. Du kannst alles später ändern.",
@@ -49,6 +51,7 @@
 
 	"admin_title": "Admin",
 	"admin_placeholder": "Kommt mit den Aufgaben.",
+	"admin_nav_overview": "Übersicht",
 
 	"error_unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal.",
 	"error_profile_not_found": "Profil nicht gefunden.",
@@ -63,5 +66,7 @@
 
 	"ui_optional": "optional",
 	"ui_close": "Schließen",
-	"ui_cancel": "Abbrechen"
+	"ui_cancel": "Abbrechen",
+	"ui_skip_to_content": "Zum Inhalt springen",
+	"ui_nav_main": "Hauptnavigation"
 }

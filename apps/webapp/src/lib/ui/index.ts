@@ -16,3 +16,4 @@ export * from './avatar/index.ts';
 export * from './empty-state/index.ts';
 export * from './modal/index.ts';
 export * from './toast/index.ts';
+export * from './app-shell/index.ts';

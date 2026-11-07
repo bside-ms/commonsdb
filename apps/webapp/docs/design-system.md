@@ -5,6 +5,9 @@ prototype (`b-side_prototyp_aktuell_september-2026.html`). The visual
 reference is the Design canvas "B-SIDE Design System — Slice 0"
 (tokens board + primitives board).
 
+PDF exports of the canvas: [`design-system/tokens.pdf`](design-system/tokens.pdf),
+[`design-system/primitives_and_layout.pdf`](design-system/primitives_and_layout.pdf).
+
 The prototype is directional, not a spec (see ROADMAP). This page records
 what we took from it and how the code is organised, so later slices add
 to it instead of around it.
@@ -103,25 +106,40 @@ anywhere in the app.
 
 ### Status
 
-| Component    | State | Notes                                                                                                               |
-|--------------|-------|---------------------------------------------------------------------------------------------------------------------|
-| `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                     |
-| `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                        |
-| `Input`      | done  | text-like types, `bind:value`                                                                                       |
-| `Textarea`   | done  | min 88px, vertical resize                                                                                           |
-| `Select`     | done  | native, `options` array, Lucide chevron                                                                             |
-| `Checkbox`   | done  | own label/hint/error, native                                                                                        |
-| `Card`       | done  | optional `title` (+ `level`) and `actions` header strip, `padded`                                                   |
-| `Badge`      | done  | `tone` neutral/attention/success/info (by meaning, not colour; 4 values, open for discussion), `outline`            |
-| `Chip`       | done  | toggle with `aria-pressed`, `size` md/sub, `href` for no-JS filters                                                 |
-| `Avatar`     | done  | `name` → initials + accessible name, `src` with fallback, `size` sm/md/lg, area `color` (auto from name if omitted) |
-| `EmptyState` | done  | dashed box, `title`, `description`, Lucide `icon`, `action` snippet                                                 |
-| `Modal`      | done  | Bits `Dialog`; bottom sheet < `lg`, centred above; `bind:open` or `trigger` snippet; `actions` row                  |
-| `Toast`      | done  | `toast(message, { tone })` + `<Toaster/>` in the root layout; client-side only                                      |
-| `AppShell`   | next  | one component, `variant="member"                                                                                    | "admin"` |
+| Component    | State | Notes                                                                                                                          |
+|--------------|-------|--------------------------------------------------------------------------------------------------------------------------------|
+| `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                                |
+| `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                                   |
+| `Input`      | done  | text-like types, `bind:value`                                                                                                  |
+| `Textarea`   | done  | min 88px, vertical resize                                                                                                      |
+| `Select`     | done  | native, `options` array, Lucide chevron                                                                                        |
+| `Checkbox`   | done  | own label/hint/error, native                                                                                                   |
+| `Card`       | done  | optional `title` (+ `level`) and `actions` header strip, `padded`                                                              |
+| `Badge`      | done  | `tone` neutral/attention/success/info (by meaning, not colour; 4 values, open for discussion), `outline`                       |
+| `Chip`       | done  | toggle with `aria-pressed`, `size` md/sub, `href` for no-JS filters                                                            |
+| `Avatar`     | done  | `name` → initials + accessible name, `src` with fallback, `size` sm/md/lg, area `color` (auto from name if omitted)            |
+| `EmptyState` | done  | dashed box, `title`, `description`, Lucide `icon`, `action` snippet                                                            |
+| `Modal`      | done  | Bits `Dialog`; bottom sheet < `lg`, centred above; `bind:open` or `trigger` snippet; `actions` row                             |
+| `Toast`      | done  | `toast(message, { tone })` + `<Toaster/>` in the root layout; client-side only                                                 |
+| `AppShell`   | done  | `variant` member/admin, `items` from `#lib/navigation.ts`, `actions` / `footer` snippets, skip link; nav hidden with < 2 items |
+
+The root `+layout.svelte` picks the shell: admin variant under `/admin`,
+member variant elsewhere, no shell when logged out (login), no nav during
+onboarding. New areas are added in `src/lib/navigation.ts`.
 
 Stays in routes until a second use: task row, stat tile, balance
 ("Saldo"), tabs, table, "thanks" card.
+
+## In routes
+
+- Headings are plain `<h1>`–`<h3>`; size comes from `app.css`.
+- Only token colours (`bg-ink`, `text-muted`, `bg-area-tasks` …).
+  Tailwind's default palette doesn't exist here: `bg-black` silently
+  renders nothing.
+- New nav entries go in `src/lib/navigation.ts`; the member nav appears
+  as soon as there are two items.
+- Patterns used once (task row, stat tile, balance) stay in the route
+  until a second use, then move to `lib/ui`.
 
 ## Showcase
 
