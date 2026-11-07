@@ -40,7 +40,7 @@
     );
 </script>
 
-<div class={cn('grid gap-1', className)}>
+<div class={cn('grid content-start gap-1', className)}>
     <div class="flex items-start gap-2.5">
         <input
                 {...rest}

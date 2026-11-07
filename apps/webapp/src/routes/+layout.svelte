@@ -7,6 +7,7 @@
     import '../app.css';
     import favicon from '#lib/assets/favicon.svg';
     import {m} from '#lib/paraglide/messages.js';
+    import {Toaster} from '#lib/ui';
     import type {LayoutProps} from './$types';
     import {resolve} from '$app/paths';
 
@@ -33,3 +34,5 @@
 {/if}
 
 {@render children()}
+
+<Toaster/>

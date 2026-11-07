@@ -20,15 +20,15 @@ text on top.
 
 ## Stack
 
-| Concern | Choice |
-|---|---|
-| Styling | Tailwind v4, theme defined in `src/lib/ui/tokens.css` (`@theme static`) |
-| Headless behaviour | [Bits UI](https://bits-ui.com) for Dialog, Tabs, Popover, Combobox, … |
-| Variants | `tailwind-variants` (`tv`), via our own `tv` export |
-| Class merging | `cn()` = `clsx` + `tailwind-merge`, configured for our tokens |
-| Icons | [Lucide](https://lucide.dev) (`@lucide/svelte`), stroke 1.9–2 |
-| Fonts | `@fontsource/archivo`, 400 preloaded in `+layout.svelte` |
-| Long text | `@tailwindcss/typography` (`prose`), recoloured in `app.css` |
+| Concern            | Choice                                                                  |
+|--------------------|-------------------------------------------------------------------------|
+| Styling            | Tailwind v4, theme defined in `src/lib/ui/tokens.css` (`@theme static`) |
+| Headless behaviour | [Bits UI](https://bits-ui.com) for Dialog, Tabs, Popover, Combobox, …   |
+| Variants           | `tailwind-variants` (`tv`), via our own `tv` export                     |
+| Class merging      | `cn()` = `clsx` + `tailwind-merge`, configured for our tokens           |
+| Icons              | [Lucide](https://lucide.dev) (`@lucide/svelte`), stroke 1.9–2           |
+| Fonts              | `@fontsource/archivo`, 400 preloaded in `+layout.svelte`                |
+| Long text          | `@tailwindcss/typography` (`prose`), recoloured in `app.css`            |
 
 ## Tokens
 
@@ -74,6 +74,9 @@ anywhere in the app.
   `src/lib/ui/index.ts`.
 - **Routes import from `#lib/ui` only.** Never import `bits-ui` in a
   route; wrap it in a `lib/ui` component so the props stay ours.
+  `#lib/ui` works because of an explicit entry in `package.json`
+  `imports` (`"#lib/ui": "./src/lib/ui/index.ts"`): subpath imports
+  don't resolve folder index files, so don't remove it.
 - Variants with `tv` from `#lib/ui` (not from `tailwind-variants`
   directly, it carries our merge config). Max three values per variant
   without a conversation; extra axes (e.g. `tone: danger`) are separate
@@ -100,21 +103,22 @@ anywhere in the app.
 
 ### Status
 
-| Component | State | Notes |
-|---|---|---|
-| `Button` | done | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href` |
-| `FormField` | done | label + hint + error + "(optional)", context for the control |
-| `Input` | done | text-like types, `bind:value` |
-| `Textarea` | done | min 88px, vertical resize |
-| `Select` | done | native, `options` array, Lucide chevron |
-| `Checkbox` | done | own label/hint/error, native |
-| `Card` | next | `.box` / `.a-card` with optional header strip |
-| `Badge` / `Chip` | next | badge tones map to **status**, not colour names |
-| `Avatar` | next | sm 26 / md 34 / lg 52, area colour fill, initials fallback |
-| `Modal` | next | Bits `Dialog`; bottom sheet < `lg`, centred above |
-| `Toast` | next | own small store + `aria-live` region (Bits has none) |
-| `EmptyState` | next | dashed box (`.locked` in the prototype) |
-| `AppShell` | next | one component, `variant="member" | "admin"` |
+| Component    | State | Notes                                                                                                               |
+|--------------|-------|---------------------------------------------------------------------------------------------------------------------|
+| `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                     |
+| `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                        |
+| `Input`      | done  | text-like types, `bind:value`                                                                                       |
+| `Textarea`   | done  | min 88px, vertical resize                                                                                           |
+| `Select`     | done  | native, `options` array, Lucide chevron                                                                             |
+| `Checkbox`   | done  | own label/hint/error, native                                                                                        |
+| `Card`       | done  | optional `title` (+ `level`) and `actions` header strip, `padded`                                                   |
+| `Badge`      | done  | `tone` neutral/attention/success/info (by meaning, not colour; 4 values, open for discussion), `outline`            |
+| `Chip`       | done  | toggle with `aria-pressed`, `size` md/sub, `href` for no-JS filters                                                 |
+| `Avatar`     | done  | `name` → initials + accessible name, `src` with fallback, `size` sm/md/lg, area `color` (auto from name if omitted) |
+| `EmptyState` | done  | dashed box, `title`, `description`, Lucide `icon`, `action` snippet                                                 |
+| `Modal`      | done  | Bits `Dialog`; bottom sheet < `lg`, centred above; `bind:open` or `trigger` snippet; `actions` row                  |
+| `Toast`      | done  | `toast(message, { tone })` + `<Toaster/>` in the root layout; client-side only                                      |
+| `AppShell`   | next  | one component, `variant="member"                                                                                    | "admin"` |
 
 Stays in routes until a second use: task row, stat tile, balance
 ("Saldo"), tabs, table, "thanks" card.

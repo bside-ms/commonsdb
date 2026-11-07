@@ -48,7 +48,7 @@
     });
 </script>
 
-<div class={cn('grid gap-1.25', className)}>
+<div class={cn('grid content-start gap-1.25', className)}>
     <label for={fieldId} class="text-tiny font-semibold">
         {label}
         {#if optional}<span class="font-normal text-muted">({m.ui_optional()})</span>{/if}

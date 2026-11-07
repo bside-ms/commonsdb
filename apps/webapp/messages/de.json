@@ -61,5 +61,7 @@
 	"error_profile_photo_visibility_invalid": "Bitte wähle eine Option.",
 	"error_onboarding_rules_not_accepted": "Bitte akzeptiere die Hausregeln.",
 
-	"ui_optional": "optional"
+	"ui_optional": "optional",
+	"ui_close": "Schließen",
+	"ui_cancel": "Abbrechen"
 }
