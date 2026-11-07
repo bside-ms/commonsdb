@@ -32,6 +32,9 @@ A plain TypeScript stack, one language end to end:
 - **Validation**: valibot in `core` (Standard Schema, so the same schemas
   can validate forms and remote functions)
 - **i18n**: Paraglide JS, German as the only locale for now
+- **UI**: Tailwind v4 (theme = design tokens in `apps/webapp/src/lib/ui/`),
+  Bits UI as headless component base, tailwind-variants, Lucide icons.
+  Conventions in `apps/webapp/docs/design-system.md`
 - **Background jobs**: a small worker process (pg-boss or
   graphile-worker, both Postgres-backed, no Redis) running the same
   `core` — not built yet
@@ -289,8 +292,10 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 0 — design system** in `apps/webapp/src/lib/ui/`; existing
-  screens (login, onboarding, profile) are functional but unstyled.
+- **Slice 0 — design system** in `apps/webapp/src/lib/ui/`: tokens and
+  form primitives in place, remaining primitives and the app shell next
+  (status in `apps/webapp/docs/design-system.md`). Login, onboarding and
+  profile still need restyling with them.
 - **Slice 2 — tasks**: categories, capabilities (category-scoped admin),
   shifts in the schema.
 - **Keycloak logout**: signing out ends the app session only; decide

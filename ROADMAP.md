@@ -83,6 +83,16 @@ Rules that keep it from rotting:
 
 Done when slice 1's screens are built entirely from it.
 
+**Decided (Nov 2026):** Tailwind v4 with the theme in
+`src/lib/ui/tokens.css`, Bits UI as headless base for the interactive
+primitives, `tailwind-variants` for variants, Lucide for icons, Archivo
+via fontsource. Native form elements where they suffice. Details,
+conventions and component status: `apps/webapp/docs/design-system.md`.
+
+Status: tokens, Button, FormField, Input, Textarea, Select, Checkbox
+done (profile fields use them). Next: Card, Badge/Chip, Avatar, Modal,
+Toast, EmptyState, AppShell — then restyle login, onboarding and profile.
+
 ---
 
 ## Slice 1 — Identity and profile
@@ -251,9 +261,9 @@ when the design side stabilises.
   transfers exist in slice 9 — but decide knowingly.
 - **Tenant grace.** Guidance or enforcement? Their copy says a minus is
   normal and not an error.
-- **Language.** German-only or translatable UI. Affects every string we
-  write from slice 0 on, so worth an early call even if the answer is
-  "German-only for now".
+- ~~**Language.**~~ Decided: German-only, every string through Paraglide
+  (see ARCHITECTURE.md, "Conventions across the stack"). UI components
+  follow the same rule (`ui_*` message keys).
 
 ---
 

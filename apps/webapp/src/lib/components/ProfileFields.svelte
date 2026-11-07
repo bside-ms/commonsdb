@@ -1,71 +1,66 @@
 <script lang="ts">
     import {m} from '#lib/paraglide/messages.js';
     import {errorMessage} from '#lib/i18n/errors.ts';
+    import {Checkbox, FormField, Input, Select, Textarea} from '#lib/ui';
     import type {ProfileFormValues} from '#lib/server/profile-form.ts';
 
     let {values, fields = {}}: { values: ProfileFormValues; fields?: Record<string, string> } =
         $props();
 
-    const visibilityOptions = [
-        {value: 'members', label: m.visibility_members},
-        {value: 'admins', label: m.visibility_admins}
-    ];
-    const photoOptions = [...visibilityOptions, {value: 'nobody', label: m.visibility_nobody}];
+    const err = (field: string) => (fields[field] ? errorMessage(fields[field]) : undefined);
+
+    const visibilityOptions = $derived([
+        {value: 'members', label: m.visibility_members()},
+        {value: 'admins', label: m.visibility_admins()}
+    ]);
+    const photoOptions = $derived([
+        ...visibilityOptions,
+        {value: 'nobody', label: m.visibility_nobody()}
+    ]);
 </script>
 
-{#snippet error(field: string)}
-    {#if fields[field]}<span class="text-sm text-red-700">{errorMessage(fields[field])}</span>{/if}
-{/snippet}
+<div class="grid gap-5 sm:grid-cols-2">
+    <FormField label={m.profile_display_name()} error={err('displayName')}>
+        <Input name="displayName" value={values.displayName} autocomplete="name" required/>
+    </FormField>
 
-<label class="grid gap-1">
-    {m.profile_display_name()}
-    <input name="displayName" value={values.displayName} required/>
-    {@render error('displayName')}
-</label>
+    <FormField label={m.profile_pronoun()} error={err('pronoun')} optional>
+        <Input name="pronoun" value={values.pronoun}/>
+    </FormField>
 
-<label class="grid gap-1">
-    {m.profile_pronoun()}
-    <input name="pronoun" value={values.pronoun}/>
-    {@render error('pronoun')}
-</label>
+    <FormField label={m.profile_phone()} error={err('phone')} optional>
+        <Input name="phone" type="tel" value={values.phone} autocomplete="tel"/>
+    </FormField>
 
-<label class="grid gap-1">
-    {m.profile_phone()}
-    <input name="phone" type="tel" value={values.phone}/>
-    {@render error('phone')}
-</label>
+    <FormField
+            class="sm:col-span-2"
+            label={m.profile_accessibility_note()}
+            hint={m.profile_accessibility_note_hint()}
+            error={err('accessibilityNote')}
+            optional
+    >
+        <Textarea name="accessibilityNote" value={values.accessibilityNote} rows={3}/>
+    </FormField>
 
-<label class="grid gap-1">
-    {m.profile_accessibility_note()}
-    <span class="text-sm">{m.profile_accessibility_note_hint()}</span>
-    <textarea name="accessibilityNote" rows="3">{values.accessibilityNote}</textarea>
-    {@render error('accessibilityNote')}
-</label>
+    <FormField label={m.profile_visibility()} error={err('visibility')}>
+        <Select name="visibility" value={values.visibility} options={visibilityOptions}/>
+    </FormField>
 
-<label class="grid gap-1">
-    {m.profile_visibility()}
-    <select name="visibility">
-        {#each visibilityOptions as o (o.value)}
-            <option value={o.value} selected={values.visibility === o.value}>{o.label()}</option>
-        {/each}
-    </select>
-    {@render error('visibility')}
-</label>
+    <FormField label={m.profile_photo_visibility()} error={err('photoVisibility')}>
+        <Select name="photoVisibility" value={values.photoVisibility} options={photoOptions}/>
+    </FormField>
 
-<label class="grid gap-1">
-    {m.profile_photo_visibility()}
-    <select name="photoVisibility">
-        {#each photoOptions as o (o.value)}
-            <option value={o.value} selected={values.photoVisibility === o.value}>{o.label()}</option>
-        {/each}
-    </select>
-    {@render error('photoVisibility')}
-</label>
-
-<fieldset class="grid gap-1">
-    <legend>{m.profile_notifications()}</legend>
-    <label><input type="checkbox" name="notifyByEmail" checked={values.notifyByEmail}/> {m.profile_notify_by_email()}
-    </label>
-    <label><input type="checkbox" name="notifyNewTasks" checked={values.notifyNewTasks}/> {m.profile_notify_new_tasks()}
-    </label>
-</fieldset>
+    <fieldset class="grid gap-2 sm:col-span-2">
+        <legend class="mb-2 text-tiny font-semibold">{m.profile_notifications()}</legend>
+        <Checkbox
+                name="notifyByEmail"
+                checked={values.notifyByEmail}
+                label={m.profile_notify_by_email()}
+        />
+        <Checkbox
+                name="notifyNewTasks"
+                checked={values.notifyNewTasks}
+                label={m.profile_notify_new_tasks()}
+        />
+    </fieldset>
+</div>

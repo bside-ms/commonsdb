@@ -1,0 +1,80 @@
+@import 'tailwindcss';
+@import './lib/ui/tokens.css';
+
+@plugin '@tailwindcss/typography';
+
+@layer base {
+    html {
+        font-size: 100%;
+    }
+
+    html[data-font-size='l'] {
+        font-size: 112.5%; /* 18px */
+    }
+
+    html[data-font-size='xl'] {
+        font-size: 125%; /* 20px */
+    }
+
+    body {
+        @apply bg-canvas text-ink font-sans text-body antialiased;
+    }
+
+    h1 {
+        @apply text-h1 lg:text-display;
+    }
+
+    h2 {
+        @apply text-h2;
+    }
+
+    h3 {
+        @apply text-h3;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--color-placeholder);
+        opacity: 1;
+    }
+
+    :focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+    }
+}
+
+/* typography plugin */
+@utility prose {
+    --tw-prose-body: var(--color-ink);
+    --tw-prose-headings: var(--color-ink);
+    --tw-prose-lead: var(--color-muted);
+    --tw-prose-links: var(--color-ink);
+    --tw-prose-bold: var(--color-ink);
+    --tw-prose-counters: var(--color-muted);
+    --tw-prose-bullets: var(--color-ink);
+    --tw-prose-hr: var(--color-hair);
+    --tw-prose-quotes: var(--color-ink);
+    --tw-prose-quote-borders: var(--color-accent);
+    --tw-prose-captions: var(--color-muted);
+    --tw-prose-code: var(--color-ink);
+    --tw-prose-th-borders: var(--color-ink);
+    --tw-prose-td-borders: var(--color-hair);
+
+    font-family: var(--font-sans), serif;
+
+    :where(h1, h2, h3, h4):not(:where([class~='not-prose'] *)) {
+        font-weight: 600;
+        letter-spacing: -0.02em;
+    }
+
+    :where(a):not(:where([class~='not-prose'] *)) {
+        font-weight: 600;
+        text-underline-offset: 3px;
+    }
+
+    :where(img):not(:where([class~='not-prose'] *)) {
+        border: 1px solid var(--color-ink);
+        border-radius: 0;
+    }
+}

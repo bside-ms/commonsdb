@@ -1,5 +1,10 @@
 <script lang="ts">
-    import './layout.css';
+    import '@fontsource/archivo/400.css';
+    import '@fontsource/archivo/500.css';
+    import '@fontsource/archivo/600.css';
+    import archivo400 from '@fontsource/archivo/files/archivo-latin-400-normal.woff2?url';
+
+    import '../app.css';
     import favicon from '#lib/assets/favicon.svg';
     import {m} from '#lib/paraglide/messages.js';
     import type {LayoutProps} from './$types';
@@ -11,6 +16,7 @@
 <svelte:head>
     <link rel="icon" href={favicon}/>
     <title>{m.app_name()}</title>
+    <link rel="preload" href={archivo400} as="font" type="font/woff2" crossorigin="anonymous"/>
 </svelte:head>
 
 {#if data.user}
