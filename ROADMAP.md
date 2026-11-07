@@ -118,8 +118,8 @@ The heart of the reslice. One loop, both sides, minimum ceremony.
 **Schema (fuller than the UI):**
 
 - `super_categories`, `categories`
-- `tasks`: title, description, urgent, place, contact, self-service,
-  bring, physical demands, `when` (fixed date | range), `steps` blocks
+- `tasks`: title, description (TipTap), urgent, place, contact,
+  self-service, bring, physical demands, `when` (fixed date | range)
 - `shifts`: task, start, end, hours, status, assignee — one row per task
   for now
 - `capabilities`: which categories an admin is responsible for
@@ -134,6 +134,22 @@ Deliberately *not* here: multi-shift UI, urgent-first/doable-now/
 together-only filters, reporting completion, the ledger, series.
 
 Demo: an admin puts a real task in, a member takes it, both see it.
+
+**Decided:**
+
+- Roles stay `member | admin | superadmin`. `admin` is the coarse gate
+  (hooks, nav); `capabilities (user_id, category_id)` scopes which tasks
+  an admin manages. Superadmins need no capabilities. Category is the
+  only scope key for now.
+- Shift hours are stored as integer tenths (`hours_tenths`, 15 = 1.5 h).
+  Repros are hours 1:1, so this settles repro storage for slice 3.
+- Shift status codes: `open | taken | reported | confirmed`; German
+  wording only in Paraglide.
+- `when` is `when_kind` + `starts_on` + `ends_on` (calendar dates, no
+  time zone). Delete is a soft delete (`deleted_at`).
+- No `steps`. Instructions live in the rich-text description. Structured
+  completion criteria (a checklist ticked when reporting) come later as
+  their own concept, shared with returning a booked resource.
 
 ---
 
@@ -250,20 +266,9 @@ Certificates gating tasks and resources.
 Things the prototype implies that we should *not* settle yet. Revisit
 when the design side stabilises.
 
-- **Admin scoping.** *(decide in slice 2)* Their admins are scoped to *categories*
-  (`u2: cats c5–c8`), not to functional areas or initiatives. Third shape
-  we've seen. The `capabilities` table in slice 2 is built for it, but
-  whether category is the only scope key stays open.
-- **Three roles or two plus capabilities.** *(decide in slice 2, together with capabilities)* They show
-  `mitglied | admin | ueberadmin`. We may end up with `member |
-  superadmin` plus capabilities, and "admin" is just "has capabilities".
 - **Repro storage.** Fractional values (0.5) mean decimal or integer
   tenths. Integer tenths avoids float drift in balance sums — decide
   before slice 3, it's the one thing here that's expensive later.
-- **`steps` storage.** *(decide in slice 2)* Typed JSON column with server-side block
-  validation, or its own table. JSON likely, since blocks are always read
-  whole. Their block set (heading/text/photo/link) is narrower than the
-  TipTap plan — good, easier to validate.
 - **Registration.** Self-serve with a rules checkbox, per the prototype.
   Whether admins approve is unresolved.
 - **Ledger entry shape.** Theirs is single-entry signed amounts. Ours
@@ -272,7 +277,10 @@ when the design side stabilises.
 - **Tenant grace.** Guidance or enforcement? Their copy says a minus is
   normal and not an error.
 - **Wiki permissions.** Built-in pages visible to all members, editable
-    by admins? Or editable by everyone, with revisions as the safety net?
+  by admins? Or editable by everyone, with revisions as the safety net?
+- **Completion criteria.** A checklist ticked when reporting a task or
+  returning a resource. Same concept for both; model it when the first
+  of them needs it.
 
 ---
 

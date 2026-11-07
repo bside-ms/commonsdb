@@ -266,6 +266,9 @@ Dependencies point one way: `webapp → auth → db`, `webapp → core → db`.
   (dummy values; the CLI only needs to know which features are on), then
   `pnpm db:generate` / `pnpm db:migrate`. Generated schema and migrations
   are committed.
+- **Erasable TypeScript only.** No enums, namespaces or constructor
+  parameter properties: Node runs package sources by stripping types
+  (seed, worker), which only works for erasable syntax.
 
 ### Conventions across the stack
 
@@ -302,8 +305,8 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 2 — tasks**: categories, capabilities (category-scoped admin),
-  shifts in the schema.
+- **Slice 2 — tasks**: schema and core done (categories, capabilities,
+  tasks, one shift per task); next: TipTap, admin UI, member UI.
 - **Keycloak logout**: signing out ends the app session only; decide
   whether to also end the IdP session.
 - **Tests**: the scaffold's e2e test no longer matches (everything is

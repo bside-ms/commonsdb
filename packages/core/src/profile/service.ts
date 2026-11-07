@@ -1,22 +1,10 @@
 import {eq} from 'drizzle-orm';
-import * as v from 'valibot';
 import type {Db} from '@commonsdb/db';
 import {profile, type Profile} from '@commonsdb/db/schema';
-import {DomainError, ValidationError, type FieldErrors} from '../errors.ts';
+import {DomainError} from '../errors.ts';
+import {parse} from '../validation.ts';
 import type {Actor} from '../roles.ts';
 import {OnboardingInput, ProfileInput} from './schema.ts';
-
-function parse<S extends v.GenericSchema>(schema: S, input: unknown): v.InferOutput<S> {
-    const result = v.safeParse(schema, input);
-    if (result.success) return result.output;
-
-    const fields: FieldErrors = {};
-    for (const issue of result.issues) {
-        const key = v.getDotPath(issue) ?? '_';
-        fields[key] ??= issue.message; // first error per field
-    }
-    throw new ValidationError(fields);
-}
 
 /** Runs once per new user (from the auth hook). Idempotent. */
 export async function provisionProfile(db: Db, user: { id: string; name: string; email: string }) {
@@ -49,11 +37,7 @@ export async function getProfile(db: Db, userId: string): Promise<Profile> {
 /** A person edits their own profile. */
 export async function updateOwnProfile(db: Db, actor: Actor, input: unknown): Promise<Profile> {
     const data = parse(ProfileInput, input);
-    const [row] = await db
-        .update(profile)
-        .set(data)
-        .where(eq(profile.userId, actor.id))
-        .returning();
+    const [row] = await db.update(profile).set(data).where(eq(profile.userId, actor.id)).returning();
     if (!row) throw new DomainError('profile_not_found');
     return row;
 }
