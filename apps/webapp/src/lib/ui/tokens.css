@@ -5,125 +5,127 @@
  * so plain CSS / component styles can always rely on them.
  */
 @theme static {
-    /* reset tailwind defaults */
-    --color-*: initial;
-    --radius-*: initial;
-    --shadow-*: initial;
-    --text-*: initial;
+	/* reset tailwind defaults */
+	--color-*: initial;
+	--radius-*: initial;
+	--shadow-*: initial;
+	--text-*: initial;
 
-    /* ---- fonts ---- */
-    --font-sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	/* ---- fonts ---- */
+	--font-sans:
+		'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+		sans-serif;
 
-    /* ---- core colors ---- */
-    --color-ink: #111111;
-    --color-paper: #ffffff;
-    --color-canvas: #f4f2ee;
-    --color-muted: #5b5b5b;
-    --color-placeholder: #6f6f6f;
-    --color-hair: #e2e0dc;
-    --color-accent: #f0703a;
+	/* ---- core colors ---- */
+	--color-ink: #111111;
+	--color-paper: #ffffff;
+	--color-canvas: #f4f2ee;
+	--color-muted: #5b5b5b;
+	--color-placeholder: #6f6f6f;
+	--color-hair: #e2e0dc;
+	--color-accent: #f0703a;
 
-    --color-hover: #faf8f5;
-    --color-hover-strong: #f0eeea;
-    --color-sunken: #fbfaf8;
-    --color-neutral-fill: #e4e2de;
-    --color-selected: #fff6e6;
+	--color-hover: #faf8f5;
+	--color-hover-strong: #f0eeea;
+	--color-sunken: #fbfaf8;
+	--color-neutral-fill: #e4e2de;
+	--color-selected: #fff6e6;
 
-    --color-danger: #b0271a;
-    --color-notify: #d63a26;
-    --color-success-line: #7cc47a;
-    --color-warning-soft: #f7b3aa;
+	--color-danger: #b0271a;
+	--color-notify: #d63a26;
+	--color-success-line: #7cc47a;
+	--color-warning-soft: #f7b3aa;
 
-    --color-white: #ffffff;
-    --color-transparent: transparent;
-    --color-current: currentColor;
+	--color-white: #ffffff;
+	--color-transparent: transparent;
+	--color-current: currentColor;
 
-    /* ---- member area accents ---- */
-    --color-area-start: #f5a3c4;
-    --color-area-tasks: #f0703a;
-    --color-area-tasks-tile: #ef8b45;
-    --color-area-commons: #a6e3a1;
-    --color-area-init: #a9c9ef;
-    --color-area-qual: #f3d675;
+	/* ---- member area accents ---- */
+	--color-area-start: #f5a3c4;
+	--color-area-tasks: #f0703a;
+	--color-area-tasks-tile: #ef8b45;
+	--color-area-commons: #a6e3a1;
+	--color-area-init: #a9c9ef;
+	--color-area-qual: #f3d675;
 
-    /* ---- type scale: size + line-height + tracking + weight ---- */
-    --text-caps: 0.6875rem;
-    --text-caps--line-height: 1.3;
-    --text-caps--letter-spacing: 0.09em;
-    --text-caps--font-weight: 600;
+	/* ---- type scale: size + line-height + tracking + weight ---- */
+	--text-caps: 0.6875rem;
+	--text-caps--line-height: 1.3;
+	--text-caps--letter-spacing: 0.09em;
+	--text-caps--font-weight: 600;
 
-    --text-tiny: 0.8125rem;
-    --text-tiny--line-height: 1.4;
+	--text-tiny: 0.8125rem;
+	--text-tiny--line-height: 1.4;
 
-    --text-small: 0.875rem;
-    --text-small--line-height: 1.45;
+	--text-small: 0.875rem;
+	--text-small--line-height: 1.45;
 
-    --text-button: 0.9375rem;
-    --text-button--line-height: 1.2;
-    --text-button--font-weight: 600;
+	--text-button: 0.9375rem;
+	--text-button--line-height: 1.2;
+	--text-button--font-weight: 600;
 
-    --text-body: 1rem;
-    --text-body--line-height: 1.5;
+	--text-body: 1rem;
+	--text-body--line-height: 1.5;
 
-    --text-h3: 1.0625rem;
-    --text-h3--line-height: 1.2;
-    --text-h3--letter-spacing: -0.01em;
-    --text-h3--font-weight: 600;
+	--text-h3: 1.0625rem;
+	--text-h3--line-height: 1.2;
+	--text-h3--letter-spacing: -0.01em;
+	--text-h3--font-weight: 600;
 
-    --text-h2: 1.375rem;
-    --text-h2--line-height: 1.1;
-    --text-h2--letter-spacing: -0.02em;
-    --text-h2--font-weight: 600;
+	--text-h2: 1.375rem;
+	--text-h2--line-height: 1.1;
+	--text-h2--letter-spacing: -0.02em;
+	--text-h2--font-weight: 600;
 
-    --text-stat: 1.6875rem;
-    --text-stat--line-height: 1;
-    --text-stat--letter-spacing: -0.03em;
-    --text-stat--font-weight: 600;
+	--text-stat: 1.6875rem;
+	--text-stat--line-height: 1;
+	--text-stat--letter-spacing: -0.03em;
+	--text-stat--font-weight: 600;
 
-    --text-h1: 2.75rem;
-    --text-h1--line-height: 1.03;
-    --text-h1--letter-spacing: -0.025em;
-    --text-h1--font-weight: 600;
+	--text-h1: 2.75rem;
+	--text-h1--line-height: 1.03;
+	--text-h1--letter-spacing: -0.025em;
+	--text-h1--font-weight: 600;
 
-    --text-saldo: 3rem;
-    --text-saldo--line-height: 0.95;
-    --text-saldo--letter-spacing: -0.035em;
-    --text-saldo--font-weight: 600;
+	--text-saldo: 3rem;
+	--text-saldo--line-height: 0.95;
+	--text-saldo--letter-spacing: -0.035em;
+	--text-saldo--font-weight: 600;
 
-    --text-display: 3.25rem;
-    --text-display--line-height: 1.03;
-    --text-display--letter-spacing: -0.025em;
-    --text-display--font-weight: 600;
+	--text-display: 3.25rem;
+	--text-display--line-height: 1.03;
+	--text-display--letter-spacing: -0.025em;
+	--text-display--font-weight: 600;
 
-    /* ---- shape ---- */
-    --radius-full: 9999px;   /* avatars, dots, pills only */
-    /* ---- breakpoints (prototype: 520 / 760 / 900 / 1500) ---- */
-    --breakpoint-*: initial;
-    --breakpoint-sm: 32.5rem;  /* 520 */
-    --breakpoint-md: 47.5rem;  /* 760 */
-    --breakpoint-lg: 56.25rem; /* 900 */
-    --breakpoint-xl: 93.75rem; /* 1500 */
+	/* ---- shape ---- */
+	--radius-full: 9999px; /* avatars, dots, pills only */
+	/* ---- breakpoints (prototype: 520 / 760 / 900 / 1500) ---- */
+	--breakpoint-*: initial;
+	--breakpoint-sm: 32.5rem; /* 520 */
+	--breakpoint-md: 47.5rem; /* 760 */
+	--breakpoint-lg: 56.25rem; /* 900 */
+	--breakpoint-xl: 93.75rem; /* 1500 */
 }
 
 /* Not Tailwind theme values, just shared CSS variables */
 :root {
-    color-scheme: light;
+	color-scheme: light;
 
-    --border-accent-width: 4px;
-    --focus-ring: 3px solid var(--color-accent);
-    --focus-ring-offset: 2px;
-    --focus-field: inset 0 0 0 2px var(--color-accent);
-    --backdrop: rgb(17 17 17 / 0.45);
+	--border-accent-width: 4px;
+	--focus-ring: 3px solid var(--color-accent);
+	--focus-ring-offset: 2px;
+	--focus-field: inset 0 0 0 2px var(--color-accent);
+	--backdrop: rgb(17 17 17 / 0.45);
 
-    --touch-min: 2.75rem;
-    --avatar-sm: 1.625rem;
-    --avatar-md: 2.125rem;
-    --avatar-lg: 3.25rem;
-    --icon-stroke: 1.9;
+	--touch-min: 2.75rem;
+	--avatar-sm: 1.625rem;
+	--avatar-md: 2.125rem;
+	--avatar-lg: 3.25rem;
+	--icon-stroke: 1.9;
 
-    --shell-member-side: 250px;
-    --shell-admin-side: 236px;
-    --content-max: 1180px;
-    --admin-content-max: 1240px;
-    --modal-max: 560px;
+	--shell-member-side: 250px;
+	--shell-admin-side: 236px;
+	--content-max: 1180px;
+	--admin-content-max: 1240px;
+	--modal-max: 560px;
 }

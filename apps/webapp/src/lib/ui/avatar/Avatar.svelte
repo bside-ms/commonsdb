@@ -45,7 +45,13 @@
 
 	let { name, src, size, color, decorative = false, class: className }: Props = $props();
 
-	const AREA_COLORS: Color[] = ['area-start', 'area-tasks', 'area-commons', 'area-init', 'area-qual'];
+	const AREA_COLORS: Color[] = [
+		'area-start',
+		'area-tasks',
+		'area-commons',
+		'area-init',
+		'area-qual'
+	];
 
 	const initials = $derived(
 		name

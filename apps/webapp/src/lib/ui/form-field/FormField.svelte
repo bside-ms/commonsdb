@@ -11,59 +11,59 @@
 	errorMessage() in the route, so ui/ stays independent of core.
 -->
 <script lang="ts">
-    import type {Snippet} from 'svelte';
-    import {m} from '#lib/paraglide/messages.js';
-    import {cn} from '#lib/ui';
-    import {setFieldContext} from './context.ts';
+	import type { Snippet } from 'svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cn } from '#lib/ui';
+	import { setFieldContext } from './context.ts';
 
-    type Props = {
-        label: string;
-        hint?: string;
-        error?: string | null | false;
-        /** Shows "(optional)" after the label. */
-        optional?: boolean;
-        /** Override the generated id, e.g. to link from elsewhere. */
-        id?: string;
-        class?: string;
-        children: Snippet;
-    };
+	type Props = {
+		label: string;
+		hint?: string;
+		error?: string | null | false;
+		/** Shows "(optional)" after the label. */
+		optional?: boolean;
+		/** Override the generated id, e.g. to link from elsewhere. */
+		id?: string;
+		class?: string;
+		children: Snippet;
+	};
 
-    let {label, hint, error, optional = false, id, class: className, children}: Props = $props();
+	let { label, hint, error, optional = false, id, class: className, children }: Props = $props();
 
-    const uid = $props.id();
-    const fieldId = $derived(id ?? `${uid}-control`);
-    const hintId = $derived(`${fieldId}-hint`);
-    const errorId = $derived(`${fieldId}-error`);
-    const labelId = $derived(`${fieldId}-label`);
+	const uid = $props.id();
+	const fieldId = $derived(id ?? `${uid}-control`);
+	const hintId = $derived(`${fieldId}-hint`);
+	const errorId = $derived(`${fieldId}-error`);
+	const labelId = $derived(`${fieldId}-label`);
 
-    setFieldContext({
-        get id() {
-            return fieldId;
-        },
-        get labelId() {
-            return labelId;
-        },
-        get describedBy() {
-            return [hint && hintId, error && errorId].filter(Boolean).join(' ') || undefined;
-        },
-        get invalid() {
-            return Boolean(error);
-        }
-    });
+	setFieldContext({
+		get id() {
+			return fieldId;
+		},
+		get labelId() {
+			return labelId;
+		},
+		get describedBy() {
+			return [hint && hintId, error && errorId].filter(Boolean).join(' ') || undefined;
+		},
+		get invalid() {
+			return Boolean(error);
+		}
+	});
 </script>
 
 <div class={cn('grid content-start gap-1.25', className)}>
-    <label id={labelId} for={fieldId} class="text-tiny font-semibold">
-        {label}
-        {#if optional}<span class="font-normal text-muted">({m.ui_optional()})</span>{/if}
-    </label>
+	<label id={labelId} for={fieldId} class="text-tiny font-semibold">
+		{label}
+		{#if optional}<span class="font-normal text-muted">({m.ui_optional()})</span>{/if}
+	</label>
 
-    {@render children()}
+	{@render children()}
 
-    {#if hint}
-        <p id={hintId} class="text-tiny text-muted">{hint}</p>
-    {/if}
-    {#if error}
-        <p id={errorId} class="text-tiny font-semibold text-danger">{error}</p>
-    {/if}
+	{#if hint}
+		<p id={hintId} class="text-tiny text-muted">{hint}</p>
+	{/if}
+	{#if error}
+		<p id={errorId} class="text-tiny font-semibold text-danger">{error}</p>
+	{/if}
 </div>
