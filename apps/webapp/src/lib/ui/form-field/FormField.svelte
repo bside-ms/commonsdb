@@ -34,10 +34,14 @@
     const fieldId = $derived(id ?? `${uid}-control`);
     const hintId = $derived(`${fieldId}-hint`);
     const errorId = $derived(`${fieldId}-error`);
+    const labelId = $derived(`${fieldId}-label`);
 
     setFieldContext({
         get id() {
             return fieldId;
+        },
+        get labelId() {
+            return labelId;
         },
         get describedBy() {
             return [hint && hintId, error && errorId].filter(Boolean).join(' ') || undefined;
@@ -49,7 +53,7 @@
 </script>
 
 <div class={cn('grid content-start gap-1.25', className)}>
-    <label for={fieldId} class="text-tiny font-semibold">
+    <label id={labelId} for={fieldId} class="text-tiny font-semibold">
         {label}
         {#if optional}<span class="font-normal text-muted">({m.ui_optional()})</span>{/if}
     </label>

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@commonsdb/db": "workspace:*",
+    "@commonsdb/richtext": "workspace:*",
     "drizzle-orm": "catalog:",
     "valibot": "^1.5.0"
   },

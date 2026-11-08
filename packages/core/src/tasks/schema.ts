@@ -1,6 +1,7 @@
 import * as v from 'valibot';
-import {WHEN_KINDS, type RichTextDoc} from '@commonsdb/db/schema';
-import {checkbox, optionalText} from '../validation.ts';
+import { parseRichText } from '@commonsdb/richtext';
+import { WHEN_KINDS } from '@commonsdb/db/schema';
+import { checkbox, optionalText } from '../validation.ts';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -23,26 +24,20 @@ export const HoursInput = v.pipe(
 );
 
 /**
- * Description: a TipTap document, or nothing. Step 2 replaces the shape
- * check with full schema validation from packages/richtext.
- * Forms post it as a JSON string from a hidden input.
+ * Description: a TipTap document in the 'description' profile, or null.
+ * Forms post it as a JSON string from the editor's hidden input.
  */
 const Description = v.pipe(
-    v.optional(v.nullable(v.union([v.string(), v.object({type: v.literal('doc')})])), null),
-    v.transform((x): unknown => {
-        if (x === null || x === '') return null;
-        if (typeof x !== 'string') return x;
-        try {
-            return JSON.parse(x);
-        } catch {
-            return {invalid: true};
-        }
-    }),
-    v.check(
-        (x) => x === null || (typeof x === 'object' && (x as { type?: unknown }).type === 'doc'),
-        'task_description_invalid'
-    ),
-    v.transform((x) => x as RichTextDoc | null)
+    v.optional(v.unknown(), null),
+    v.rawTransform(({ dataset, addIssue, NEVER }) => {
+        const result = parseRichText('description', dataset.value);
+        if (result.ok) return result.doc;
+        addIssue({
+            message:
+                result.reason === 'link' ? 'task_description_link_invalid' : 'task_description_invalid'
+        });
+        return NEVER;
+    })
 );
 
 export const TaskInput = v.pipe(
@@ -67,20 +62,20 @@ export const TaskInput = v.pipe(
         endsOn: v.optional(v.string(), ''),
         hours: HoursInput
     }),
-    v.rawTransform(({dataset, addIssue, NEVER}) => {
-        const {endsOn, whenKind, hours, ...rest} = dataset.value;
-        if (whenKind === 'date') return {...rest, whenKind, endsOn: null, hoursTenths: hours};
+    v.rawTransform(({ dataset, addIssue, NEVER }) => {
+        const { endsOn, whenKind, hours, ...rest } = dataset.value;
+        if (whenKind === 'date') return { ...rest, whenKind, endsOn: null, hoursTenths: hours };
 
         const end = endsOn.trim();
         if (!ISO_DATE.test(end) || Number.isNaN(Date.parse(end))) {
-            addIssue({message: 'task_ends_on_invalid', path: pathTo(dataset.value, 'endsOn')});
+            addIssue({ message: 'task_ends_on_invalid', path: pathTo(dataset.value, 'endsOn') });
             return NEVER;
         }
         if (end < rest.startsOn) {
-            addIssue({message: 'task_ends_before_start', path: pathTo(dataset.value, 'endsOn')});
+            addIssue({ message: 'task_ends_before_start', path: pathTo(dataset.value, 'endsOn') });
             return NEVER;
         }
-        return {...rest, whenKind, endsOn: end, hoursTenths: hours};
+        return { ...rest, whenKind, endsOn: end, hoursTenths: hours };
     })
 );
 export type TaskInput = v.InferInput<typeof TaskInput>;
@@ -88,7 +83,7 @@ export type TaskData = v.InferOutput<typeof TaskInput>;
 
 /** Issue path for a cross-field error, so getDotPath yields the field name. */
 function pathTo(input: Record<string, unknown>, key: string) {
-    return [{type: 'object', origin: 'value', input, key, value: input[key]}] as unknown as [
+    return [{ type: 'object', origin: 'value', input, key, value: input[key] }] as unknown as [
         v.ObjectPathItem
     ];
 }

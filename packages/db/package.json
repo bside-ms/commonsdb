@@ -15,6 +15,7 @@
     "seed": "node src/seed.ts"
   },
   "dependencies": {
+    "@commonsdb/richtext": "workspace:*",
     "drizzle-orm": "catalog:",
     "postgres": "^4.0.0"
   },

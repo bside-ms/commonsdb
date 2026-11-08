@@ -85,10 +85,26 @@
 	"error_task_hours_too_small": "Mindestens eine halbe Stunde.",
 	"error_task_hours_too_large": "Höchstens 24 Stunden.",
 	"error_task_hours_half_steps": "Bitte in halben Stunden (z. B. 1,5).",
+	"error_task_description_link_invalid": "Die Beschreibung enthält einen ungültigen Link.",
 
 	"ui_optional": "optional",
 	"ui_close": "Schließen",
 	"ui_cancel": "Abbrechen",
 	"ui_skip_to_content": "Zum Inhalt springen",
-	"ui_nav_main": "Hauptnavigation"
+	"ui_nav_main": "Hauptnavigation",
+	"ui_editor_toolbar": "Formatierung",
+	"ui_editor_bold": "Fett",
+	"ui_editor_italic": "Kursiv",
+	"ui_editor_link": "Link",
+	"ui_editor_heading2": "Überschrift",
+	"ui_editor_heading3": "Zwischenüberschrift",
+	"ui_editor_bullet_list": "Aufzählung",
+	"ui_editor_ordered_list": "Nummerierte Liste",
+	"ui_editor_undo": "Rückgängig",
+	"ui_editor_redo": "Wiederholen",
+	"ui_editor_link_title": "Link setzen",
+	"ui_editor_link_url": "Adresse",
+	"ui_editor_link_hint": "Webadresse, mailto: oder tel:. Leer lassen entfernt den Link.",
+	"ui_editor_link_apply": "Übernehmen",
+	"ui_editor_link_invalid": "Diese Adresse geht nicht. Erlaubt sind Webadressen, mailto: und tel:."
 }

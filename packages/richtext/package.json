@@ -1,0 +1,23 @@
+{
+	"name": "@commonsdb/richtext",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check": "tsc",
+		"test": "node --test"
+	},
+	"dependencies": {
+		"@tiptap/core": "^3.33.0",
+		"@tiptap/pm": "^3.33.0",
+		"@tiptap/starter-kit": "^3.33.0",
+		"@tiptap/static-renderer": "^3.33.0"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"typescript": "catalog:"
+	}
+}

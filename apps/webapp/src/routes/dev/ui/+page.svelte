@@ -17,8 +17,12 @@
         Modal,
         Select,
         Textarea,
+        Editor,
+        RichText,
         toast
     } from '#lib/ui';
+    import {enhance} from '$app/forms';
+    import {isAllowedHref, profiles} from '@commonsdb/richtext';
 
     let category = $state('alle');
     let range = $state('heute');
@@ -30,6 +34,8 @@
         if (fontSize === 'm') delete html.dataset.fontSize;
         else html.dataset.fontSize = fontSize;
     });
+
+    let {data, form} = $props();
 </script>
 
 <main class="mx-auto grid max-w-(--content-max) gap-10 px-4 py-8 lg:px-10">
@@ -177,5 +183,33 @@
                 >
             {/snippet}
         </Modal>
+    </section>
+
+    <section class="grid gap-4 border-t border-ink pt-6 lg:grid-cols-2">
+        <h2 class="lg:col-span-2">Editor · RichText</h2>
+
+        <form method="post" action="?/richtext" use:enhance class="grid content-start gap-3">
+            <FormField label="Beschreibung" optional hint="Absenden zeigt, was der Server daraus macht.">
+                <Editor
+                        name="description"
+                        value={data.richText.doc}
+                        html={data.richText.html}
+                        extensions={profiles.description()}
+                        {isAllowedHref}
+                />
+            </FormField>
+            <div>
+                <Button type="submit" size="sm">Absenden</Button>
+            </div>
+        </form>
+
+        <div class="grid content-start gap-3">
+            <p class="text-caps uppercase">Server-HTML</p>
+            {#if form?.richText && !form.richText.ok}
+                <p class="font-semibold text-danger">Abgelehnt: {form.richText.reason}</p>
+            {:else}
+                <RichText html={form?.richText?.html ?? data.richText.html} class="border border-ink bg-paper p-4"/>
+            {/if}
+        </div>
     </section>
 </main>
