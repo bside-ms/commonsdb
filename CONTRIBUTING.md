@@ -16,7 +16,8 @@ best way to start is to open an issue before writing larger changes.
    fixed and which are meant to be swapped.
 2. Check [ROADMAP.md](ROADMAP.md) for what is planned next.
 3. Keep changes focused: one topic per pull request.
-4. Run the tests of the app you changed (see the app's README).
+4. Run `pnpm check` and `pnpm test`. If you changed UI or a flow, also
+   `pnpm test:e2e`. New rules in `core` come with a test.
 5. If you change a decision, update ARCHITECTURE.md in the same pull
    request.
 

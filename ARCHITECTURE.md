@@ -42,10 +42,14 @@ A plain TypeScript stack, one language end to end:
 - **Background jobs**: a small worker process (pg-boss or
   graphile-worker, both Postgres-backed, no Redis) running the same
   `core` — not built yet
-- **Rich text**: TipTap, one shared editor config for messages and the
-  long-form descriptions of tasks, resources and qualifications (and the
-  built-in wiki, see below). Stored as TipTap JSON, validated server-side.
-  Not built yet.
+- **Rich text**: TipTap 3, in `packages/richtext`. One extension list per
+  use ("profile": `description` now; messages and wiki later) feeds the
+  editor, the server-side validation (`parseRichText`, also checks link
+  protocols and heading levels) and the HTML renderer (`toHtml`, via
+  `@tiptap/static-renderer`, no DOM needed). Stored as TipTap JSON;
+  readers get server-rendered HTML and load no TipTap. The webapp bundles
+  TipTap/ProseMirror into its server build (`ssr.noExternal`), because
+  ProseMirror breaks when two copies are loaded.
 
 ### History: why not Laravel
 
@@ -158,9 +162,16 @@ authenticate, call a service in `core`, and return the result. Nothing in
   real migrations; `reset()` before each test, factories for users and
   categories. Every rule a service enforces gets a test.
 - **richtext**: unit tests for schema, links, rendering.
-- **webapp**: Playwright e2e for the main flows (from slice 2, step 5).
-  Routes and components stay thin, so most logic is covered in core.
-- `pnpm test` runs all of them that exist in a package.
+- **webapp**: Playwright e2e in `apps/webapp/e2e/` against a production
+  build (`vite build` + `vite preview`), a real Postgres database of its
+  own (`commonsdb_e2e`, recreated per run; the name must contain `e2e` or
+  `test`) and real email/password login. Users are created through Better
+  Auth in `global-setup.ts`, logged in once in `auth.setup.ts`;
+  `as('kim')` gives a logged-in page. Selectors are roles and visible
+  German text, no test ids. Covers the main flows, not every rule (that's
+  core's job).
+- `pnpm test`: core + richtext, fast, no database. `pnpm test:e2e`:
+  browser tests, needs `pnpm db:up`.
 
 ## Admin dashboard decision
 
@@ -263,15 +274,16 @@ spaces fork and customize adapters). pnpm workspaces.
 ```
 ├── apps/
 │   └── webapp/         # SvelteKit — composition root, routes, UI;
-│                        # thin load/actions that call core
+│       └── e2e/        # Playwright tests against a production build
 ├── packages/
 │   ├── db/              # Drizzle schema (incl. generated Better Auth
-│   │                    # tables), migrations, createDb(url)
+│   │                    # tables), migrations, createDb, runMigrations;
+│   │                    # /testing: PGlite test db, factories
 │   ├── auth/            # createAuth(options) around Better Auth
-│   └── core/            # domain services, Actor, policies, input
-│                        # schemas, domain errors
+│   ├── core/            # domain services, Actor, policies, input
+│   │                    # schemas, domain errors (+ *.test.ts)
+│   └── richtext/        # TipTap profiles, parseRichText, toHtml
 ├── docs/
-├── infra/
 ├── docker-compose.yml   # Postgres (+ optional local Keycloak)
 ├── tsconfig.base.json
 ├── pnpm-workspace.yaml  # packages, catalog, build-script allowlist
@@ -280,7 +292,8 @@ spaces fork and customize adapters). pnpm workspaces.
 └── ...
 ```
 
-Dependencies point one way: `webapp → auth → db`, `webapp → core → db`.
+Dependencies point one way: `webapp → auth → db`, `webapp → core → db`,
+and `core`, `db`, `webapp → richtext` (which depends on nothing internal).
 `core` and `auth` never depend on each other or on SvelteKit.
 
 ### Package conventions
@@ -334,23 +347,26 @@ the webapp are declared and validated in `apps/webapp/src/env.ts`
 (SvelteKit 3 `defineEnvVars`). Development authenticates against the
 B-Side Keycloak `Test` realm; a local Keycloak in docker compose stays
 available for offline work.
+`pnpm db:up` starts the docker Postgres. The e2e tests use a separate
+database on the same server, created and dropped by the tests; the dev
+database is never touched.
 
 Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 2 — tasks**: done except browser e2e tests (step 5).
-- **Tests**: core has integration tests (`*.test.ts`, `node --test`,
-  PGlite with the real migrations, `pnpm test`). Browser e2e with
-  Playwright against the real app is next.
+- **Slice 3 — report, confirm, repros**: next. Repro storage is decided
+  (integer tenths, like shift hours).
+- **CI**: GitHub Actions with a Postgres service running `pnpm check`,
+  `pnpm test`, `pnpm test:e2e`.
 - **Admin roles**: still set by SQL; a superadmin user list with role
-  assignment is open (slice 4 or with "Mitglieder" in the admin nav).
+  assignment is open (with "Mitglieder" in the admin nav).
 - **Keycloak logout**: signing out ends the app session only; decide
   whether to also end the IdP session.
-- **Tests**: the scaffold's e2e test no longer matches (everything is
-  behind login); set up test strategy (core unit tests against a test
-  database, a few e2e flows).
+- **Experimental SvelteKit features** (remote functions, Svelte async):
+  in use since slice 2; two dev-only warnings after form redirects are
+  known (see slice 2 notes). Re-check on SvelteKit updates.
 - **TypeScript 7**: packages use the native compiler; editor and
   `svelte-check` tooling may lag — pin via catalog if it causes trouble.
-- Later: worker process, deployment docs (VPS/Docker), CI, ledger
-  semantics, Better Auth organization plugin vs. own initiative model.
+- Later: worker process, deployment docs (VPS/Docker), ledger semantics,
+  Better Auth organization plugin vs. own initiative model.

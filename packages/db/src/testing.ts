@@ -9,6 +9,7 @@
  */
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
+import postgres from 'postgres';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Db } from './client.ts';
@@ -17,6 +18,29 @@ import * as schema from './schema/index.ts';
 type PlatformRole = 'member' | 'admin' | 'superadmin';
 
 const MIGRATIONS = fileURLToPath(new URL('../migrations', import.meta.url));
+
+/**
+ * Drop and create a database on a real Postgres server (e2e tests).
+ * Refuses any name without "test" or "e2e" in it, so a wrong
+ * DATABASE_URL can never wipe a real database.
+ */
+export async function recreateDatabase(url: string) {
+	const name = decodeURIComponent(new URL(url).pathname.slice(1));
+	if (!/^[\w-]+$/.test(name) || !/test|e2e/.test(name)) {
+		throw new Error(
+			`Refusing to recreate "${name}": test databases need "test" or "e2e" in the name.`
+		);
+	}
+	const maintenance = new URL(url);
+	maintenance.pathname = '/postgres';
+	const sql = postgres(maintenance.toString(), { max: 1, onnotice: () => {} });
+	try {
+		await sql.unsafe(`drop database if exists "${name}" with (force)`);
+		await sql.unsafe(`create database "${name}"`);
+	} finally {
+		await sql.end();
+	}
+}
 
 export async function createTestDb() {
 	const pg = new PGlite();
@@ -33,8 +57,8 @@ export async function createTestDb() {
 
 	const tables = await pg.query<{ name: string }>(
 		`select quote_ident(tablename) as name
-         from pg_tables
-         where schemaname = 'public'`
+		 from pg_tables
+		 where schemaname = 'public'`
 	);
 	const all = tables.rows.map((r) => r.name).join(', ');
 

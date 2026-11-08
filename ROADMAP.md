@@ -135,9 +135,11 @@ together-only filters, reporting completion, the ledger, series.
 
 Demo: an admin puts a real task in, a member takes it, both see it.
 
-Status: done — admin side (list, create, edit, duplicate, delete/restore,
-release, capabilities), member side (list with search and category
-filters, detail, take/release), core tests. Browser e2e tests follow.
+Status: **done.** Admin side (list, create, edit, duplicate,
+delete/restore, release, capabilities for superadmins), member side (list
+with search and category filters, detail, take/release, "Meine Aufgaben"
+on the start page). Tested in core (integration, PGlite) and end to end
+(Playwright against a production build and real Postgres).
 
 **Decided:**
 
@@ -270,9 +272,9 @@ Certificates gating tasks and resources.
 Things the prototype implies that we should _not_ settle yet. Revisit
 when the design side stabilises.
 
-- **Repro storage.** Fractional values (0.5) mean decimal or integer
-  tenths. Integer tenths avoids float drift in balance sums — decide
-  before slice 3, it's the one thing here that's expensive later.
+- **Past tasks.** A task whose date has passed can still be taken.
+  Probably fine until reporting (slice 3) and series (slice 5) give
+  "overdue" a meaning; decide then.
 - **Registration.** Self-serve with a rules checkbox, per the prototype.
   Whether admins approve is unresolved.
 - **Ledger entry shape.** Theirs is single-entry signed amounts. Ours

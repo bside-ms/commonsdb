@@ -5,6 +5,14 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	ssr: {
+		// TipTap/ProseMirror must exist once per process: ProseMirror checks
+		// instances, and two copies (one bundled, one from node_modules) make
+		// server-side rendering of rich text fail ("multiple versions of
+		// prosemirror-model"). Bundling all of it into the server build
+		// guarantees a single copy.
+		noExternal: [/^@tiptap\//, /^prosemirror-/]
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({

@@ -40,11 +40,14 @@ rewrite. Details and trade-offs in ARCHITECTURE.md.
 ├── apps/
 │   └── webapp/        # SvelteKit — PWA + guarded /admin routes
 ├── packages/
-│   ├── core/           # domain logic, ports and adapters
-│   └── db/             # Drizzle schema + migrations
-├── docs/              # cross-cutting docs (adapters, deployment, decisions)
-├── infra/             # docker compose, deploy scripts, CI
-├── ARCHITECTURE.md     # conceptual/architectural decisions, living doc
+│   ├── core/          # domain logic: services, policies, validation
+│   ├── db/            # Drizzle schema + migrations
+│   ├── auth/          # Better Auth setup
+│   └── richtext/      # TipTap profiles, validation, rendering
+├── docs/              # cross-cutting docs (adapters, …)
+├── docker-compose.yml # Postgres (+ optional local Keycloak)
+├── ARCHITECTURE.md    # conceptual/architectural decisions, living doc
+├── ROADMAP.md         # order of work, slice by slice
 └── CONTRIBUTING.md
 ```
 
@@ -60,12 +63,27 @@ else (ledger, tasks, initiatives, resource rules) works the same.
 
 ## Getting started
 
-Local development uses docker compose (Postgres) and pnpm; a devcontainer
-may follow. Dev tooling only — production deployment is described in
-`docs/deployment/`.
+You need Node 24+, pnpm and Docker.
 
-<!-- Fill in once scaffolding exists: prerequisites, pnpm install,
-     docker compose up, migrate, dev server. -->
+```sh
+pnpm install
+cp .env.example .env      # set BETTER_AUTH_SECRET; for local accounts
+                          # AUTH_EMAIL_PASSWORD=true
+pnpm db:up                # Postgres in docker
+pnpm db:migrate
+pnpm db:seed              # demo categories
+pnpm dev                  # http://localhost:5173
+```
+
+New users start as members. To make yourself superadmin:
+`update "user" set platform_role = 'superadmin' where email = '…';`
+
+```sh
+pnpm check                # types
+pnpm test                 # core + richtext tests (no database needed)
+pnpm test:e2e             # browser tests (needs pnpm db:up; first time:
+                          # pnpm --filter webapp exec playwright install chromium)
+```
 
 ## Releases & versioning
 
