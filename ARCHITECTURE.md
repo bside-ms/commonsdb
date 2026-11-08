@@ -63,7 +63,7 @@ would mean rewriting the domain.
 
 - **Hosting**: cheap shared PHP hosting is no longer a target. The
   reference deployment is Docker or a small VPS (Node process + Postgres
-    + worker). Other spaces need that, or a managed container platform.
+  - worker). Other spaces need that, or a managed container platform.
 - **Supply chain**: npm ecosystem risk is real. Mitigations: lockfile,
   install scripts disabled by default, small dependency count, regular
   audits.
@@ -73,7 +73,7 @@ would mean rewriting the domain.
 ## Core design principle: fixed core vs. pluggable boundary
 
 Not everything needs to be adjustable. Only swap what genuinely differs
-between spaces; keep the domain logic that *is* the product opinionated
+between spaces; keep the domain logic that _is_ the product opinionated
 and simple.
 
 ### Fixed core (no swapping needed, lives in `packages/core`)
@@ -86,8 +86,8 @@ and simple.
 - **Resource access rules** — "requires certificate X", "costs N repros",
   "initiative members only", "max duration" etc. Modeled as a composable
   rule chain (internal Strategy pattern) attached to each Resource, so
-  new rule *instances* are data/config, not code changes. New rule
-  *types* are small classes implementing a common interface.
+  new rule _instances_ are data/config, not code changes. New rule
+  _types_ are small classes implementing a common interface.
 - **Tasks** for space maintenance.
 - **Authorization policies** — server-side checks (who may do what) live
   in `core`, not in route handlers or the UI.
@@ -98,11 +98,11 @@ and simple.
   `packages/auth` exports `createAuth(options)`: Keycloak/OIDC (issuer,
   client id/secret) or email/password, chosen by env vars. Two seams keep
   the library out of the domain:
-    - `core` only sees an **`Actor`** (`{ id, platformRole }`), never a
-      Better Auth session.
-    - `createAuth` exposes an **`onUserCreated`** callback; the webapp
-      connects it to `core` (profile provisioning). `auth` never imports
-      `core`.
+  - `core` only sees an **`Actor`** (`{ id, platformRole }`), never a
+    Better Auth session.
+  - `createAuth` exposes an **`onUserCreated`** callback; the webapp
+    connects it to `core` (profile provisioning). `auth` never imports
+    `core`.
 - **`CalendarProvider`** — where booking events actually live. Reference
   implementations: internal DB (default), CalDAV, Google Calendar. Not
   needed before resource booking (ROADMAP slice 10).
@@ -149,6 +149,18 @@ authenticate, call a service in `core`, and return the result. Nothing in
   codes with `errorMessage()`.
 - Inputs come from `form.fields.<name>.as(...)`; `.for(id)` when the same
   form appears more than once (rows, one per entity).
+
+## Tests
+
+- **core**: integration tests next to the code (`*.test.ts`), Node's
+  test runner, no build step. `createTestDb()` from
+  `@commonsdb/db/testing` gives an in-memory Postgres (PGlite) with the
+  real migrations; `reset()` before each test, factories for users and
+  categories. Every rule a service enforces gets a test.
+- **richtext**: unit tests for schema, links, rendering.
+- **webapp**: Playwright e2e for the main flows (from slice 2, step 5).
+  Routes and components stay thin, so most logic is covered in core.
+- `pnpm test` runs all of them that exist in a package.
 
 ## Admin dashboard decision
 
@@ -198,49 +210,49 @@ which UI rendered it.
   the auth API; arrives with the session, no extra query). Managed in the
   app, not mapped from Keycloak — mapping can become an optional auth
   setting later.
-    - The earlier "roles as data in a table" idea is replaced: the
-      flexibility it was meant to provide lives in **category-scoped
-      capabilities** (ROADMAP slice 2), not in the platform role.
-    - Whether `admin` stays a role or becomes "has capabilities" is still
-      open (ROADMAP, "Noticed, not decided").
-    - Initiative-scoped roles (`member` / `admin` on the
-      User↔Initiative relationship) remain as planned for slice 9.
+  - The earlier "roles as data in a table" idea is replaced: the
+    flexibility it was meant to provide lives in **category-scoped
+    capabilities** (ROADMAP slice 2), not in the platform role.
+  - Whether `admin` stays a role or becomes "has capabilities" is still
+    open (ROADMAP, "Noticed, not decided").
+  - Initiative-scoped roles (`member` / `admin` on the
+    User↔Initiative relationship) remain as planned for slice 9.
 - **Account concept**: a shared conceptual role (not necessarily a DB
   table) that both **User** and **Initiative** fulfill — anything that
   can hold a ledger balance and be the "party" on a booking. User and
   Initiative stay distinct entities (auth, roles, membership differ) but
-  both *are-an* Account for ledger/booking purposes.
+  both _are-an_ Account for ledger/booking purposes.
 - **User ↔ Initiative**: many-to-many via a proper relationship entity
   (not just a flag pivot) — a User can belong to zero, one, or many
   Initiatives; standalone use without any Initiative is fully supported.
   The relationship carries an initiative-scoped role.
-    - Better Auth ships an organization plugin (members, roles,
-      invitations). Worth evaluating as a foundation, but the domain model
-      (roles as data, Account concept, ledger) stays owned by `core`; the
-      auth library must not own it.
+  - Better Auth ships an organization plugin (members, roles,
+    invitations). Worth evaluating as a foundation, but the domain model
+    (roles as data, Account concept, ledger) stays owned by `core`; the
+    auth library must not own it.
 - **Ledger (repros) — Approach B, confirmed**:
-    - Both Users and Initiatives hold a balance (they're both Accounts).
-    - Users earn repros (tied to completing tasks/contributions). Earning
-      is always credited to a User for now.
-    - Users can transfer repros to an Initiative's balance.
-    - Either a User or an Initiative can spend from its own balance to pay
-      for a resource booking.
-    - Every transaction carries a **reason/memo** field (like
-      `Verwendungszweck`) — covers today's needs (task credit, resource
-      payment, transfer) and future ones (e.g. "commons working day"
-      contributions by people without an account, credited to an
-      Initiative by an organizer, documented via the memo) without a
-      schema change.
-    - **Credit / negative balance**: allowed, bounded. Each Account has a
-      credit limit (floor) and, while negative, a `credit_since` timestamp.
-      After a grace period an unsettled negative balance blocks the
-      Account from further resource use. Account standing (blocked or not)
-      is a check independent from per-resource access rules — two separate
-      rule types that both gate a booking. The grace-period check runs in
-      the background worker.
-    - Open question: should transfers (User → Initiative) be allowed to
-      push the *sender* negative, or only resource spending? Leaning
-      toward: transfers must not create/increase a negative balance.
+  - Both Users and Initiatives hold a balance (they're both Accounts).
+  - Users earn repros (tied to completing tasks/contributions). Earning
+    is always credited to a User for now.
+  - Users can transfer repros to an Initiative's balance.
+  - Either a User or an Initiative can spend from its own balance to pay
+    for a resource booking.
+  - Every transaction carries a **reason/memo** field (like
+    `Verwendungszweck`) — covers today's needs (task credit, resource
+    payment, transfer) and future ones (e.g. "commons working day"
+    contributions by people without an account, credited to an
+    Initiative by an organizer, documented via the memo) without a
+    schema change.
+  - **Credit / negative balance**: allowed, bounded. Each Account has a
+    credit limit (floor) and, while negative, a `credit_since` timestamp.
+    After a grace period an unsettled negative balance blocks the
+    Account from further resource use. Account standing (blocked or not)
+    is a check independent from per-resource access rules — two separate
+    rule types that both gate a booking. The grace-period check runs in
+    the background worker.
+  - Open question: should transfers (User → Initiative) be allowed to
+    push the _sender_ negative, or only resource spending? Leaning
+    toward: transfers must not create/increase a negative balance.
 
 ## Repo structure (decided)
 
@@ -308,7 +320,7 @@ Dependencies point one way: `webapp → auth → db`, `webapp → core → db`.
   the "About" page) is content in the database, not i18n.
 - **Authorization lives in `core`.** The hooks guard is coarse (session,
   onboarding, `/admin` needs admin); services enforce the real rules
-  (e.g. "edit *own* profile" via the actor in the query).
+  (e.g. "edit _own_ profile" via the actor in the query).
 - **Redirects to external origins** use SvelteKit's allowlist
   (`{ external: [keycloakOrigin] }`), never `{ external: true }`.
 -
@@ -327,8 +339,10 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 2 — tasks**: schema, core, rich text, admin UI done; next:
-  member UI (list, detail, take/release), then tests and wrap-up.
+- **Slice 2 — tasks**: done except browser e2e tests (step 5).
+- **Tests**: core has integration tests (`*.test.ts`, `node --test`,
+  PGlite with the real migrations, `pnpm test`). Browser e2e with
+  Playwright against the real app is next.
 - **Admin roles**: still set by SQL; a superadmin user list with role
   assignment is open (slice 4 or with "Mitglieder" in the admin nav).
 - **Keycloak logout**: signing out ends the app session only; decide

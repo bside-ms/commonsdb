@@ -1,27 +1,29 @@
 {
-  "name": "@commonsdb/db",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
-  },
-  "scripts": {
-    "check": "tsc",
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "studio": "drizzle-kit studio",
-    "seed": "node src/seed.ts"
-  },
-  "dependencies": {
-    "@commonsdb/richtext": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "postgres": "^4.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^26.6.6",
-    "drizzle-kit": "^0.31.11",
-    "typescript": "catalog:"
-  }
+	"name": "@commonsdb/db",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./schema": "./src/schema/index.ts",
+		"./testing": "./src/testing.ts"
+	},
+	"scripts": {
+		"check": "tsc",
+		"generate": "drizzle-kit generate",
+		"migrate": "drizzle-kit migrate",
+		"studio": "drizzle-kit studio",
+		"seed": "node src/seed.ts"
+	},
+	"dependencies": {
+		"@commonsdb/richtext": "workspace:*",
+		"drizzle-orm": "catalog:",
+		"postgres": "^4.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"@electric-sql/pglite": "^0.5.15",
+		"drizzle-kit": "^0.31.11",
+		"typescript": "catalog:"
+	}
 }

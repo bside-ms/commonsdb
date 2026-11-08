@@ -1,22 +1,23 @@
 {
-  "name": "@commonsdb/core",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
-  "scripts": {
-    "check": "tsc"
-  },
-  "dependencies": {
-    "@commonsdb/db": "workspace:*",
-    "@commonsdb/richtext": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "valibot": "^1.5.0"
-  },
-  "devDependencies": {
-    "@types/node": "^26.6.6",
-    "typescript": "catalog:"
-  }
+	"name": "@commonsdb/core",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check": "tsc",
+		"test": "node --test"
+	},
+	"dependencies": {
+		"@commonsdb/db": "workspace:*",
+		"@commonsdb/richtext": "workspace:*",
+		"drizzle-orm": "catalog:",
+		"valibot": "^1.5.0"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"typescript": "catalog:"
+	}
 }

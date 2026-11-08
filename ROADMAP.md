@@ -1,7 +1,7 @@
 # Roadmap — feature slices
 
-Companion to `ARCHITECTURE.md`. That document holds *decisions*; this one
-holds *order*. Written after reviewing the design team's prototype
+Companion to `ARCHITECTURE.md`. That document holds _decisions_; this one
+holds _order_. Written after reviewing the design team's prototype
 (`b-side_prototyp_aktuell.html`).
 
 Working constraint: one developer, backend and frontend built together
@@ -12,7 +12,7 @@ each slice rather than a half-built layer.
 
 The prototype is **directional, not a specification**. The design side is
 still moving, and the ideas are good enough to follow — but we build to
-the *shape* they implied, not to their current screens.
+the _shape_ they implied, not to their current screens.
 
 Practically this means a standing rule for every slice:
 
@@ -130,13 +130,14 @@ form covers the fields above; the shift part is just "how many hours".
 **Member UI:** task list with search and category filter, task detail,
 and a single primary action — take it, or release it.
 
-Deliberately *not* here: multi-shift UI, urgent-first/doable-now/
+Deliberately _not_ here: multi-shift UI, urgent-first/doable-now/
 together-only filters, reporting completion, the ledger, series.
 
 Demo: an admin puts a real task in, a member takes it, both see it.
 
-Status: admin side done (list, create, edit, duplicate, delete/restore,
-release, capabilities page for superadmins). Member side next.
+Status: done — admin side (list, create, edit, duplicate, delete/restore,
+release, capabilities), member side (list with search and category
+filters, detail, take/release), core tests. Browser e2e tests follow.
 
 **Decided:**
 
@@ -266,7 +267,7 @@ Certificates gating tasks and resources.
 
 ## Noticed, not decided
 
-Things the prototype implies that we should *not* settle yet. Revisit
+Things the prototype implies that we should _not_ settle yet. Revisit
 when the design side stabilises.
 
 - **Repro storage.** Fractional values (0.5) mean decimal or integer

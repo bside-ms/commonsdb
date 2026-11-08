@@ -16,10 +16,14 @@
 	"logout": "Abmelden",
 
 	"home_greeting": "Hallo {name}!",
+	"home_no_tasks_title": "Du hast gerade keine Aufgaben übernommen",
+	"home_no_tasks_hint": "Schau, was ansteht – vielleicht ist etwas für dich dabei.",
+	"home_browse_tasks": "Aufgaben ansehen",
 
 	"nav_admin": "Admin",
 	"nav_start": "Start",
 	"nav_back_to_app": "Zur App",
+	"nav_tasks": "Aufgaben",
 
 	"onboarding_title": "Willkommen!",
 	"onboarding_intro": "Erzähl uns kurz, wer du bist. Du kannst alles später ändern.",
@@ -40,6 +44,32 @@
 	"profile_notify_by_email": "per E-Mail",
 	"profile_notify_new_tasks": "bei neuen Aufgaben",
 	"profile_role": "Rolle",
+
+	"tasks_title": "Aufgaben",
+	"tasks_search": "Suchen",
+	"tasks_search_placeholder": "Was suchst du?",
+	"tasks_filter_categories": "Bereiche",
+	"tasks_filter_all": "Alle",
+	"tasks_filter_all_in": "Alles in {name}",
+	"tasks_filter_reset": "Filter zurücksetzen",
+	"tasks_mine": "Meine Aufgaben",
+	"tasks_open": "Offen",
+	"tasks_empty_title": "Keine offenen Aufgaben",
+	"tasks_empty_hint": "Schau später wieder vorbei oder ändere den Filter.",
+	"tasks_back": "Alle Aufgaben",
+
+	"task_mine": "Deine",
+	"task_duration": "Dauer",
+	"task_self_service_info": "Geht ohne Absprache: Du kannst einfach loslegen.",
+	"task_take": "Übernehmen",
+	"task_take_hint": "Wenn du übernimmst, ist die Aufgabe für dich reserviert.",
+	"task_take_confirm_title": "Aufgabe übernehmen?",
+	"task_take_confirm_text": "Du trägst dich für {when} ein. Du kannst sie wieder freigeben, solange sie nicht erledigt ist.",
+	"task_taken_toast": "Aufgabe übernommen.",
+	"task_you_took_it": "Du hast diese Aufgabe übernommen.",
+	"task_release": "Wieder freigeben",
+	"task_release_hint": "Klappt es doch nicht? Gib sie frei, dann kann jemand anderes übernehmen.",
+	"task_released_toast": "Aufgabe freigegeben.",
 
 	"visibility_members": "Alle Mitglieder",
 	"visibility_admins": "Nur Admins",
@@ -175,5 +205,6 @@
 	"error_task_hours_half_steps": "Bitte in halben Stunden (z. B. 1,5).",
 	"error_task_description_link_invalid": "Die Beschreibung enthält einen ungültigen Link.",
 	"error_unauthenticated": "Bitte melde dich an.",
-	"error_validation_failed": "Bitte prüfe die markierten Felder."
+	"error_validation_failed": "Bitte prüfe die markierten Felder.",
+	"error_field_required": "Bitte ausfüllen."
 }

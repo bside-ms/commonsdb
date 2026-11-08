@@ -1,0 +1,14 @@
+# Lockfiles
+pnpm-lock.yaml
+
+# Build output
+**/.svelte-kit/
+**/build/
+
+# Generated
+**/paraglide/
+**/project.inlang/cache/
+packages/db/migrations/
+
+# Static assets
+apps/webapp/static/

@@ -149,6 +149,11 @@ Stays in routes until a second use: task row, stat tile, balance
 - Filters live in the URL (GET form, `data-sveltekit-reset="false"`), so
   they work without JS and survive reloads.
 - Date and hour display goes through `#lib/format.ts`.
+- Cards that link somewhere are one `<a>` around the whole card, title
+  first (it becomes the link's accessible name), badges after.
+- Confirmations (`Modal`) are an enhancement: the button is a real submit
+  button that opens the modal only when JS runs; the modal's confirm
+  button submits via `form="…"`.
 
 ## Showcase
 

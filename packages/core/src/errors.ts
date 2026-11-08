@@ -7,25 +7,25 @@
  * script, later the worker) refuses to run this file.
  */
 export class DomainError extends Error {
-    readonly code: string;
-    readonly field?: string;
+	readonly code: string;
+	readonly field?: string;
 
-    constructor(code: string, field?: string) {
-        super(code);
-        this.name = 'DomainError';
-        this.code = code;
-        this.field = field;
-    }
+	constructor(code: string, field?: string) {
+		super(code);
+		this.name = 'DomainError';
+		this.code = code;
+		this.field = field;
+	}
 }
 
 export type FieldErrors = Record<string, string>;
 
 export class ValidationError extends DomainError {
-    readonly fields: FieldErrors;
+	readonly fields: FieldErrors;
 
-    constructor(fields: FieldErrors) {
-        super('validation_failed');
-        this.name = 'ValidationError';
-        this.fields = fields;
-    }
+	constructor(fields: FieldErrors) {
+		super('validation_failed');
+		this.name = 'ValidationError';
+		this.fields = fields;
+	}
 }

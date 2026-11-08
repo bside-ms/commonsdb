@@ -1,8 +1,8 @@
 # Adapting this platform for your space
 
 This is the single most important doc for anyone forking this project for
-their own space. Everything else in this repo describes *our* instance;
-this page describes how to make it *yours* without touching the domain
+their own space. Everything else in this repo describes _our_ instance;
+this page describes how to make it _yours_ without touching the domain
 logic.
 
 Status: stub, to be filled in as the interfaces in `packages/core`
@@ -26,7 +26,7 @@ You adjust the platform by:
 
 Authentication is handled by Better Auth, configured per deployment.
 
-*(to be filled in: required env variables, example configs)*
+_(to be filled in: required env variables, example configs)_
 
 - **You run Keycloak or another OIDC provider** → configure the OIDC
   provider (issuer, client id/secret, role/group mapping).
@@ -36,13 +36,13 @@ Authentication is handled by Better Auth, configured per deployment.
   domain only depends on a small "current identity" port, so swapping is
   contained.
 
-*(to be filled in: how external roles/groups map to platform roles)*
+_(to be filled in: how external roles/groups map to platform roles)_
 
 ## `CalendarProvider`
 
-*(to be filled in: interface definition, what a minimal implementation
+_(to be filled in: interface definition, what a minimal implementation
 must provide — availability check, create/cancel booking — and
-reference implementations)*
+reference implementations)_
 
 - **Bookings live in the platform's own database** → use the internal
   provider (default).
@@ -51,13 +51,13 @@ reference implementations)*
 
 ## Writing a new adapter
 
-*(to be filled in as the interfaces stabilize: checklist, testing
+_(to be filled in as the interfaces stabilize: checklist, testing
 expectations, how to register it in the composition root, where to submit
-it if you'd like it merged upstream for others to reuse)*
+it if you'd like it merged upstream for others to reuse)_
 
 ## What you don't need to adapt
 
-The following are intentionally *not* pluggable — they're the actual
+The following are intentionally _not_ pluggable — they're the actual
 product, not infrastructure glue, and should work the same everywhere:
 
 - Users, Initiatives, and the relationship between them

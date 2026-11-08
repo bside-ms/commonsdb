@@ -1,20 +1,26 @@
 {
-  "name": "commonsdb",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@12.8.1",
-  "engines": {
-    "node": ">=22"
-  },
-  "scripts": {
-    "dev": "pnpm --filter webapp dev",
-    "build": "pnpm --filter webapp build",
-    "check": "pnpm -r check",
-    "lint": "pnpm -r lint",
-    "format": "pnpm -r format",
-    "db:generate": "pnpm --filter @commonsdb/db generate",
-    "db:migrate": "pnpm --filter @commonsdb/db migrate",
-    "db:studio": "pnpm --filter @commonsdb/db studio",
-    "db:seed": "pnpm --filter @commonsdb/db seed"
-  }
+	"name": "commonsdb",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@12.8.1",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"dev": "pnpm --filter webapp dev",
+		"build": "pnpm --filter webapp build",
+		"check": "pnpm -r check",
+		"lint": "prettier --check .",
+		"format": "prettier --write .",
+		"test": "pnpm -r --if-present test",
+		"db:generate": "pnpm --filter @commonsdb/db generate",
+		"db:migrate": "pnpm --filter @commonsdb/db migrate",
+		"db:studio": "pnpm --filter @commonsdb/db studio",
+		"db:seed": "pnpm --filter @commonsdb/db seed"
+	},
+	"devDependencies": {
+		"prettier": "^3.8.3",
+		"prettier-plugin-svelte": "^4.1.0",
+		"prettier-plugin-tailwindcss": "^0.8.0"
+	}
 }

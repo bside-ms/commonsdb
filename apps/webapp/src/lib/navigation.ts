@@ -6,14 +6,15 @@ import type { NavItem } from '#lib/ui';
 /**
  * Navigation of the two shells. Functions, so labels are translated at
  * render time. Add areas as their slices land; the nav shows from two
- * items on (slice 2 adds Aufgaben: ListChecks, area 'tasks').
+ * items on.
  *
  * Prototype areas and their Lucide icons, for later:
  *   Start House · Aufgaben ListChecks · Commons Box · Initiativen Users ·
  *   Qualifikationen GraduationCap
  */
 export const memberNav = (): NavItem[] => [
-	{ href: resolve('/'), label: m.nav_start(), icon: House, area: 'start' }
+	{ href: resolve('/'), label: m.nav_start(), icon: House, area: 'start' },
+	{ href: resolve('/tasks'), label: m.nav_tasks(), icon: ListChecks, area: 'tasks' }
 ];
 
 /**

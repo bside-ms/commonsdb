@@ -22,13 +22,13 @@ best way to start is to open an issue before writing larger changes.
 
 ## Where documentation goes
 
-| Kind of information                    | Place |
-|----------------------------------------|-------|
-| Overview, orientation                  | `README.md` |
-| System design and decisions            | `ARCHITECTURE.md` |
-| Order of work                          | `ROADMAP.md` |
-| Topics spanning both apps              | `docs/` |
-| Setup and details of one app           | `apps/<app>/README.md` and `apps/<app>/docs/` |
+| Kind of information          | Place                                         |
+| ---------------------------- | --------------------------------------------- |
+| Overview, orientation        | `README.md`                                   |
+| System design and decisions  | `ARCHITECTURE.md`                             |
+| Order of work                | `ROADMAP.md`                                  |
+| Topics spanning both apps    | `docs/`                                       |
+| Setup and details of one app | `apps/<app>/README.md` and `apps/<app>/docs/` |
 
 ## License
 
