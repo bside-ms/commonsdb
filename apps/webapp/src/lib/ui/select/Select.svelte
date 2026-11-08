@@ -8,6 +8,9 @@
 		{ value: 'members', label: m.visibility_members() },
 		{ value: 'admins', label: m.visibility_admins() }
 	]} />
+
+	Grouped (renders <optgroup>), e.g. categories under their super category:
+	<Select name="categoryId" groups={[{ label: 'Küche', options: [...] }]} />
 -->
 <script lang="ts">
 	import type { HTMLSelectAttributes } from 'svelte/elements';
@@ -15,18 +18,32 @@
 	import { control, getFieldContext, cn } from '#lib/ui';
 
 	type Option = { value: string; label: string; disabled?: boolean };
+	type Group = { label: string; options: Option[] };
 
 	type Props = Omit<HTMLSelectAttributes, 'class' | 'multiple'> & {
-		options: Option[];
+		options?: Option[];
+		/** Alternative to `options`: options under <optgroup> labels. */
+		groups?: Group[];
 		/** Shown as a first, empty option. */
 		placeholder?: string;
 		class?: string;
 	};
 
-	let { value = $bindable(), options, placeholder, class: className, ...rest }: Props = $props();
+	let {
+		value = $bindable(),
+		options = [],
+		groups = [],
+		placeholder,
+		class: className,
+		...rest
+	}: Props = $props();
 
 	const field = getFieldContext();
 </script>
+
+{#snippet option(o: Option)}
+	<option value={o.value} disabled={o.disabled}>{o.label}</option>
+{/snippet}
 
 <div class={cn('relative', className)}>
 	<select
@@ -41,7 +58,14 @@
 			<option value="">{placeholder}</option>
 		{/if}
 		{#each options as o (o.value)}
-			<option value={o.value} disabled={o.disabled}>{o.label}</option>
+			{@render option(o)}
+		{/each}
+		{#each groups as g (g.label)}
+			<optgroup label={g.label}>
+				{#each g.options as o (o.value)}
+					{@render option(o)}
+				{/each}
+			</optgroup>
 		{/each}
 	</select>
 	<ChevronDown

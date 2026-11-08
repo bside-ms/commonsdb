@@ -1,4 +1,4 @@
-import { House, LayoutDashboard } from '@lucide/svelte';
+import { House, KeyRound, ListChecks } from '@lucide/svelte';
 import { resolve } from '$app/paths';
 import { m } from '#lib/paraglide/messages.js';
 import type { NavItem } from '#lib/ui';
@@ -16,7 +16,14 @@ export const memberNav = (): NavItem[] => [
 	{ href: resolve('/'), label: m.nav_start(), icon: House, area: 'start' }
 ];
 
-/** Admin: Aufgaben ListChecks, Bestätigen CheckCheck, Postfach Inbox, Mitglieder Users. */
-export const adminNav = (): NavItem[] => [
-	{ href: resolve('/admin'), label: m.admin_nav_overview(), icon: LayoutDashboard }
+/**
+ * Later: Bestätigen CheckCheck, Postfach Inbox, Mitglieder Users.
+ * Admins without superadmin rights see one item, so the nav stays hidden
+ * for them until slice 3 adds "Bestätigen".
+ */
+export const adminNav = (user: { isSuperadmin: boolean }): NavItem[] => [
+	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: ListChecks },
+	...(user.isSuperadmin
+		? [{ href: resolve('/admin/capabilities'), label: m.admin_nav_capabilities(), icon: KeyRound }]
+		: [])
 ];

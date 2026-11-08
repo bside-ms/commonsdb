@@ -122,6 +122,7 @@ anywhere in the app.
 | `Modal`      | done  | Bits `Dialog`; bottom sheet < `lg`, centred above; `bind:open` or `trigger` snippet; `actions` row                             |
 | `Toast`      | done  | `toast(message, { tone })` + `<Toaster/>` in the root layout; client-side only                                                 |
 | `AppShell`   | done  | `variant` member/admin, `items` from `#lib/navigation.ts`, `actions` / `footer` snippets, skip link; nav hidden with < 2 items |
+| `Select`     | done  | native; `options` or `groups` (renders `<optgroup>`), `placeholder`                                                            |
 
 The root `+layout.svelte` picks the shell: admin variant under `/admin`,
 member variant elsewhere, no shell when logged out (login), no nav during
@@ -140,6 +141,14 @@ Stays in routes until a second use: task row, stat tile, balance
   as soon as there are two items.
 - Patterns used once (task row, stat tile, balance) stay in the route
   until a second use, then move to `lib/ui`.
+- Domain UI that's used by more than one route but isn't generic
+  (`TaskForm`, `TaskRow`) lives in the route folder, not in `lib/ui`.
+- Forms: inputs spread from `form.fields.x.as(...)` straight into the
+  primitives (`<Input {...f.title.as('text', initial)} />`); messages via
+  `errorMessage(issue.message)`.
+- Filters live in the URL (GET form, `data-sveltekit-reset="false"`), so
+  they work without JS and survive reloads.
+- Date and hour display goes through `#lib/format.ts`.
 
 ## Showcase
 

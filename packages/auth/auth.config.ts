@@ -1,5 +1,5 @@
 import {createDb} from '@commonsdb/db';
-import {createAuth} from './src';
+import {createAuth} from './src/index.ts';
 
 process.loadEnvFile(new URL('../../.env', import.meta.url));
 

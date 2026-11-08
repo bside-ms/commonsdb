@@ -35,7 +35,12 @@
 
 {#if data.user && inAdmin}
 	{@const user = data.user}
-	<AppShell variant="admin" items={adminNav()} homeHref={resolve('/admin')} title={m.nav_admin()}>
+	<AppShell
+		variant="admin"
+		items={adminNav(user)}
+		homeHref={resolve('/admin')}
+		title={m.nav_admin()}
+	>
 		{#snippet footer()}
 			<div class="grid gap-3">
 				<a

@@ -135,6 +135,9 @@ together-only filters, reporting completion, the ledger, series.
 
 Demo: an admin puts a real task in, a member takes it, both see it.
 
+Status: admin side done (list, create, edit, duplicate, delete/restore,
+release, capabilities page for superadmins). Member side next.
+
 **Decided:**
 
 - Roles stay `member | admin | superadmin`. `admin` is the coarse gate

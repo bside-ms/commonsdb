@@ -31,6 +31,10 @@ A plain TypeScript stack, one language end to end:
   config, email/password behind a flag for spaces without an IdP)
 - **Validation**: valibot in `core` (Standard Schema, so the same schemas
   can validate forms and remote functions)
+- **Server ↔ UI**: SvelteKit remote functions (experimental flag on).
+  `query` for reads, awaited in components (Svelte async mode, rendered on
+  the server); `form` for writes, spread onto `<form>`, works without JS.
+  `load` and form actions remain for auth and profile, which predate this.
 - **i18n**: Paraglide JS, German as the only locale for now
 - **UI**: Tailwind v4 (theme = design tokens in `apps/webapp/src/lib/ui/`),
   Bits UI as headless component base, tailwind-variants, Lucide icons.
@@ -127,6 +131,24 @@ authenticate, call a service in `core`, and return the result. Nothing in
   becomes necessary (other spaces integrating, mobile client, etc.)
 - run the worker as a second entrypoint on the same `core`
 - the reverse is not cheap: leaving TypeScript means rewriting `core`
+
+## Remote functions
+
+- Live next to the routes that use them: `routes/<area>/<name>.remote.ts`.
+  A file must export nothing but remote functions; don't name helpers
+  `remote.ts`.
+- Each function authorizes itself first (`requireActor` / `requireAdmin` /
+  `requireSuperadmin` from `lib/server/guards.ts`). Remote calls have their
+  own URL, and the hooks guard only sees the calling page, so it can't
+  protect them.
+- They stay thin: authorize, call core, translate errors. Validation of
+  domain input is core's job (`form('unchecked', …)`); a valibot schema in
+  the remote function only for plain arguments like ids.
+- Core errors: `toFormIssues` in forms (per-field issues, codes as
+  messages), `toHttpError` in queries (403/404/400). The UI translates
+  codes with `errorMessage()`.
+- Inputs come from `form.fields.<name>.as(...)`; `.for(id)` when the same
+  form appears more than once (rows, one per entity).
 
 ## Admin dashboard decision
 
@@ -305,8 +327,10 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 2 — tasks**: schema and core done (categories, capabilities,
-  tasks, one shift per task); next: TipTap, admin UI, member UI.
+- **Slice 2 — tasks**: schema, core, rich text, admin UI done; next:
+  member UI (list, detail, take/release), then tests and wrap-up.
+- **Admin roles**: still set by SQL; a superadmin user list with role
+  assignment is open (slice 4 or with "Mitglieder" in the admin nav).
 - **Keycloak logout**: signing out ends the app session only; decide
   whether to also end the IdP session.
 - **Tests**: the scaffold's e2e test no longer matches (everything is

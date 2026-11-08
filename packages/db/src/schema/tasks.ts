@@ -12,6 +12,7 @@ import {
     timestamp,
     uuid
 } from 'drizzle-orm/pg-core';
+import type {RichTextDoc} from '@commonsdb/richtext';
 import {user} from './auth.ts';
 
 export const WHEN_KINDS = ['date', 'range'] as const;
@@ -20,9 +21,6 @@ export type WhenKind = (typeof WHEN_KINDS)[number];
 /** Slice 2 uses open/taken. reported/confirmed arrive with slice 3. */
 export const SHIFT_STATUSES = ['open', 'taken', 'reported', 'confirmed'] as const;
 export type ShiftStatus = (typeof SHIFT_STATUSES)[number];
-
-/** TipTap document. Validated in core (packages/richtext, step 2). */
-export type RichTextDoc = { type: 'doc'; content?: unknown[] };
 
 const timestamps = {
     createdAt: timestamp('created_at', {withTimezone: true}).notNull().defaultNow(),
@@ -140,17 +138,26 @@ export const shift = pgTable(
     (t) => [
         index('shift_task_idx').on(t.taskId),
         index('shift_assignee_idx').on(t.assigneeId),
-        check('shift_hours_check', sql`${t.hoursTenths}
-        > 0`),
-        check('shift_status_check', sql`${t.status}
-        in ('open', 'taken', 'reported', 'confirmed')`),
+        check(
+            'shift_hours_check',
+            sql`${t.hoursTenths}
+            > 0`
+        ),
+        check(
+            'shift_status_check',
+            sql`${t.status}
+            in ('open', 'taken', 'reported', 'confirmed')`
+        ),
         // open shifts never have an assignee; the reverse isn't enforced, so
         // deleting a user (set null) can't fail on their old shifts
-        check('shift_open_unassigned_check', sql`${t.status}
-        <> 'open' or
-        ${t.assigneeId}
-        is
-        null`)
+        check(
+            'shift_open_unassigned_check',
+            sql`${t.status}
+            <> 'open' or
+            ${t.assigneeId}
+            is
+            null`
+        )
     ]
 );
 
