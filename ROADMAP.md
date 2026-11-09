@@ -178,6 +178,24 @@ initiatives arrive.
 
 Demo: end to end. Take, do, report, confirm, repros land.
 
+**Decided:**
+
+- Ledger is single-entry and append-only: one signed amount per row on
+  one account, balance = sum. Corrections are new entries (a trigger
+  rejects UPDATE/DELETE). Transfers (slice 9) will be two entries sharing
+  a `transfer_id`.
+- Amounts in integer tenths (`amount_tenths`), like `hours_tenths`.
+- `kind` (`shift_credit | adjustment`) replaces the manual flag; `memo`
+  is the free-text reason, required for adjustments.
+- One credit per shift, guaranteed by a partial unique index.
+- Accounts are created lazily on first credit; no account = balance 0.
+- `actor_id` on entries has no FK: an audit field that survives user
+  deletion without touching immutable rows.
+- `credit_limit` / `credit_since` wait for slices 8/10 (cheap to add).
+- The table is `ledger_account` (export `ledgerAccount`): `account`
+  belongs to Better Auth (IdP links). Conceptually it is still the
+  `Account` from ARCHITECTURE.md.
+
 ---
 
 ## Slice 4 — Multi-shift tasks
@@ -277,9 +295,6 @@ when the design side stabilises.
   "overdue" a meaning; decide then.
 - **Registration.** Self-serve with a rules checkbox, per the prototype.
   Whether admins approve is unresolved.
-- **Ledger entry shape.** Theirs is single-entry signed amounts. Ours
-  was double-entry. Single-entry with an account reference is fine until
-  transfers exist in slice 9 — but decide knowingly.
 - **Tenant grace.** Guidance or enforcement? Their copy says a minus is
   normal and not an error.
 - **Wiki permissions.** Built-in pages visible to all members, editable
