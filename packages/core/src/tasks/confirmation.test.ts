@@ -38,7 +38,7 @@ const input = (over: Record<string, unknown> = {}) => ({
 	categoryId: cat.Garten,
 	whenKind: 'date',
 	startsOn: '2026-11-20',
-	hours: '1,5',
+	shifts: [{ hours: '1,5' }],
 	...over
 });
 
@@ -56,7 +56,7 @@ async function codeOf(fn: () => Promise<unknown>) {
 /** A task in Garten, taken and reported by `who`. Returns task and shift id. */
 async function reported(who: Actor = kim, over: Record<string, unknown> = {}) {
 	const taskId = await createTask(db, sa, input(over));
-	const shiftId = (await getTaskForAdmin(db, sa, taskId)).shift.id;
+	const shiftId = (await getTaskForAdmin(db, sa, taskId)).shifts[0].id;
 	await takeShift(db, who, shiftId);
 	await reportShift(db, who, shiftId, { note: 'fertig' });
 	return { taskId, shiftId };
@@ -96,7 +96,7 @@ describe('confirmShift', () => {
 		assert.equal(own.balanceTenths, 20, 'corrected hours are credited');
 		assert.equal(own.entries[0].task?.id, taskId);
 
-		const s = (await getTaskForAdmin(db, sa, taskId)).shift;
+		const s = (await getTaskForAdmin(db, sa, taskId)).shifts[0];
 		assert.equal(s.status, 'confirmed');
 		assert.equal(await listConfirmations(db, admin).then((l) => l.length), 0);
 	});
@@ -157,11 +157,14 @@ describe('sendBackShift', () => {
 		await sendBackShift(db, admin, shiftId, { note: 'Bitte auch den Rasen' });
 
 		const detail = await getTaskForMember(db, kim, taskId);
-		assert.equal(detail.shift.status, 'taken');
-		assert.deepEqual(detail.notes, { report: 'fertig', sentBack: 'Bitte auch den Rasen' });
+		assert.equal(detail.shifts[0].status, 'taken');
+		assert.deepEqual(detail.shifts[0].notes, {
+			report: 'fertig',
+			sentBack: 'Bitte auch den Rasen'
+		});
 
 		await reportShift(db, kim, shiftId, {});
-		assert.equal((await getTaskForMember(db, kim, taskId)).notes?.sentBack, null);
+		assert.equal((await getTaskForMember(db, kim, taskId)).shifts[0].notes?.sentBack, null);
 	});
 
 	test('needs a reason', async () => {
@@ -176,8 +179,15 @@ describe('hours lock', () => {
 		const { taskId, shiftId } = await reported();
 		await confirmShift(db, admin, shiftId, { hours: '1,5' });
 
-		const result = await codeOf(() => updateTask(db, admin, taskId, input({ hours: '3' })));
-		assert.deepEqual(result.fields, { hours: 'shift_hours_locked' });
-		await updateTask(db, admin, taskId, input({ title: 'Hecke geschnitten' }));
+		const result = await codeOf(() =>
+			updateTask(db, admin, taskId, input({ shifts: [{ id: shiftId, hours: '3' }] }))
+		);
+		assert.deepEqual(result.fields, { 'shifts.0.hours': 'shift_hours_locked' });
+		await updateTask(
+			db,
+			admin,
+			taskId,
+			input({ title: 'Hecke geschnitten', shifts: [{ id: shiftId, hours: '1,5' }] })
+		);
 	});
 });

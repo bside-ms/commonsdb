@@ -52,7 +52,7 @@ const input = (over: Record<string, unknown> = {}) => ({
 	categoryId: cat.Garten,
 	whenKind: 'date',
 	startsOn: '2026-11-20',
-	hours: '1,5',
+	shifts: [{ hours: '1,5' }],
 	...over
 });
 
@@ -68,7 +68,7 @@ async function codeOf(fn: () => Promise<unknown>) {
 	assert.fail('expected a DomainError');
 }
 
-const shiftOf = async (taskId: string) => (await getTaskForAdmin(db, superadmin, taskId)).shift;
+const shiftOf = async (taskId: string) => (await getTaskForAdmin(db, superadmin, taskId)).shifts[0];
 
 // ---- creating and editing ---------------------------------------------------
 
@@ -76,24 +76,28 @@ describe('createTask', () => {
 	test('stores the task with one open shift; hours as tenths', async () => {
 		const id = await createTask(db, admin, input({ urgent: 'on', place: '  Hof  ' }));
 		const task = await getTaskForAdmin(db, admin, id);
-		assert.equal(task.hoursTenths, 15);
+		assert.equal(task.shifts[0].hoursTenths, 15);
 		assert.equal(task.urgent, true);
 		assert.equal(task.place, 'Hof', 'trimmed');
 		assert.equal(task.contact, null, 'empty text becomes null');
 		assert.equal(task.endsOn, null);
-		assert.deepEqual(task.shift.status, 'open');
+		assert.deepEqual(task.shifts[0].status, 'open');
 	});
 
 	test('reports one code per invalid field', async () => {
 		const result = await codeOf(() =>
-			createTask(db, admin, input({ title: ' ', hours: '0,7', startsOn: '20.11.2026' }))
+			createTask(
+				db,
+				admin,
+				input({ title: ' ', shifts: [{ hours: '0,7' }], startsOn: '20.11.2026' })
+			)
 		);
 		assert.deepEqual(result, {
 			code: 'validation_failed',
 			fields: {
 				title: 'task_title_required',
 				startsOn: 'task_starts_on_invalid',
-				hours: 'task_hours_half_steps'
+				'shifts.0.hours': 'task_hours_half_steps'
 			}
 		});
 	});
@@ -106,7 +110,7 @@ describe('createTask', () => {
 				title: 'field_required',
 				whenKind: 'field_required',
 				startsOn: 'field_required',
-				hours: 'field_required'
+				shifts: 'field_required'
 			}
 		});
 	});
@@ -156,10 +160,19 @@ describe('createTask', () => {
 describe('updateTask', () => {
 	test('changes fields and hours', async () => {
 		const id = await createTask(db, admin, input());
-		await updateTask(db, admin, id, input({ title: 'Hecke (Hof)', hours: 2 }));
+		const s = await shiftOf(id);
+		await updateTask(
+			db,
+			admin,
+			id,
+			input({ title: 'Hecke (Hof)', shifts: [{ id: s.id, hours: 2 }] })
+		);
 		const task = await getTaskForAdmin(db, admin, id);
 		assert.equal(task.title, 'Hecke (Hof)');
-		assert.equal(task.hoursTenths, 20);
+		assert.deepEqual(
+			task.shifts.map((x) => [x.id, x.hoursTenths]),
+			[[s.id, 20]]
+		);
 	});
 
 	test('moving to another category needs both categories', async () => {
@@ -207,8 +220,7 @@ describe('takeShift', () => {
 		await takeShift(db, kim, (await shiftOf(id)).id);
 
 		const [mine] = await listTasksForMember(db, kim);
-		assert.equal(mine.shift.mine, true);
-		assert.equal(mine.shift.status, 'taken');
+		assert.equal(mine.shifts.mine?.status, 'taken');
 		assert.deepEqual(await listTasksForMember(db, lu), []);
 		assert.deepEqual(await codeOf(() => getTaskForMember(db, lu, id)), {
 			code: 'task_not_found'
@@ -298,7 +310,7 @@ describe('listTasksForMember', () => {
 		await db.update(shift).set({ status: 'confirmed' }).where(eq(shift.id, s.id));
 		assert.equal((await listTasksForMember(db, kim)).length, 0);
 		// still reachable for the account screen's link
-		assert.equal((await getTaskForMember(db, kim, id)).shift.status, 'confirmed');
+		assert.equal((await getTaskForMember(db, kim, id)).shifts[0].status, 'confirmed');
 	});
 });
 
@@ -310,7 +322,7 @@ describe('listTasksForAdmin', () => {
 
 		const list = await listTasksForAdmin(db, admin);
 		assert.deepEqual(
-			list.map((x) => [x.title, x.shift.assigneeName]),
+			list.map((x) => [x.title, x.shifts[0].assigneeName]),
 			[['Hecke schneiden', 'Kim']]
 		);
 		assert.equal((await listTasksForAdmin(db, superadmin)).length, 2);
@@ -355,8 +367,8 @@ describe('reportShift', () => {
 		await reportShift(db, kim, s.id, { note: '  Alles geschnitten  ' });
 
 		const detail = await getTaskForMember(db, kim, id);
-		assert.equal(detail.shift.status, 'reported');
-		assert.deepEqual(detail.notes, { report: 'Alles geschnitten', sentBack: null });
+		assert.equal(detail.shifts[0].status, 'reported');
+		assert.deepEqual(detail.shifts[0].notes, { report: 'Alles geschnitten', sentBack: null });
 	});
 
 	test('the note is optional', async () => {
@@ -364,7 +376,7 @@ describe('reportShift', () => {
 		const s = await shiftOf(id);
 		await takeShift(db, kim, s.id);
 		await reportShift(db, kim, s.id, {});
-		assert.equal((await getTaskForMember(db, kim, id)).notes?.report, null);
+		assert.equal((await getTaskForMember(db, kim, id)).shifts[0].notes?.report, null);
 	});
 
 	test('only the assignee, only while taken', async () => {
@@ -400,7 +412,7 @@ describe('reportShift', () => {
 		// step 3's sendBackShift, by hand until it exists
 		await db.update(shift).set({ sendBackNote: 'Bitte auch den Rasen' }).where(eq(shift.id, s.id));
 		await reportShift(db, kim, s.id, {});
-		assert.equal((await getTaskForMember(db, kim, id)).notes?.sentBack, null);
+		assert.equal((await getTaskForMember(db, kim, id)).shifts[0].notes?.sentBack, null);
 	});
 
 	test('notes too long are rejected', async () => {
@@ -409,5 +421,268 @@ describe('reportShift', () => {
 		await takeShift(db, kim, s.id);
 		const result = await codeOf(() => reportShift(db, kim, s.id, { note: 'x'.repeat(1001) }));
 		assert.deepEqual(result.fields, { note: 'shift_note_too_long' });
+	});
+});
+
+// ---- several shifts (slice 4) -------------------------------------------------
+
+/** Three shifts: two in parallel in the morning, one in the evening past midnight. */
+const threeShifts = () =>
+	input({
+		shifts: [
+			{ startsTime: '22:00', endsTime: '02:00', hours: 4 },
+			{ startsTime: '10:00', endsTime: '12:00', hours: 2 },
+			{ startsTime: '10:00', endsTime: '12:00', hours: '1,5' }
+		]
+	});
+
+const shiftsOf = async (taskId: string) => (await getTaskForAdmin(db, superadmin, taskId)).shifts;
+
+describe('shift windows', () => {
+	test('stored per shift, listed by start time; past midnight is the next day', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const shifts = await shiftsOf(id);
+		assert.deepEqual(
+			shifts.map((s) => [s.startsTime, s.endsTime, s.endsNextDay, s.hoursTenths]),
+			[
+				['10:00', '12:00', false, 20],
+				['10:00', '12:00', false, 15],
+				['22:00', '02:00', true, 40]
+			]
+		);
+	});
+
+	test('times both or neither, well-formed; one code per field', async () => {
+		const result = await codeOf(() =>
+			createTask(
+				db,
+				admin,
+				input({
+					shifts: [
+						{ startsTime: '10:00', hours: 1 },
+						{ startsTime: '25:00', endsTime: '26:00', hours: 1 }
+					]
+				})
+			)
+		);
+		assert.deepEqual(result, {
+			code: 'validation_failed',
+			fields: {
+				'shifts.0.endsTime': 'shift_time_incomplete',
+				'shifts.1.startsTime': 'shift_time_invalid',
+				'shifts.1.endsTime': 'shift_time_invalid'
+			}
+		});
+	});
+
+	test('a task needs at least one shift', async () => {
+		const result = await codeOf(() => createTask(db, admin, input({ shifts: [] })));
+		assert.deepEqual(result.fields, { shifts: 'task_shifts_required' });
+	});
+
+	test('duplicating copies the templates, all open', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		await takeShift(db, kim, (await shiftsOf(id))[0].id);
+		const copy = await shiftsOf(await duplicateTask(db, admin, id));
+		assert.deepEqual(
+			copy.map((s) => [s.startsTime, s.hoursTenths, s.status]),
+			[
+				['10:00', 20, 'open'],
+				['10:00', 15, 'open'],
+				['22:00', 40, 'open']
+			]
+		);
+	});
+});
+
+describe('updateTask with several shifts', () => {
+	/** The form as it would post back the current shifts, with changes. */
+	const formShifts = async (taskId: string) =>
+		(await shiftsOf(taskId)).map((s) => ({
+			id: s.id,
+			startsTime: s.startsTime ?? '',
+			endsTime: s.endsTime ?? '',
+			hours: s.hoursTenths / 10
+		}));
+
+	test('adds, changes and removes open shifts', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const [first, second] = await formShifts(id);
+		await updateTask(
+			db,
+			admin,
+			id,
+			input({
+				shifts: [
+					{ ...first, startsTime: '09:00' },
+					{ ...second, hours: 3 },
+					{ startsTime: '', endsTime: '', hours: 1 }
+				]
+			})
+		);
+		assert.deepEqual(
+			(await shiftsOf(id)).map((s) => [s.startsTime, s.endsTime, s.hoursTenths]),
+			[
+				['09:00', '12:00', 20],
+				['10:00', '12:00', 30],
+				[null, null, 10]
+			]
+		);
+	});
+
+	test('a taken shift keeps its window and stays; its hours may change', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const shifts = await formShifts(id);
+		await takeShift(db, kim, shifts[0].id);
+
+		const retimed = await codeOf(() =>
+			updateTask(
+				db,
+				admin,
+				id,
+				input({ shifts: [{ ...shifts[0], startsTime: '08:00' }, ...shifts.slice(1)] })
+			)
+		);
+		assert.deepEqual(retimed.fields, { 'shifts.0.startsTime': 'shift_time_locked' });
+
+		const removed = await codeOf(() =>
+			updateTask(db, admin, id, input({ shifts: shifts.slice(1) }))
+		);
+		assert.deepEqual(removed.fields, { shifts: 'shift_remove_locked' });
+
+		await updateTask(
+			db,
+			admin,
+			id,
+			input({ shifts: [{ ...shifts[0], hours: 3 }, ...shifts.slice(1)] })
+		);
+		assert.equal((await shiftsOf(id))[0].hoursTenths, 30);
+		assert.equal((await shiftsOf(id))[0].assigneeName, 'Kim', 'still hers');
+	});
+
+	test('confirmed hours are locked', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const shifts = await formShifts(id);
+		await db
+			.update(shift)
+			.set({ status: 'confirmed', assigneeId: kim.id })
+			.where(eq(shift.id, shifts[0].id));
+		const result = await codeOf(() =>
+			updateTask(db, admin, id, input({ shifts: [{ ...shifts[0], hours: 3 }, ...shifts.slice(1)] }))
+		);
+		assert.deepEqual(result.fields, { 'shifts.0.hours': 'shift_hours_locked' });
+	});
+
+	test('ids must belong to the task, once', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const other = await createTask(db, admin, input());
+		const shifts = await formShifts(id);
+		const foreign = (await shiftOf(other)).id;
+		const result = await codeOf(() =>
+			updateTask(
+				db,
+				admin,
+				id,
+				input({ shifts: [...shifts, { ...shifts[0] }, { id: foreign, hours: 1 }] })
+			)
+		);
+		assert.deepEqual(result.fields, {
+			'shifts.3.id': 'shift_not_found',
+			'shifts.4.id': 'shift_not_found'
+		});
+	});
+});
+
+describe('taking one of several shifts', () => {
+	test('one shift per member per task', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const [a, b] = await shiftsOf(id);
+		await takeShift(db, kim, a.id);
+		assert.deepEqual(await codeOf(() => takeShift(db, kim, b.id)), {
+			code: 'shift_one_per_member'
+		});
+		await takeShift(db, lu, b.id);
+	});
+
+	test('the task stays listed while a shift is free; members see who else is on it', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const [a] = await shiftsOf(id);
+		await takeShift(db, kim, a.id);
+
+		const [forLu] = await listTasksForMember(db, lu);
+		assert.equal(forLu.shifts.total, 3);
+		assert.equal(forLu.shifts.free, 2);
+		assert.equal(forLu.shifts.mine, null);
+
+		const detail = await getTaskForMember(db, lu, id);
+		assert.deepEqual(
+			detail.shifts.map((s) => [s.status, s.assigneeName, s.mine, s.notes]),
+			[
+				['taken', 'Kim', false, null],
+				['open', null, false, null],
+				['open', null, false, null]
+			]
+		);
+
+		const [forKim] = await listTasksForMember(db, kim);
+		assert.deepEqual(forKim.shifts.mine, { id: a.id, status: 'taken', hoursTenths: 20 });
+	});
+
+	test('once every shift is taken, only the people on it see the task', async () => {
+		const id = await createTask(db, admin, threeShifts());
+		const [a, b, c] = await shiftsOf(id);
+		const ana = await insertUser(db, { id: 'ana', name: 'Ana' });
+		await takeShift(db, kim, a.id);
+		await takeShift(db, lu, b.id);
+		await takeShift(db, ana, c.id);
+		const ben = await insertUser(db, { id: 'ben', name: 'Ben' });
+		assert.deepEqual(await listTasksForMember(db, ben), []);
+		assert.deepEqual(await codeOf(() => getTaskForMember(db, ben, id)), {
+			code: 'task_not_found'
+		});
+		assert.equal((await listTasksForMember(db, lu)).length, 1);
+	});
+});
+
+describe('member filters', () => {
+	test('summary: parallel slots, together, hours range', async () => {
+		await createTask(db, admin, threeShifts());
+		const [t] = await listTasksForMember(db, kim);
+		assert.equal(t.shifts.parallel, 2);
+		assert.equal(t.shifts.together, true);
+		assert.deepEqual(t.shifts.hoursTenths, { min: 15, max: 40 });
+	});
+
+	test('urgent only, doable now, together only', async () => {
+		const today = '2026-11-20';
+		await createTask(db, admin, input({ title: 'Heute allein', startsOn: today }));
+		await createTask(db, admin, { ...threeShifts(), title: 'Heute zusammen', startsOn: today });
+		await createTask(
+			db,
+			admin,
+			input({
+				title: 'Woche',
+				whenKind: 'range',
+				startsOn: '2026-11-18',
+				endsOn: '2026-11-22',
+				urgent: true
+			})
+		);
+		await createTask(db, admin, input({ title: 'Morgen', startsOn: '2026-11-21' }));
+
+		const titles = async (f = {}) =>
+			(await listTasksForMember(db, kim, f, { today })).map((x) => x.title).sort();
+		assert.deepEqual(await titles({ urgent: true }), ['Woche']);
+		assert.deepEqual(await titles({ now: true }), ['Heute allein', 'Heute zusammen', 'Woche']);
+		assert.deepEqual(await titles({ together: 'on' }), ['Heute zusammen']);
+		assert.deepEqual(await titles({ now: true, together: true }), ['Heute zusammen']);
+	});
+
+	test('a task with no free shift is not doable now, even today', async () => {
+		const today = '2026-11-20';
+		const id = await createTask(db, admin, input({ startsOn: today }));
+		await takeShift(db, kim, (await shiftOf(id)).id);
+		const [t] = await listTasksForMember(db, kim, {}, { today });
+		assert.equal(t.shifts.doableNow, false);
 	});
 });

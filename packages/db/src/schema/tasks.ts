@@ -9,7 +9,9 @@ import {
 	pgTable,
 	primaryKey,
 	text,
+	time,
 	timestamp,
+	uniqueIndex,
 	uuid
 } from 'drizzle-orm/pg-core';
 import type { RichTextDoc } from '@commonsdb/richtext';
@@ -102,7 +104,8 @@ export const task = pgTable(
 );
 
 /**
- * A slot of work on a task. Slice 2: exactly one per task, no time window.
+ * A slot of work on a task. A task has one or more (slice 4), each with an
+ * optional local time window and its own hours.
  * Hours as integer tenths (15 = 1.5 h): repros are hours 1:1 (slice 3),
  * and integers keep balance sums exact.
  */
@@ -113,8 +116,13 @@ export const shift = pgTable(
 		taskId: uuid('task_id')
 			.notNull()
 			.references(() => task.id, { onDelete: 'cascade' }),
-		startsAt: timestamp('starts_at', { withTimezone: true }),
-		endsAt: timestamp('ends_at', { withTimezone: true }),
+		/** Local time of day, like the task's dates. Both or neither; none = any time. */
+		startsTime: time('starts_time'),
+		endsTime: time('ends_time'),
+		/** The window ends after midnight (22:00–02:00). Set by core from the times. */
+		endsNextDay: boolean('ends_next_day').notNull().default(false),
+		/** Order on the task form; ties between equal start times follow it. */
+		position: integer('position').notNull().default(0),
 		hoursTenths: integer('hours_tenths').notNull(),
 		status: text('status', { enum: SHIFT_STATUSES }).notNull().default('open'),
 		assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
@@ -137,7 +145,14 @@ export const shift = pgTable(
 		check('shift_status_check', sql`${t.status} in ('open', 'taken', 'reported', 'confirmed')`),
 		// open shifts never have an assignee; the reverse isn't enforced, so
 		// deleting a user (set null) can't fail on their old shifts
-		check('shift_open_unassigned_check', sql`${t.status} <> 'open' or ${t.assigneeId} is null`)
+		check('shift_open_unassigned_check', sql`${t.status} <> 'open' or ${t.assigneeId} is null`),
+		check(
+			'shift_time_check',
+			sql`(${t.startsTime} is null and ${t.endsTime} is null and not ${t.endsNextDay}) or (${t.startsTime} is not null and ${t.endsTime} is not null and ${t.endsNextDay} = (${t.endsTime} <= ${t.startsTime}))`
+		), // one shift per member per task (slice 4). Drop this index if double shifts become a thing.
+		uniqueIndex('shift_one_per_member_idx')
+			.on(t.taskId, t.assigneeId)
+			.where(sql`${t.assigneeId} is not null`)
 	]
 );
 

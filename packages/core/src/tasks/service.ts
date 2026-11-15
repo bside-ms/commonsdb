@@ -3,10 +3,12 @@ import {
 	asc,
 	desc,
 	eq,
+	exists,
 	ilike,
 	inArray,
 	isNotNull,
 	isNull,
+	ne,
 	or,
 	sql,
 	type SQL
@@ -23,11 +25,20 @@ import {
 	type ShiftStatus,
 	type WhenKind
 } from '@commonsdb/db/schema';
-import { DomainError, ValidationError } from '../errors.ts';
+import { DomainError, ValidationError, type FieldErrors } from '../errors.ts';
 import { assertSuperadmin, type Actor } from '../roles.ts';
 import { parse } from '../validation.ts';
 import { assertManagesCategory, canManageCategory, manageableCategories } from './policy.ts';
-import { ReportInput, TaskFilter, TaskInput, type TaskData } from './schema.ts';
+import { ReportInput, TaskFilter, TaskInput, type ShiftData, type TaskData } from './schema.ts';
+import {
+	byWindow,
+	hhmm,
+	isDoableNow,
+	isTogether,
+	localToday,
+	parallelCount,
+	type ShiftWindow
+} from './shifts.ts';
 
 // ---------------------------------------------------------------------------
 // Read models. Services return these shapes, never raw rows, so routes only
@@ -40,6 +51,23 @@ export type CategoryGroup = {
 	categories: { id: string; name: string }[];
 };
 
+/** A shift's time window as read models hand it out ('HH:MM'). */
+export type ShiftTimes = ShiftWindow;
+
+/** What the member list needs to know about a task's shifts. */
+export type ShiftSummary = {
+	total: number;
+	free: number;
+	/** Most shifts running at the same time. */
+	parallel: number;
+	together: boolean;
+	doableNow: boolean;
+	/** Smallest and largest hours on offer, for "1–2 Std." */
+	hoursTenths: { min: number; max: number };
+	/** The actor's own shift on this task (at most one), until confirmed. */
+	mine: { id: string; status: ShiftStatus; hoursTenths: number } | null;
+};
+
 export type TaskListItem = {
 	id: string;
 	title: string;
@@ -49,35 +77,57 @@ export type TaskListItem = {
 	startsOn: string;
 	endsOn: string | null;
 	category: { id: string; name: string };
-	shift: { id: string; hoursTenths: number; status: ShiftStatus; mine: boolean };
+	shifts: ShiftSummary;
 };
 
-export type TaskDetail = TaskListItem & {
+/**
+ * One shift on the member detail page. Names of the people on a task are
+ * visible to everyone who may open it: they meet at the shift anyway
+ * (ROADMAP, slice 4). Notes only for the actor's own shift.
+ */
+export type MemberShift = ShiftTimes & {
+	id: string;
+	hoursTenths: number;
+	status: ShiftStatus;
+	mine: boolean;
+	assigneeName: string | null;
+	notes: { report: string | null; sentBack: string | null } | null;
+};
+
+export type TaskDetail = Omit<TaskListItem, 'shifts'> & {
 	description: TaskData['description'];
 	selfService: boolean;
 	contact: string | null;
 	bring: string | null;
 	physicalDemands: string | null;
-	/** Only for the assignee: their report note and an admin's send-back reason. */
-	notes: { report: string | null; sentBack: string | null } | null;
+	summary: ShiftSummary;
+	shifts: MemberShift[];
 };
 
-export type AdminTaskListItem = Omit<TaskListItem, 'shift'> & {
+/** One shift as admins see it, in the list and on the edit page. */
+export type AdminShift = ShiftTimes & {
+	id: string;
+	hoursTenths: number;
+	status: ShiftStatus;
+	assigneeName: string | null;
+};
+
+export type AdminTaskListItem = Omit<TaskListItem, 'shifts'> & {
 	deleted: boolean;
-	shift: { id: string; hoursTenths: number; status: ShiftStatus; assigneeName: string | null };
+	shifts: AdminShift[];
 };
 
-/** TaskData without the date/range narrowing: what comes back from the DB. */
-type TaskFields = Omit<TaskData, 'whenKind' | 'endsOn'> & {
+/** TaskData without the date/range narrowing and the shifts. */
+type TaskFields = Omit<TaskData, 'whenKind' | 'endsOn' | 'shifts'> & {
 	whenKind: WhenKind;
 	endsOn: string | null;
 };
 
-/** The task as the edit form needs it, plus who (if anyone) has taken it. */
+/** The task as the edit form needs it, with every shift and who holds it. */
 export type AdminTask = TaskFields & {
 	id: string;
 	deleted: boolean;
-	shift: { id: string; status: ShiftStatus; assigneeName: string | null };
+	shifts: AdminShift[];
 };
 
 // ---------------------------------------------------------------------------
@@ -117,6 +167,83 @@ export async function listManageableCategories(db: Db, actor: Actor) {
 }
 
 // ---------------------------------------------------------------------------
+// Shifts of a set of tasks
+// ---------------------------------------------------------------------------
+
+type ShiftRow = ShiftTimes & {
+	id: string;
+	taskId: string;
+	hoursTenths: number;
+	status: ShiftStatus;
+	assigneeId: string | null;
+	assigneeName: string | null;
+	reportNote: string | null;
+	sendBackNote: string | null;
+};
+
+/** Shifts per task id, in display order (by start time, untimed last). */
+async function loadShifts(db: Db, taskIds: string[]): Promise<Map<string, ShiftRow[]>> {
+	const byTask = new Map<string, ShiftRow[]>();
+	if (taskIds.length === 0) return byTask;
+
+	const rows = await db
+		.select({
+			id: shift.id,
+			taskId: shift.taskId,
+			startsTime: shift.startsTime,
+			endsTime: shift.endsTime,
+			endsNextDay: shift.endsNextDay,
+			hoursTenths: shift.hoursTenths,
+			status: shift.status,
+			assigneeId: shift.assigneeId,
+			assigneeName: profile.displayName,
+			reportNote: shift.reportNote,
+			sendBackNote: shift.sendBackNote
+		})
+		.from(shift)
+		.leftJoin(profile, eq(profile.userId, shift.assigneeId))
+		.where(inArray(shift.taskId, taskIds))
+		.orderBy(asc(shift.position), asc(shift.createdAt));
+
+	for (const r of rows) {
+		const row = { ...r, startsTime: hhmm(r.startsTime), endsTime: hhmm(r.endsTime) };
+		byTask.set(r.taskId, [...(byTask.get(r.taskId) ?? []), row]);
+	}
+	for (const list of byTask.values()) list.sort(byWindow); // stable: form order breaks ties
+	return byTask;
+}
+
+const timesOf = (s: ShiftTimes): ShiftTimes => ({
+	startsTime: s.startsTime,
+	endsTime: s.endsTime,
+	endsNextDay: s.endsNextDay
+});
+
+/** A member's own shift on a task, while it's still theirs to act on. */
+const isMineActive = (s: ShiftRow, actor: Actor) =>
+	s.assigneeId === actor.id && (s.status === 'taken' || s.status === 'reported');
+
+function summarize(
+	t: { whenKind: WhenKind; startsOn: string; endsOn: string | null },
+	shifts: ShiftRow[],
+	actor: Actor,
+	today: string
+): ShiftSummary {
+	const free = shifts.filter((s) => s.status === 'open').length;
+	const hours = shifts.map((s) => s.hoursTenths);
+	const mine = shifts.find((s) => isMineActive(s, actor));
+	return {
+		total: shifts.length,
+		free,
+		parallel: parallelCount(shifts),
+		together: isTogether(shifts),
+		doableNow: isDoableNow(t, free, today),
+		hoursTenths: { min: Math.min(...hours), max: Math.max(...hours) },
+		mine: mine ? { id: mine.id, status: mine.status, hoursTenths: mine.hoursTenths } : null
+	};
+}
+
+// ---------------------------------------------------------------------------
 // Member side
 // ---------------------------------------------------------------------------
 
@@ -129,11 +256,7 @@ const listColumns = {
 	startsOn: task.startsOn,
 	endsOn: task.endsOn,
 	categoryId: category.id,
-	categoryName: category.name,
-	shiftId: shift.id,
-	hoursTenths: shift.hoursTenths,
-	status: shift.status,
-	assigneeId: shift.assigneeId
+	categoryName: category.name
 };
 
 type ListRow = {
@@ -146,69 +269,89 @@ type ListRow = {
 	endsOn: string | null;
 	categoryId: string;
 	categoryName: string;
-	shiftId: string;
-	hoursTenths: number;
-	status: ShiftStatus;
-	assigneeId: string | null;
 };
 
-function toListItem(r: ListRow, actor: Actor): TaskListItem {
-	return {
-		id: r.id,
-		title: r.title,
-		urgent: r.urgent,
-		place: r.place,
-		whenKind: r.whenKind,
-		startsOn: r.startsOn,
-		endsOn: r.endsOn,
-		category: { id: r.categoryId, name: r.categoryName },
-		shift: {
-			id: r.shiftId,
-			hoursTenths: r.hoursTenths,
-			status: r.status,
-			mine: r.assigneeId === actor.id
-		}
-	};
-}
+const baseItem = (r: ListRow) => ({
+	id: r.id,
+	title: r.title,
+	urgent: r.urgent,
+	place: r.place,
+	whenKind: r.whenKind,
+	startsOn: r.startsOn,
+	endsOn: r.endsOn,
+	category: { id: r.categoryId, name: r.categoryName }
+});
 
 /** ilike pattern with the user's % and _ taken literally. */
 const contains = (q: string) => `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
+/** A shift of this task matching `where` exists. */
+const hasShift = (db: Db, where: SQL) =>
+	exists(
+		db
+			.select({ one: sql`1` })
+			.from(shift)
+			.where(and(eq(shift.taskId, task.id), where))
+	);
+
+export type MemberListOptions = {
+	/** Today's date where the space is; defaults to Berlin. Tests pass it. */
+	today?: string;
+};
+
 /**
- * What a member sees: live tasks that are still open, plus their own.
+ * What a member sees: live tasks with a free shift, plus tasks where they
+ * hold a shift until it's confirmed (then it lives on the account screen).
  * Urgent first, then by date.
  */
 export async function listTasksForMember(
 	db: Db,
 	actor: Actor,
-	filter: TaskFilter = {}
+	filter: TaskFilter = {},
+	{ today = localToday() }: MemberListOptions = {}
 ): Promise<TaskListItem[]> {
 	const f = parse(TaskFilter, filter);
 	const where: SQL[] = [
 		isNull(task.deletedAt),
-		// open for everyone; own ones until confirmed (then they live on the account screen)
 		or(
-			eq(shift.status, 'open'),
-			and(eq(shift.assigneeId, actor.id), inArray(shift.status, ['taken', 'reported']))
+			hasShift(db, eq(shift.status, 'open')),
+			hasShift(
+				db,
+				and(eq(shift.assigneeId, actor.id), inArray(shift.status, ['taken', 'reported']))!
+			)
 		)!
 	];
 	if (f.q) where.push(ilike(task.title, contains(f.q)));
 	if (f.categoryId) where.push(eq(task.categoryId, f.categoryId));
 	if (f.superCategoryId) where.push(eq(category.superCategoryId, f.superCategoryId));
+	if (f.urgent) where.push(eq(task.urgent, true));
 
 	const rows = await db
 		.select(listColumns)
 		.from(task)
 		.innerJoin(category, eq(task.categoryId, category.id))
-		.innerJoin(shift, eq(shift.taskId, task.id))
 		.where(and(...where))
 		.orderBy(desc(task.urgent), asc(task.startsOn), asc(task.title));
 
-	return rows.map((r) => toListItem(r, actor));
+	const shifts = await loadShifts(
+		db,
+		rows.map((r) => r.id)
+	);
+	return rows
+		.map((r) => ({ ...baseItem(r), shifts: summarize(r, shifts.get(r.id) ?? [], actor, today) }))
+		.filter((t) => (!f.now || t.shifts.doableNow) && (!f.together || t.shifts.together));
 }
 
-/** A member may open any live task that is open or theirs. */
-export async function getTaskForMember(db: Db, actor: Actor, taskId: string): Promise<TaskDetail> {
+/**
+ * A member may open any live task with a free shift, or one where they
+ * hold (or held) a shift.
+ */
+export async function getTaskForMember(
+	db: Db,
+	actor: Actor,
+	taskId: string,
+	{ today = localToday() }: MemberListOptions = {}
+): Promise<TaskDetail> {
 	const [r] = await db
 		.select({
 			...listColumns,
@@ -216,42 +359,84 @@ export async function getTaskForMember(db: Db, actor: Actor, taskId: string): Pr
 			selfService: task.selfService,
 			contact: task.contact,
 			bring: task.bring,
-			physicalDemands: task.physicalDemands,
-			reportNote: shift.reportNote,
-			sendBackNote: shift.sendBackNote
+			physicalDemands: task.physicalDemands
 		})
 		.from(task)
 		.innerJoin(category, eq(task.categoryId, category.id))
-		.innerJoin(shift, eq(shift.taskId, task.id))
 		.where(and(eq(task.id, taskId), isNull(task.deletedAt)))
 		.limit(1);
-
 	if (!r) throw new DomainError('task_not_found');
-	if (r.status !== 'open' && r.assigneeId !== actor.id) throw new DomainError('task_not_found');
+
+	const shifts = (await loadShifts(db, [taskId])).get(taskId) ?? [];
+	const visible = shifts.some((s) => s.status === 'open' || s.assigneeId === actor.id);
+	if (!visible) throw new DomainError('task_not_found');
 
 	return {
-		...toListItem(r, actor),
+		...baseItem(r),
 		description: r.description,
 		selfService: r.selfService,
 		contact: r.contact,
 		bring: r.bring,
 		physicalDemands: r.physicalDemands,
-		notes: r.assigneeId === actor.id ? { report: r.reportNote, sentBack: r.sendBackNote } : null
+		summary: summarize(r, shifts, actor, today),
+		shifts: shifts.map((s) => {
+			const mine = s.assigneeId === actor.id;
+			return {
+				id: s.id,
+				...timesOf(s),
+				hoursTenths: s.hoursTenths,
+				status: s.status,
+				mine,
+				assigneeName: s.status === 'open' ? null : s.assigneeName,
+				notes: mine ? { report: s.reportNote, sentBack: s.sendBackNote } : null
+			};
+		})
 	};
+}
+
+/** Postgres unique violation, however the driver wraps it. */
+function isUniqueViolation(e: unknown): boolean {
+	for (let err = e; err && typeof err === 'object'; err = (err as { cause?: unknown }).cause) {
+		if ((err as { code?: unknown }).code === '23505') return true;
+	}
+	return false;
 }
 
 /**
  * Take an open shift. One conditional UPDATE: if two people press the
  * button at once, exactly one row changes and the other gets an error.
+ * One shift per member per task: checked first for a clear code, and
+ * guaranteed by shift_one_per_member_idx.
  */
 export async function takeShift(db: Db, actor: Actor, shiftId: string) {
+	const target = await db.query.shift.findFirst({
+		where: eq(shift.id, shiftId),
+		columns: { taskId: true }
+	});
+	if (!target) throw new DomainError('shift_not_open');
+
+	const other = await db.query.shift.findFirst({
+		where: and(
+			eq(shift.taskId, target.taskId),
+			eq(shift.assigneeId, actor.id),
+			ne(shift.id, shiftId)
+		),
+		columns: { id: true }
+	});
+	if (other) throw new DomainError('shift_one_per_member');
+
 	const liveTasks = db.select({ id: task.id }).from(task).where(isNull(task.deletedAt));
-	const [row] = await db
-		.update(shift)
-		.set({ status: 'taken', assigneeId: actor.id, takenAt: new Date() })
-		.where(and(eq(shift.id, shiftId), eq(shift.status, 'open'), inArray(shift.taskId, liveTasks)))
-		.returning({ id: shift.id });
-	if (!row) throw new DomainError('shift_not_open');
+	try {
+		const [row] = await db
+			.update(shift)
+			.set({ status: 'taken', assigneeId: actor.id, takenAt: new Date() })
+			.where(and(eq(shift.id, shiftId), eq(shift.status, 'open'), inArray(shift.taskId, liveTasks)))
+			.returning({ id: shift.id });
+		if (!row) throw new DomainError('shift_not_open');
+	} catch (e) {
+		if (isUniqueViolation(e)) throw new DomainError('shift_one_per_member');
+		throw e;
+	}
 }
 
 /** Give a taken shift back. The assignee, or an admin of its category. */
@@ -297,6 +482,14 @@ export async function reportShift(db: Db, actor: Actor, shiftId: string, input: 
 
 export type AdminTaskFilter = TaskFilter & { deleted?: boolean };
 
+const toAdminShift = (s: ShiftRow): AdminShift => ({
+	id: s.id,
+	...timesOf(s),
+	hoursTenths: s.hoursTenths,
+	status: s.status,
+	assigneeName: s.assigneeName
+});
+
 /** Tasks in the categories the admin manages; deleted ones on request. */
 export async function listTasksForAdmin(
 	db: Db,
@@ -313,48 +506,29 @@ export async function listTasksForAdmin(
 	if (f.categoryId) where.push(eq(task.categoryId, f.categoryId));
 
 	const rows = await db
-		.select({
-			...listColumns,
-			deletedAt: task.deletedAt,
-			assigneeName: profile.displayName
-		})
+		.select({ ...listColumns, deletedAt: task.deletedAt })
 		.from(task)
 		.innerJoin(category, eq(task.categoryId, category.id))
-		.innerJoin(shift, eq(shift.taskId, task.id))
-		.leftJoin(profile, eq(profile.userId, shift.assigneeId))
 		.where(and(...where))
 		.orderBy(desc(task.urgent), asc(task.startsOn), asc(task.title));
 
+	const shifts = await loadShifts(
+		db,
+		rows.map((r) => r.id)
+	);
 	return rows.map((r) => ({
-		id: r.id,
-		title: r.title,
-		urgent: r.urgent,
-		place: r.place,
-		whenKind: r.whenKind,
-		startsOn: r.startsOn,
-		endsOn: r.endsOn,
-		category: { id: r.categoryId, name: r.categoryName },
+		...baseItem(r),
 		deleted: r.deletedAt !== null,
-		shift: {
-			id: r.shiftId,
-			hoursTenths: r.hoursTenths,
-			status: r.status,
-			assigneeName: r.assigneeName
-		}
+		shifts: (shifts.get(r.id) ?? []).map(toAdminShift)
 	}));
 }
 
 /** The full task for the edit form, deleted or not. */
 export async function getTaskForAdmin(db: Db, actor: Actor, taskId: string): Promise<AdminTask> {
-	const t = await db.query.task.findFirst({
-		where: eq(task.id, taskId),
-		with: {
-			shifts: { columns: { id: true, hoursTenths: true, status: true, assigneeId: true }, limit: 1 }
-		}
-	});
-	if (!t || t.shifts.length === 0) throw new DomainError('task_not_found');
+	const t = await db.query.task.findFirst({ where: eq(task.id, taskId) });
+	if (!t) throw new DomainError('task_not_found');
 	await assertManagesCategory(db, actor, t.categoryId);
-	const s = t.shifts[0];
+	const shifts = (await loadShifts(db, [taskId])).get(taskId) ?? [];
 
 	return {
 		id: t.id,
@@ -370,76 +544,140 @@ export async function getTaskForAdmin(db: Db, actor: Actor, taskId: string): Pro
 		whenKind: t.whenKind,
 		startsOn: t.startsOn,
 		endsOn: t.endsOn,
-		hoursTenths: s.hoursTenths,
 		deleted: t.deletedAt !== null,
-		shift: { id: s.id, status: s.status, assigneeName: await displayName(db, s.assigneeId) }
+		shifts: shifts.map(toAdminShift)
 	};
 }
 
-async function displayName(db: Db, userId: string | null): Promise<string | null> {
-	if (!userId) return null;
-	const p = await db.query.profile.findFirst({
-		where: eq(profile.userId, userId),
-		columns: { displayName: true }
-	});
-	return p?.displayName ?? null;
+const taskColumns = ({ shifts: _, ...rest }: TaskFields & { shifts?: unknown }) => rest;
+
+/** The columns a shift template sets (no id, no status). */
+const shiftValues = (s: Omit<ShiftData, 'id'>, position: number) => ({
+	position,
+	startsTime: s.startsTime,
+	endsTime: s.endsTime,
+	endsNextDay: s.endsNextDay,
+	hoursTenths: s.hoursTenths
+});
+
+type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
+async function insertTaskWithShifts(
+	tx: Tx,
+	actor: Actor,
+	fields: TaskFields,
+	shifts: Omit<ShiftData, 'id'>[]
+): Promise<string> {
+	const [t] = await tx
+		.insert(task)
+		.values({ ...taskColumns(fields), createdBy: actor.id })
+		.returning({ id: task.id });
+	await tx.insert(shift).values(shifts.map((s, i) => ({ taskId: t.id, ...shiftValues(s, i) })));
+	return t.id;
 }
 
-const taskColumns = ({ hoursTenths: _, ...rest }: TaskFields) => rest;
-
-/** New task with its one shift, in one transaction. Returns the task id. */
+/** New task with its shifts, in one transaction. Returns the task id. */
 export async function createTask(db: Db, actor: Actor, input: unknown): Promise<string> {
 	const data = parse(TaskInput, input);
 	await assertManagesCategory(db, actor, data.categoryId);
-
-	return db.transaction(async (tx) => {
-		const [t] = await tx
-			.insert(task)
-			.values({ ...taskColumns(data), createdBy: actor.id })
-			.returning({ id: task.id });
-		await tx.insert(shift).values({ taskId: t.id, hoursTenths: data.hoursTenths });
-		return t.id;
-	});
+	// ids only mean something when editing
+	return db.transaction((tx) => insertTaskWithShifts(tx, actor, data, data.shifts));
 }
 
 /**
- * Edit a task. Moving it to another category needs both categories.
- * Hours may change until the shift is confirmed; after that they are credited and locked.
+ * Edit a task and its shifts. Moving it to another category needs both
+ * categories. Shifts are matched by id:
+ *
+ * - new rows (no id) are added as open shifts
+ * - open shifts may change freely or be removed
+ * - taken or reported shifts keep their time window and can't be removed;
+ *   their hours may still change (release them first to do more)
+ * - confirmed shifts are credited: hours locked as well
+ *
+ * Shifts are read FOR UPDATE inside the transaction, so a member taking a
+ * shift at the same moment waits and then sees the edited shift.
  */
 export async function updateTask(db: Db, actor: Actor, taskId: string, input: unknown) {
 	const data = parse(TaskInput, input);
 	const current = await db.query.task.findFirst({
 		where: eq(task.id, taskId),
-		columns: { categoryId: true },
-		with: { shifts: { columns: { status: true, hoursTenths: true }, limit: 1 } }
+		columns: { categoryId: true }
 	});
 	if (!current) throw new DomainError('task_not_found');
 	await assertManagesCategory(db, actor, current.categoryId);
 	if (data.categoryId !== current.categoryId) {
 		await assertManagesCategory(db, actor, data.categoryId);
 	}
-	// confirmed hours are credited: changing them would leave the ledger wrong
-	const s = current.shifts[0];
-	if (s?.status === 'confirmed' && s.hoursTenths !== data.hoursTenths) {
-		throw new ValidationError({ hours: 'shift_hours_locked' });
-	}
+
 	await db.transaction(async (tx) => {
+		const existing = await tx
+			.select({
+				id: shift.id,
+				status: shift.status,
+				startsTime: shift.startsTime,
+				endsTime: shift.endsTime,
+				hoursTenths: shift.hoursTenths
+			})
+			.from(shift)
+			.where(eq(shift.taskId, taskId))
+			.for('update');
+		const byId = new Map(existing.map((s) => [s.id, s]));
+
+		const errors: FieldErrors = {};
+		const seen = new Set<string>();
+		data.shifts.forEach((s, i) => {
+			if (s.id === null) return;
+			const old = byId.get(s.id);
+			if (!old || seen.has(s.id)) {
+				errors[`shifts.${i}.id`] = 'shift_not_found';
+				return;
+			}
+			seen.add(s.id);
+			const retimed = hhmm(old.startsTime) !== s.startsTime || hhmm(old.endsTime) !== s.endsTime;
+			if (old.status !== 'open' && retimed) {
+				errors[`shifts.${i}.startsTime`] = 'shift_time_locked';
+			}
+			// confirmed hours are credited: changing them would leave the ledger wrong
+			if (old.status === 'confirmed' && old.hoursTenths !== s.hoursTenths) {
+				errors[`shifts.${i}.hours`] = 'shift_hours_locked';
+			}
+		});
+		const removed = existing.filter((s) => !seen.has(s.id));
+		if (removed.some((s) => s.status !== 'open')) errors.shifts = 'shift_remove_locked';
+		if (Object.keys(errors).length > 0) throw new ValidationError(errors);
+
 		await tx.update(task).set(taskColumns(data)).where(eq(task.id, taskId));
-		await tx.update(shift).set({ hoursTenths: data.hoursTenths }).where(eq(shift.taskId, taskId));
+		if (removed.length > 0) {
+			await tx.delete(shift).where(
+				inArray(
+					shift.id,
+					removed.map((s) => s.id)
+				)
+			);
+		}
+		for (const [i, s] of data.shifts.entries()) {
+			if (s.id === null) await tx.insert(shift).values({ taskId, ...shiftValues(s, i) });
+			else await tx.update(shift).set(shiftValues(s, i)).where(eq(shift.id, s.id));
+		}
 	});
 }
 
-/** Copy of a task with a fresh, open shift. Returns the new id. */
+/** Copy of a task with the same shift templates, all open. Returns the new id. */
 export async function duplicateTask(db: Db, actor: Actor, taskId: string): Promise<string> {
-	const { id: _, deleted: __, shift: ___, ...source } = await getTaskForAdmin(db, actor, taskId);
-	return db.transaction(async (tx) => {
-		const [t] = await tx
-			.insert(task)
-			.values({ ...taskColumns(source), createdBy: actor.id })
-			.returning({ id: task.id });
-		await tx.insert(shift).values({ taskId: t.id, hoursTenths: source.hoursTenths });
-		return t.id;
-	});
+	const { id: _, deleted: __, shifts, ...source } = await getTaskForAdmin(db, actor, taskId);
+	return db.transaction((tx) =>
+		insertTaskWithShifts(
+			tx,
+			actor,
+			source,
+			shifts.map((s) => ({
+				startsTime: s.startsTime,
+				endsTime: s.endsTime,
+				endsNextDay: s.endsNextDay,
+				hoursTenths: s.hoursTenths
+			}))
+		)
+	);
 }
 
 async function setDeleted(db: Db, actor: Actor, taskId: string, deletedAt: Date | null) {

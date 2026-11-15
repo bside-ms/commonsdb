@@ -250,6 +250,27 @@ tables already exist.
 - The prototype's richer filters (urgent-first, doable-now,
   together-only)
 
+**Decided:**
+
+- Shift windows are local times of day (`starts_time`, `ends_time`,
+  Postgres `time`, both or neither), like the task's calendar dates. No
+  time = any time on the day / in the range. Replaces the unused
+  `starts_at`/`ends_at`.
+- Members see the display names of everyone holding a shift on the same
+  task: they meet at the shift anyway.
+- One shift per member per task. Double shifts can come later if needed.
+- A window ending after midnight sets `ends_next_day`; core derives it
+  (end ≤ start), a check keeps it consistent. `position` keeps the form
+  order for shifts with the same start.
+- One shift per member per task is a partial unique index
+  (`shift_one_per_member_idx`); drop it to allow double shifts.
+- Editing shifts: open ones change freely; taken/reported keep their
+  window and can't be removed (hours may change); confirmed are locked.
+  Shifts are matched by id, read FOR UPDATE.
+- "Together" = two shifts overlap; a shift without a window overlaps
+  everything (as in the prototype). "Doable now" = a free shift and the
+  task is on today (Europe/Berlin, `localToday`).
+
 ---
 
 ## Slice 5 — Recurring series
@@ -262,6 +283,18 @@ tables already exist.
   `minGap`. The completion-relative mode makes this stateful: it must run
   after every confirmation, not only nightly.
 - Series health view for admins; members only ever see occurrences
+
+**Decided:**
+
+- Occurrences are materialised: real `task` + `shift` rows with
+  `series_id`, generated up to `lookahead` ahead. The rule lives in
+  `task_series`, not in a genesis task. Shifts, the ledger and the
+  queue never know about series.
+- Rule changes, pause and end only touch future occurrences that were
+  generated, have no assignee and weren't edited individually.
+- No worker yet: the generator runs on series save, after confirming a
+  series occurrence (same transaction), and as a daily top-up on the
+  first task-list load. A nightly job waits for the worker process.
 
 ---
 

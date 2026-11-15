@@ -25,9 +25,9 @@ beforeEach(async () => {
 		categoryId: cat.Garten,
 		whenKind: 'date',
 		startsOn: '2026-11-20',
-		hours: '1,5'
+		shifts: [{ hours: '1,5' }]
 	});
-	shiftId = (await getTaskForAdmin(db, sa, taskId)).shift.id;
+	shiftId = (await getTaskForAdmin(db, sa, taskId)).shifts[0].id;
 });
 
 const credit = (userId = kim.id, amountTenths = 15) =>

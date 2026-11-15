@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { parseRichText } from '@commonsdb/richtext';
 import { WHEN_KINDS } from '@commonsdb/db/schema';
 import { checkbox, optionalText } from '../validation.ts';
+import { endsNextDay } from './shifts.ts';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -40,6 +41,53 @@ const Description = v.pipe(
 	})
 );
 
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** '' from an empty time input → null; otherwise 'HH:MM'. */
+const optionalTime = v.pipe(
+	v.optional(v.nullable(v.string()), ''),
+	v.transform((s) => (s ?? '').trim()),
+	v.check((s) => s === '' || TIME.test(s), 'shift_time_invalid'),
+	v.transform((s) => (s === '' ? null : s))
+);
+
+/**
+ * One shift on the task form. `id` is set for shifts that already exist
+ * (updateTask matches on it), empty for new rows. Times both or neither;
+ * an end at or before the start means the next day (22:00–02:00).
+ */
+export const ShiftInput = v.pipe(
+	v.object({
+		id: v.pipe(
+			v.optional(v.nullable(v.string()), ''),
+			v.transform((s) => s || null),
+			v.nullable(v.pipe(v.string(), v.uuid('shift_not_found')))
+		),
+		startsTime: optionalTime,
+		endsTime: optionalTime,
+		hours: HoursInput
+	}),
+	v.rawTransform(({ dataset, addIssue, NEVER }) => {
+		const { id, startsTime, endsTime, hours } = dataset.value;
+		if ((startsTime === null) !== (endsTime === null)) {
+			const missing = startsTime === null ? 'startsTime' : 'endsTime';
+			addIssue({ message: 'shift_time_incomplete', path: pathTo(dataset.value, missing) });
+			return NEVER;
+		}
+		return {
+			id,
+			startsTime,
+			endsTime,
+			endsNextDay: startsTime !== null && endsTime !== null && endsNextDay(startsTime, endsTime),
+			hoursTenths: hours
+		};
+	})
+);
+export type ShiftData = v.InferOutput<typeof ShiftInput>;
+
+/** At most this many shifts per task: a guard, not a product rule. */
+export const MAX_SHIFTS = 30;
+
 export const TaskInput = v.pipe(
 	v.object({
 		title: v.pipe(
@@ -60,11 +108,15 @@ export const TaskInput = v.pipe(
 		startsOn: isoDate('task_starts_on_invalid'),
 		// only read for 'range'; '' from an empty date input is fine for 'date'
 		endsOn: v.optional(v.string(), ''),
-		hours: HoursInput
+		shifts: v.pipe(
+			v.array(ShiftInput, 'task_shifts_required'),
+			v.minLength(1, 'task_shifts_required'),
+			v.maxLength(MAX_SHIFTS, 'task_shifts_too_many')
+		)
 	}),
 	v.rawTransform(({ dataset, addIssue, NEVER }) => {
-		const { endsOn, whenKind, hours, ...rest } = dataset.value;
-		if (whenKind === 'date') return { ...rest, whenKind, endsOn: null, hoursTenths: hours };
+		const { endsOn, whenKind, ...rest } = dataset.value;
+		if (whenKind === 'date') return { ...rest, whenKind, endsOn: null };
 
 		const end = endsOn.trim();
 		if (!ISO_DATE.test(end) || Number.isNaN(Date.parse(end))) {
@@ -75,7 +127,7 @@ export const TaskInput = v.pipe(
 			addIssue({ message: 'task_ends_before_start', path: pathTo(dataset.value, 'endsOn') });
 			return NEVER;
 		}
-		return { ...rest, whenKind, endsOn: end, hoursTenths: hours };
+		return { ...rest, whenKind, endsOn: end };
 	})
 );
 export type TaskInput = v.InferInput<typeof TaskInput>;
@@ -91,7 +143,13 @@ function pathTo(input: Record<string, unknown>, key: string) {
 export const TaskFilter = v.object({
 	q: v.pipe(v.optional(v.string(), ''), v.trim(), v.maxLength(100)),
 	superCategoryId: v.optional(v.pipe(v.string(), v.uuid())),
-	categoryId: v.optional(v.pipe(v.string(), v.uuid()))
+	categoryId: v.optional(v.pipe(v.string(), v.uuid())),
+	/** Only urgent tasks. They always come first anyway. */
+	urgent: checkbox(),
+	/** Doable now: a free shift and the task is on today. */
+	now: checkbox(),
+	/** Together only: at least two shifts at the same time. */
+	together: checkbox()
 });
 export type TaskFilter = v.InferInput<typeof TaskFilter>;
 
