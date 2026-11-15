@@ -314,6 +314,14 @@ in core (shifts.test.ts, service.test.ts) and end to end (shifts.e2e.ts).
 - No worker yet: the generator runs on series save, after confirming a
   series occurrence (same transaction), and as a daily top-up on the
   first task-list load. A nightly job waits for the worker process.
+- The rule is one jsonb column (`task_series.rule`), a tagged union
+  validated in core; its shape decides date vs. range, so the series has
+  no `when_kind`. Weekdays 0 = Monday.
+- Periods have stable keys (`w:<Monday>`, `m:<YYYY-MM>`, `d:<start>`);
+  `(series_id, period_key)` is unique, so generating is idempotent.
+  Occurrences added by hand have no key.
+- Monthly "nth 5" = last weekday of the month; day 31 = last day.
+  Ranges that have begun start today; until cuts ranges short.
 
 ---
 

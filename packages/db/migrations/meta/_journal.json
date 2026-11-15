@@ -43,6 +43,13 @@
       "when": 1794765428869,
       "tag": "0005_shift_times",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794770631333,
+      "tag": "0006_task_series",
+      "breakpoints": true
     }
   ]
 }
