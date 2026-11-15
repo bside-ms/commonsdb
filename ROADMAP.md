@@ -250,6 +250,12 @@ tables already exist.
 - The prototype's richer filters (urgent-first, doable-now,
   together-only)
 
+Status: **done.** Admins create and edit tasks with several shifts (time
+window or none, past midnight, own hours); held shifts keep their window.
+Members see free/total, who else is on a task and parallel slots, pick a
+shift when taking, and filter by urgent / doable today / together. Tested
+in core (shifts.test.ts, service.test.ts) and end to end (shifts.e2e.ts).
+
 **Decided:**
 
 - Shift windows are local times of day (`starts_time`, `ends_time`,
@@ -270,6 +276,19 @@ tables already exist.
 - "Together" = two shifts overlap; a shift without a window overlaps
   everything (as in the prototype). "Doable now" = a free shift and the
   task is on today (Europe/Berlin, `localToday`).
+- Admin form: shift rows live in the remote form's own state
+  (`fields.shifts.value()/set()`), so failed submits come back with the
+  posted rows. Adding/removing rows needs JS; without JS the form edits
+  the rows it has.
+- `toFormIssues` turns numeric path segments into numbers
+  (`shifts.0.hours` → `['shifts', 0, 'hours']`); SvelteKit only matches
+  array fields that way.
+- Member detail: one take form; with several free shifts the member picks
+  one by radio inside it (works without JS, one confirmation).
+- List filters `urgent`, `now`, `together` are URL toggles (`?now=1`),
+  evaluated in core; "doable now" uses Europe/Berlin's today.
+- Cards show the hours range on offer ("1,5–4 Std.") or the member's own
+  shift's hours once they hold one.
 
 ---
 

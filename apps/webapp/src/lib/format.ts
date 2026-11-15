@@ -50,9 +50,24 @@ export const hoursValue = (tenths: number) =>
 /** 15 → "1,5 Std." */
 export const formatHours = (tenths: number) => m.ui_hours({ hours: hoursValue(tenths) });
 
+/** { min: 15, max: 40 } → "1,5–4 Std."; equal ends → "1,5 Std." */
+export const formatHoursRange = ({ min, max }: { min: number; max: number }) =>
+	min === max ? formatHours(min) : m.ui_hours({ hours: `${hoursValue(min)}–${hoursValue(max)}` });
+
 /** 15 → "1,5", -20 → "−2" (typographic minus) */
 export const formatRepros = (tenths: number) =>
 	(tenths / 10).toLocaleString(getLocale(), { maximumFractionDigits: 1 }).replace('-', '−');
 
 /** 15 → "+1,5", -20 → "−2" (ledger entries) */
 export const formatReproChange = (tenths: number) => (tenths > 0 ? '+' : '') + formatRepros(tenths);
+
+/** A shift's window: "10:00–12:00", "22:00–02:00 (+1 Tag)", or "Ohne feste Uhrzeit". */
+export function formatShiftTime(s: {
+	startsTime: string | null;
+	endsTime: string | null;
+	endsNextDay: boolean;
+}) {
+	if (!s.startsTime || !s.endsTime) return m.task_shift_any_time();
+	const window = `${s.startsTime}–${s.endsTime}`;
+	return s.endsNextDay ? `${window} ${m.task_shift_next_day_short()}` : window;
+}

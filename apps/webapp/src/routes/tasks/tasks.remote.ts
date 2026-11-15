@@ -1,7 +1,7 @@
 /*
  * The member side of tasks: browse, read, take, give back.
  * Any signed-in member may call these; what they see is decided in core
- * (open tasks plus their own).
+ * (tasks with a free shift plus their own).
  */
 import { form, query } from '$app/server';
 import * as v from 'valibot';
@@ -30,11 +30,14 @@ export const memberTasks = query(
 	v.object({
 		q: v.optional(v.string()),
 		superCategoryId: v.optional(v.string()),
-		categoryId: v.optional(v.string())
+		categoryId: v.optional(v.string()),
+		urgent: v.optional(v.boolean()),
+		now: v.optional(v.boolean()),
+		together: v.optional(v.boolean())
 	}),
-	async ({ q, superCategoryId, categoryId }) =>
+	async ({ superCategoryId, categoryId, ...filter }) =>
 		listTasksForMember(db, requireActor(), {
-			q,
+			...filter,
 			superCategoryId: idOrNothing(superCategoryId),
 			categoryId: idOrNothing(categoryId)
 		}).catch(toHttpError)
@@ -43,7 +46,7 @@ export const memberTasks = query(
 /** Only the tasks the member has taken (start page). */
 export const myTasks = query(async () => {
 	const tasks = await listTasksForMember(db, requireActor()).catch(toHttpError);
-	return tasks.filter((t) => t.shift.mine);
+	return tasks.filter((t) => t.shifts.mine !== null);
 });
 
 export const memberTask = query(Id, async (id) => {

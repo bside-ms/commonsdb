@@ -76,6 +76,14 @@ export type TaskFormData = {
 	whenKind: 'date' | 'range';
 	startsOn: string;
 	endsOn?: string;
+	shifts: ShiftFormData[];
+};
+
+/** One shift row: id for existing shifts, '' for new ones; times '' = none. */
+export type ShiftFormData = {
+	id: string;
+	startsTime: string;
+	endsTime: string;
 	hours: string;
 };
 
@@ -115,7 +123,7 @@ export const restore = form(ById, async ({ id }) => {
 	return { done: true };
 });
 
-/** Take the assignee off a task; it is open for everyone again. */
+/** Take the assignee off a shift; it is open for everyone again. */
 export const releaseAssignee = form(ById, async ({ id }) => {
 	await releaseShift(db, requireAdmin(), id).catch(toFormIssues);
 	return { done: true };

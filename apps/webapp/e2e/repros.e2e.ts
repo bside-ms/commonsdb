@@ -101,9 +101,9 @@ test('confirmed hours are locked on the task form', async ({ as }) => {
 	const alex = await as('admin');
 	await alex.goto('/admin/tasks');
 	await alex.getByRole('link', { name: TITLE }).click();
-	await alex.getByLabel('Stunden').fill('3');
-	await alex.getByRole('button', { name: 'Speichern' }).click();
-	await expect(alex.getByText('Die Stunden sind bestätigt', { exact: false })).toBeVisible();
+	// the form doesn't let you change them; core rejects it anyway (confirmation.test.ts)
+	await expect(alex.getByLabel('Stunden')).toHaveAttribute('readonly');
+	await expect(alex.getByText('Vergeben: Uhrzeit fest', { exact: false })).toBeVisible();
 });
 
 test('only superadmins correct balances; Kim sees the correction', async ({ as }) => {

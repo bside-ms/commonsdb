@@ -85,7 +85,7 @@ test('two people, one task: the second gets a clear message', async ({ as }) => 
 
 	await lu.getByRole('dialog').getByRole('button', { name: 'Übernehmen' }).click();
 	await expect(lu.getByRole('alert')).toHaveText(
-		'Die Aufgabe hat inzwischen jemand anderes übernommen.'
+		'Diese Schicht hat inzwischen jemand anderes übernommen.'
 	);
 });
 

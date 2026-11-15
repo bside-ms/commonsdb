@@ -1,6 +1,7 @@
 <!--
-	Member task list. Filters are links (?super=…&category=…) and a GET
-	search form, so everything works without JS and can be bookmarked.
+	Member task list. Filters are links (?super=…&category=…, toggles
+	?urgent=1&now=1&together=1) and a GET search form, so everything works
+	without JS and can be bookmarked.
 	"Meine Aufgaben" first, then what's open.
 -->
 <script lang="ts">
@@ -16,15 +17,28 @@
 	const q = $derived(params.get('q') ?? '');
 	const superId = $derived(params.get('super') ?? undefined);
 	const categoryId = $derived(params.get('category') ?? undefined);
+	const urgent = $derived(params.has('urgent'));
+	const now = $derived(params.has('now'));
+	const together = $derived(params.has('together'));
 
 	const [groups, tasks] = $derived(
-		await Promise.all([taskCategories(), memberTasks({ q, superCategoryId: superId, categoryId })])
+		await Promise.all([
+			taskCategories(),
+			memberTasks({ q, superCategoryId: superId, categoryId, urgent, now, together })
+		])
 	);
 
-	const mine = $derived(tasks.filter((t) => t.shift.mine));
-	const open = $derived(tasks.filter((t) => !t.shift.mine));
+	const mine = $derived(tasks.filter((t) => t.shifts.mine));
+	const open = $derived(tasks.filter((t) => !t.shifts.mine));
 	const selectedGroup = $derived(groups.find((g) => g.id === superId));
-	const filtered = $derived(Boolean(q || superId || categoryId));
+	const filtered = $derived(Boolean(q || superId || categoryId || urgent || now || together));
+
+	/** The on/off filters: label, URL key, current state. */
+	const toggles = $derived([
+		[m.tasks_filter_urgent(), 'urgent', urgent],
+		[m.tasks_filter_now(), 'now', now],
+		[m.tasks_filter_together(), 'together', together]
+	] as const);
 
 	/** Link to this page with some params changed (undefined removes one). */
 	function withParams(changes: Record<string, string | undefined>) {
@@ -45,6 +59,9 @@
 <form method="get" data-sveltekit-reset="false" class="mt-5 flex gap-2" role="search">
 	{#if superId}<input type="hidden" name="super" value={superId} />{/if}
 	{#if categoryId}<input type="hidden" name="category" value={categoryId} />{/if}
+	{#each toggles as [, key, on] (key)}
+		{#if on}<input type="hidden" name={key} value="1" />{/if}
+	{/each}
 	<Input
 		type="search"
 		name="q"
@@ -79,6 +96,12 @@
 			{/each}
 		</div>
 	{/if}
+</nav>
+
+<nav class="mt-3 flex flex-wrap gap-1.5" aria-label={m.tasks_filter_more()}>
+	{#each toggles as [label, key, on] (key)}
+		<Chip size="sub" href={withParams({ [key]: on ? undefined : '1' })} pressed={on}>{label}</Chip>
+	{/each}
 </nav>
 
 {#if mine.length > 0}

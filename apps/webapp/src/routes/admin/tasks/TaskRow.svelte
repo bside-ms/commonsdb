@@ -10,6 +10,7 @@
 	import { formatHours, formatWhen } from '#lib/format.ts';
 	import { Badge, Button, toast } from '#lib/ui';
 	import { duplicate, remove, restore } from './tasks.remote';
+	import ShiftStatusBadge from './ShiftStatusBadge.svelte';
 
 	let { task, view }: { task: AdminTaskListItem; view: 'active' | 'deleted' } = $props();
 
@@ -17,6 +18,9 @@
 	const dup = $derived(duplicate.for(task.id));
 	const del = $derived(remove.for(task.id));
 	const res = $derived(restore.for(task.id));
+	const total = $derived(task.shifts.length);
+	const free = $derived(task.shifts.filter((s) => s.status === 'open').length);
+	const reported = $derived(task.shifts.filter((s) => s.status === 'reported').length);
 </script>
 
 <li class="flex flex-wrap items-center gap-x-5 gap-y-2.5 px-4 py-3.5">
@@ -27,7 +31,10 @@
 			</a>
 		</h2>
 		<p class="mt-0.5 text-small text-muted">
-			{task.category.name} · {formatWhen(task)} · {formatHours(task.shift.hoursTenths)}
+			{task.category.name} · {formatWhen(task)} ·
+			{total === 1
+				? formatHours(task.shifts[0].hoursTenths)
+				: m.task_shifts_count({ count: total })}
 		</p>
 	</div>
 
@@ -35,22 +42,17 @@
 		{#if task.urgent}
 			<Badge tone="attention">{m.task_urgent()}</Badge>
 		{/if}
-		{#if task.shift.status === 'open'}
-			<Badge outline>{m.task_status_open()}</Badge>
-		{:else if task.shift.status === 'reported'}
-			<Badge tone="info">
-				{task.shift.assigneeName
-					? m.task_reported_by({ name: task.shift.assigneeName })
-					: m.task_status_reported()}
-			</Badge>
-		{:else if task.shift.status === 'confirmed'}
-			<Badge tone="success">{m.task_status_confirmed()}</Badge>
+		{#if total === 1}
+			<ShiftStatusBadge shift={task.shifts[0]} />
 		{:else}
-			<Badge>
-				{task.shift.assigneeName
-					? m.task_taken_by({ name: task.shift.assigneeName })
-					: m.task_status_taken()}
-			</Badge>
+			{#if free > 0}
+				<Badge outline>{m.task_shifts_free({ free, total })}</Badge>
+			{:else}
+				<Badge>{m.task_shifts_full()}</Badge>
+			{/if}
+			{#if reported > 0}
+				<Badge tone="info">{m.task_shifts_reported({ count: reported })}</Badge>
+			{/if}
 		{/if}
 	</div>
 

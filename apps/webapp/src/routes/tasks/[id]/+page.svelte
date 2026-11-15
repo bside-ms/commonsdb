@@ -1,5 +1,10 @@
 <!--
-	Task detail with one primary action: take it, or give it back.
+	Task detail with one primary action for the member: take a shift, or
+	act on the one they hold (report it, give it back).
+
+	A task can have several shifts. The member holds at most one; with more
+	than one free, they pick it with radio buttons inside the take form, so
+	there is still one form, one button and one confirmation.
 
 	"Übernehmen" asks for confirmation in a modal, but only with JS: the
 	button is a real submit button, and its click handler opens the modal
@@ -13,19 +18,25 @@
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage } from '#lib/i18n/errors.ts';
-	import { formatHours, formatWhen } from '#lib/format.ts';
+	import { formatHours, formatHoursRange, formatShiftTime, formatWhen } from '#lib/format.ts';
 	import { Badge, Button, Card, FormField, Modal, RichText, Textarea, toast } from '#lib/ui';
 	import { memberTask, release, report, take } from '../tasks.remote';
 
 	const task = $derived(await memberTask(page.params.id!));
 
-	const takeForm = $derived(take.for(task.shift.id));
-	const releaseForm = $derived(release.for(task.shift.id));
-	const reportForm = $derived(report.for(task.shift.id));
+	/** The member's own shift on this task, whatever its status. */
+	const mine = $derived(task.shifts.find((s) => s.mine));
+	const free = $derived(task.shifts.filter((s) => s.status === 'open'));
+	const several = $derived(task.shifts.length > 1);
+
+	// take: one plain form; the shift comes from a radio (or a hidden input)
+	const takeForm = take;
+	const releaseForm = $derived(release.for(mine?.id ?? ''));
+	const reportForm = $derived(report.for(mine?.id ?? ''));
 	const issues = $derived([
 		...(takeForm.fields.issues() ?? []),
-		...(releaseForm.fields.issues() ?? []),
-		...(reportForm.fields.issues() ?? [])
+		...(mine ? (releaseForm.fields.issues() ?? []) : []),
+		...(mine ? (reportForm.fields.issues() ?? []) : [])
 	]);
 	const noteError = $derived.by(() => {
 		const issue = reportForm.fields.note.issues()?.[0];
@@ -38,7 +49,10 @@
 	const facts = $derived(
 		[
 			[m.task_when(), formatWhen(task)],
-			[m.task_duration(), formatHours(task.shift.hoursTenths)],
+			[
+				m.task_duration(),
+				mine ? formatHours(mine.hoursTenths) : formatHoursRange(task.summary.hoursTenths)
+			],
 			[m.task_place(), task.place],
 			[m.task_contact(), task.contact],
 			[m.task_bring(), task.bring],
@@ -58,6 +72,9 @@
 	{#if task.urgent}
 		<Badge tone="attention">{m.task_urgent()}</Badge>
 	{/if}
+	{#if task.summary.together}
+		<Badge tone="success">{m.task_together()}</Badge>
+	{/if}
 	<Badge outline>{task.category.name}</Badge>
 </div>
 <h1 class="mt-2">{task.title}</h1>
@@ -75,29 +92,57 @@
 			<p class="border-l-4 border-area-commons pl-3 text-small">{m.task_self_service_info()}</p>
 		{/if}
 
+		{#if several}
+			<section aria-labelledby="shifts-heading">
+				<h2 id="shifts-heading" class="text-h3">{m.task_shifts_title()}</h2>
+				{#if task.summary.parallel > 1}
+					<p class="mt-1 text-small text-muted">
+						{m.task_parallel({ count: task.summary.parallel })}
+					</p>
+				{/if}
+				<ul class="mt-2 divide-y divide-hair border border-ink bg-paper">
+					{#each task.shifts as shift (shift.id)}
+						<li class="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-small">
+							<span>{formatShiftTime(shift)} · {formatHours(shift.hoursTenths)}</span>
+							{#if shift.mine}
+								<Badge tone="neutral">{m.task_shift_you()}</Badge>
+							{:else if shift.status === 'open'}
+								<Badge outline>{m.task_shift_free()}</Badge>
+							{:else}
+								<span class="font-semibold">{shift.assigneeName ?? m.task_status_taken()}</span>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
 		<RichText html={task.descriptionHtml} />
 	</div>
 
 	<!-- the one thing to do here; sticks on large screens -->
 	<Card class="lg:sticky lg:top-4">
-		{#if task.shift.mine && task.shift.status === 'confirmed'}
+		{#if mine?.status === 'confirmed'}
 			<Badge tone="success">{m.task_status_confirmed()}</Badge>
 			<p class="mt-2 text-small text-muted">{m.task_confirmed_info()}</p>
-		{:else if task.shift.mine && task.shift.status === 'reported'}
+		{:else if mine?.status === 'reported'}
 			<Badge tone="info">{m.task_status_reported()}</Badge>
 			<p class="mt-2 text-small text-muted">{m.task_reported_info()}</p>
-			{#if task.notes?.report}
+			{#if mine.notes?.report}
 				<p class="mt-3 text-small font-semibold">{m.task_your_note()}</p>
-				<p class="text-small whitespace-pre-line">{task.notes.report}</p>
+				<p class="text-small whitespace-pre-line">{mine.notes.report}</p>
 			{/if}
-		{:else if task.shift.mine}
-			{#if task.notes?.sentBack}
+		{:else if mine}
+			{#if mine.notes?.sentBack}
 				<div role="status" class="mb-4 border-l-4 border-accent pl-3 text-small">
 					<p class="font-semibold">{m.task_sent_back_title()}</p>
-					<p class="whitespace-pre-line">{task.notes.sentBack}</p>
+					<p class="whitespace-pre-line">{mine.notes.sentBack}</p>
 				</div>
 			{/if}
 			<p class="font-semibold">{m.task_you_took_it()}</p>
+			{#if several}
+				<p class="mt-1 text-small">{formatShiftTime(mine)} · {formatHours(mine.hoursTenths)}</p>
+			{/if}
 			<p class="mt-1 text-small text-muted">{m.task_report_hint()}</p>
 			<form
 				{...reportForm.enhance(async ({ submit }) => {
@@ -105,7 +150,7 @@
 				})}
 				class="mt-4 grid gap-3"
 			>
-				<input {...reportForm.fields.shiftId.as('hidden', task.shift.id)} />
+				<input {...reportForm.fields.shiftId.as('hidden', mine.id)} />
 				<FormField label={m.task_report_note()} error={noteError} optional>
 					<Textarea {...reportForm.fields.note.as('text')} rows={3} maxlength={1000} />
 				</FormField>
@@ -119,12 +164,12 @@
 				})}
 				class="mt-2"
 			>
-				<input {...releaseForm.fields.shiftId.as('hidden', task.shift.id)} />
+				<input {...releaseForm.fields.shiftId.as('hidden', mine.id)} />
 				<Button type="submit" variant="ghost" block disabled={releaseForm.pending > 0}>
 					{m.task_release()}
 				</Button>
 			</form>
-		{:else}
+		{:else if free.length > 0}
 			<p class="text-small text-muted">{m.task_take_hint()}</p>
 			<form
 				id={formId}
@@ -132,9 +177,24 @@
 					confirmOpen = false;
 					if (await submit()) toast(m.task_taken_toast());
 				})}
-				class="mt-4"
+				class="mt-4 grid gap-3"
 			>
-				<input {...takeForm.fields.shiftId.as('hidden', task.shift.id)} />
+				{#if free.length === 1}
+					<input {...takeForm.fields.shiftId.as('hidden', free[0].id)} />
+				{:else}
+					<fieldset class="grid gap-2">
+						<legend class="mb-1 text-small font-semibold">{m.task_take_choose()}</legend>
+						{#each free as shift, i (shift.id)}
+							<label class="flex cursor-pointer items-center gap-2.5 text-small">
+								<input
+									{...takeForm.fields.shiftId.as('radio', shift.id, i === 0)}
+									class="size-4.5 accent-ink"
+								/>
+								{formatShiftTime(shift)} · {formatHours(shift.hoursTenths)}
+							</label>
+						{/each}
+					</fieldset>
+				{/if}
 				<Button
 					type="submit"
 					variant="accent"

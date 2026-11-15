@@ -142,7 +142,8 @@ Stays in routes until a second use: task row, stat tile, tabs, table, "thanks" c
 - Patterns used once (task row, stat tile) stay in the route
   until a second use, then move to `lib/ui`.
 - Domain UI that's used by more than one route but isn't generic
-  (`TaskForm`, `TaskRow`) lives in the route folder, not in `lib/ui`.
+  (`TaskForm`, `TaskRow`, `ShiftStatusBadge`) lives in the route folder,
+  not in `lib/ui`.
 - Forms: inputs spread from `form.fields.x.as(...)` straight into the
   primitives (`<Input {...f.title.as('text', initial)} />`); messages via
   `errorMessage(issue.message)`.

@@ -59,7 +59,8 @@ export function toFormIssues(e: unknown): never {
 		invalid(
 			...Object.entries(e.fields).map(([key, code]) => ({
 				message: code,
-				path: key === '_' ? [] : key.split('.')
+				// 'shifts.0.hours' → ['shifts', 0, 'hours']: SvelteKit matches array fields only with numeric indices
+				path: key === '_' ? [] : key.split('.').map((k) => (/^\d+$/.test(k) ? Number(k) : k))
 			}))
 		);
 	}
