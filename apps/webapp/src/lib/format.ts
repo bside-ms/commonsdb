@@ -39,3 +39,13 @@ export const hoursValue = (tenths: number) =>
 
 /** 15 → "1,5 Std." */
 export const formatHours = (tenths: number) => m.ui_hours({ hours: hoursValue(tenths) });
+
+/** A point in time as a calendar day: "15.11." or "15.11.2025". */
+export function formatDate(date: Date) {
+	const sameYear = date.getFullYear() === new Date().getFullYear();
+	return new Intl.DateTimeFormat(getLocale(), {
+		day: '2-digit',
+		month: '2-digit',
+		year: sameYear ? undefined : 'numeric'
+	}).format(date);
+}

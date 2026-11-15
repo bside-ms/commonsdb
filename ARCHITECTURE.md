@@ -265,7 +265,7 @@ which UI rendered it.
       push the _sender_ negative, or only resource spending? Leaning
       toward: transfers must not create/increase a negative balance.
     - Storage: ledger_account (kind + user_id, initiative later) and append-only ledger_entry; details in ROADMAP slice
-      3.
+        3.
 
 ## Repo structure (decided)
 
@@ -357,8 +357,8 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 3 — report, confirm, repros**: next. Repro storage is decided
-  (integer tenths, like shift hours).
+- **Slice 3 — report, confirm, repros**: in progress (ledger, report, confirm done; account screen, adjustments, e2e
+  next).
 - **CI**: GitHub Actions with a Postgres service running `pnpm check`,
   `pnpm test`, `pnpm test:e2e`.
 - **Admin roles**: still set by SQL; a superadmin user list with role

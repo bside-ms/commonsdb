@@ -99,3 +99,19 @@ export type TaskFilter = v.InferInput<typeof TaskFilter>;
 export const ReportInput = v.object({
 	note: optionalText(1000, 'shift_note_too_long')
 });
+
+/** Confirming: the admin may correct the hours; the thanks note is optional. */
+export const ConfirmInput = v.object({
+	hours: HoursInput,
+	note: optionalText(1000, 'shift_note_too_long')
+});
+
+/** Sending a report back needs a reason. */
+export const SendBackInput = v.object({
+	note: v.pipe(
+		v.string('shift_send_back_note_required'),
+		v.trim(),
+		v.nonEmpty('shift_send_back_note_required'),
+		v.maxLength(1000, 'shift_note_too_long')
+	)
+});

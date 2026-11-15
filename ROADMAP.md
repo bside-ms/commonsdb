@@ -207,6 +207,13 @@ Demo: end to end. Take, do, report, confirm, repros land.
   A history (`shift_event`) waits until someone needs it.
 - Members see their own shifts in the task list until confirmed; done
   work lives on the account screen.
+- Confirming is one transaction (conditional `reported → confirmed` +
+  ledger credit); the confirmed hours are what gets credited.
+  Confirmation logic lives in `core/src/tasks/confirmation.ts`, the only
+  task code that imports the ledger.
+- The queue includes soft-deleted tasks; oldest report first.
+- No assignee (user deleted after reporting) → no credit
+  (`shift_no_assignee`); send back or delete.
 
 ---
 

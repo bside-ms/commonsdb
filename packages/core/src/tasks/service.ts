@@ -23,7 +23,7 @@ import {
 	type ShiftStatus,
 	type WhenKind
 } from '@commonsdb/db/schema';
-import { DomainError } from '../errors.ts';
+import { DomainError, ValidationError } from '../errors.ts';
 import type { Actor } from '../roles.ts';
 import { parse } from '../validation.ts';
 import {
@@ -409,20 +409,25 @@ export async function createTask(db: Db, actor: Actor, input: unknown): Promise<
 
 /**
  * Edit a task. Moving it to another category needs both categories.
- * Hours may change while the shift is taken (nothing is credited until slice 3).
+ * Hours may change until the shift is confirmed; after that they are credited and locked.
  */
 export async function updateTask(db: Db, actor: Actor, taskId: string, input: unknown) {
 	const data = parse(TaskInput, input);
 	const current = await db.query.task.findFirst({
 		where: eq(task.id, taskId),
-		columns: { categoryId: true }
+		columns: { categoryId: true },
+		with: { shifts: { columns: { status: true, hoursTenths: true }, limit: 1 } }
 	});
 	if (!current) throw new DomainError('task_not_found');
 	await assertManagesCategory(db, actor, current.categoryId);
 	if (data.categoryId !== current.categoryId) {
 		await assertManagesCategory(db, actor, data.categoryId);
 	}
-
+	// confirmed hours are credited: changing them would leave the ledger wrong
+	const s = current.shifts[0];
+	if (s?.status === 'confirmed' && s.hoursTenths !== data.hoursTenths) {
+		throw new ValidationError({ hours: 'shift_hours_locked' });
+	}
 	await db.transaction(async (tx) => {
 		await tx.update(task).set(taskColumns(data)).where(eq(task.id, taskId));
 		await tx.update(shift).set({ hoursTenths: data.hoursTenths }).where(eq(shift.taskId, taskId));
