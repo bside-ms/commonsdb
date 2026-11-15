@@ -107,7 +107,7 @@ anywhere in the app.
 ### Status
 
 | Component    | State | Notes                                                                                                                          |
-| ------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------ |
+|--------------|-------|--------------------------------------------------------------------------------------------------------------------------------|
 | `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                                |
 | `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                                   |
 | `Input`      | done  | text-like types, `bind:value`                                                                                                  |

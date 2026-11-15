@@ -10,6 +10,7 @@ import {
 	listCategories,
 	listTasksForMember,
 	releaseShift,
+	reportShift,
 	takeShift
 } from '@commonsdb/core';
 import { toHtml } from '@commonsdb/richtext';
@@ -61,3 +62,11 @@ export const release = form(ByShift, async ({ shiftId }) => {
 	await releaseShift(db, requireActor(), shiftId).catch(toFormIssues);
 	return { done: true };
 });
+
+export const report = form(
+	v.object({ shiftId: Id, note: v.optional(v.string()) }),
+	async ({ shiftId, note }) => {
+		await reportShift(db, requireActor(), shiftId, { note }).catch(toFormIssues);
+		return { done: true };
+	}
+);

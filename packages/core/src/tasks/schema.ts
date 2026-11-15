@@ -94,3 +94,8 @@ export const TaskFilter = v.object({
 	categoryId: v.optional(v.pipe(v.string(), v.uuid()))
 });
 export type TaskFilter = v.InferInput<typeof TaskFilter>;
+
+/** Reporting a shift as done. The note is optional. */
+export const ReportInput = v.object({
+	note: optionalText(1000, 'shift_note_too_long')
+});

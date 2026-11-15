@@ -23,7 +23,11 @@
 	<!-- title first: it's what a screen reader announces as the link's name -->
 	<span class="text-h3">{task.title}</span>
 	<span class="flex flex-wrap gap-1.5">
-		{#if task.shift.mine}<Badge tone="success">{m.task_mine()}</Badge>{/if}
+		{#if task.shift.mine && task.shift.status === 'reported'}
+			<Badge tone="info">{m.task_status_reported()}</Badge>
+		{:else if task.shift.mine}
+			<Badge tone="neutral">{m.task_mine()}</Badge>
+		{/if}
 		{#if task.urgent}<Badge tone="attention">{m.task_urgent()}</Badge>{/if}
 		<Badge outline>{task.category.name}</Badge>
 	</span>

@@ -18,7 +18,7 @@ import { user } from './auth.ts';
 export const WHEN_KINDS = ['date', 'range'] as const;
 export type WhenKind = (typeof WHEN_KINDS)[number];
 
-/** Slice 2 uses open/taken. reported/confirmed arrive with slice 3. */
+/** open → taken → reported → confirmed; reported can go back to taken. */
 export const SHIFT_STATUSES = ['open', 'taken', 'reported', 'confirmed'] as const;
 export type ShiftStatus = (typeof SHIFT_STATUSES)[number];
 
@@ -133,16 +133,21 @@ export const shift = pgTable(
 		status: text('status', { enum: SHIFT_STATUSES }).notNull().default('open'),
 		assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
 		takenAt: timestamp('taken_at', { withTimezone: true }),
+		reportedAt: timestamp('reported_at', { withTimezone: true }),
+		reportNote: text('report_note'),
+		/** Why an admin sent the report back. Cleared when reported again. */
+		sendBackNote: text('send_back_note'),
+		confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+		/** Who confirmed. Audit field: no FK, like ledger_entry.actor_id. */
+		confirmedBy: text('confirmed_by'),
+		/** Optional thanks from the confirming admin, shown on the account screen. */
+		confirmNote: text('confirm_note'),
 		...timestamps
 	},
 	(t) => [
 		index('shift_task_idx').on(t.taskId),
 		index('shift_assignee_idx').on(t.assigneeId),
-		check(
-			'shift_hours_check',
-			sql`${t.hoursTenths}
-            > 0`
-		),
+		check('shift_hours_check', sql`${t.hoursTenths} > 0`),
 		check(
 			'shift_status_check',
 			sql`${t.status}

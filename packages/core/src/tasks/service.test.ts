@@ -14,11 +14,14 @@ import {
 	listTasksForAdmin,
 	listTasksForMember,
 	releaseShift,
+	reportShift,
 	restoreTask,
 	setCapabilities,
 	takeShift,
 	updateTask
 } from './service.ts';
+import { shift } from '@commonsdb/db/schema';
+import { eq } from 'drizzle-orm';
 
 const t = await createTestDb();
 const { db } = t;
@@ -284,6 +287,19 @@ describe('listTasksForMember', () => {
 			'Später'
 		]);
 	});
+
+	test('own shifts stay listed until confirmed', async () => {
+		const id = await createTask(db, admin, input());
+		const s = await shiftOf(id);
+		await takeShift(db, kim, s.id);
+		await reportShift(db, kim, s.id, {});
+		assert.equal((await listTasksForMember(db, kim)).length, 1);
+
+		await db.update(shift).set({ status: 'confirmed' }).where(eq(shift.id, s.id));
+		assert.equal((await listTasksForMember(db, kim)).length, 0);
+		// still reachable for the account screen's link
+		assert.equal((await getTaskForMember(db, kim, id)).shift.status, 'confirmed');
+	});
 });
 
 describe('listTasksForAdmin', () => {
@@ -328,5 +344,70 @@ describe('capabilities', () => {
 			code: 'forbidden'
 		});
 		assert.deepEqual(await codeOf(() => listAdminCapabilities(db, admin)), { code: 'forbidden' });
+	});
+});
+
+describe('reportShift', () => {
+	test('the assignee reports with a note; it shows on their detail', async () => {
+		const id = await createTask(db, admin, input());
+		const s = await shiftOf(id);
+		await takeShift(db, kim, s.id);
+		await reportShift(db, kim, s.id, { note: '  Alles geschnitten  ' });
+
+		const detail = await getTaskForMember(db, kim, id);
+		assert.equal(detail.shift.status, 'reported');
+		assert.deepEqual(detail.notes, { report: 'Alles geschnitten', sentBack: null });
+	});
+
+	test('the note is optional', async () => {
+		const id = await createTask(db, admin, input());
+		const s = await shiftOf(id);
+		await takeShift(db, kim, s.id);
+		await reportShift(db, kim, s.id, {});
+		assert.equal((await getTaskForMember(db, kim, id)).notes?.report, null);
+	});
+
+	test('only the assignee, only while taken', async () => {
+		const id = await createTask(db, admin, input());
+		const s = await shiftOf(id);
+		assert.deepEqual(await codeOf(() => reportShift(db, kim, s.id, {})), {
+			code: 'shift_not_reportable'
+		});
+		await takeShift(db, kim, s.id);
+		assert.deepEqual(await codeOf(() => reportShift(db, lu, s.id, {})), {
+			code: 'shift_not_reportable'
+		});
+		await reportShift(db, kim, s.id, {});
+		assert.deepEqual(await codeOf(() => reportShift(db, kim, s.id, {})), {
+			code: 'shift_not_reportable'
+		});
+	});
+
+	test('a reported shift can no longer be released', async () => {
+		const id = await createTask(db, admin, input());
+		const s = await shiftOf(id);
+		await takeShift(db, kim, s.id);
+		await reportShift(db, kim, s.id, {});
+		assert.deepEqual(await codeOf(() => releaseShift(db, kim, s.id)), {
+			code: 'shift_not_taken'
+		});
+	});
+
+	test('reporting again clears a send-back note', async () => {
+		const id = await createTask(db, admin, input());
+		const s = await shiftOf(id);
+		await takeShift(db, kim, s.id);
+		// step 3's sendBackShift, by hand until it exists
+		await db.update(shift).set({ sendBackNote: 'Bitte auch den Rasen' }).where(eq(shift.id, s.id));
+		await reportShift(db, kim, s.id, {});
+		assert.equal((await getTaskForMember(db, kim, id)).notes?.sentBack, null);
+	});
+
+	test('notes too long are rejected', async () => {
+		const id = await createTask(db, admin, input());
+		const s = await shiftOf(id);
+		await takeShift(db, kim, s.id);
+		const result = await codeOf(() => reportShift(db, kim, s.id, { note: 'x'.repeat(1001) }));
+		assert.deepEqual(result.fields, { note: 'shift_note_too_long' });
 	});
 });

@@ -14,17 +14,24 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage } from '#lib/i18n/errors.ts';
 	import { formatHours, formatWhen } from '#lib/format.ts';
-	import { Badge, Button, Card, Modal, RichText, toast } from '#lib/ui';
-	import { memberTask, release, take } from '../tasks.remote';
+	import { Badge, Button, Card, FormField, Modal, RichText, Textarea, toast } from '#lib/ui';
+	import { memberTask, release, report, take } from '../tasks.remote';
+
 
 	const task = $derived(await memberTask(page.params.id!));
 
 	const takeForm = $derived(take.for(task.shift.id));
 	const releaseForm = $derived(release.for(task.shift.id));
+	const reportForm = $derived(report.for(task.shift.id));
 	const issues = $derived([
 		...(takeForm.fields.issues() ?? []),
-		...(releaseForm.fields.issues() ?? [])
+		...(releaseForm.fields.issues() ?? []),
+		...(reportForm.fields.issues() ?? [])
 	]);
+	const noteError = $derived.by(() => {
+		const issue = reportForm.fields.note.issues()?.[0];
+		return issue ? errorMessage(issue.message) : undefined;
+	});
 
 	let confirmOpen = $state(false);
 	const formId = $props.id();
@@ -49,7 +56,9 @@
 </a>
 
 <div class="mt-4 flex flex-wrap gap-1.5">
-	{#if task.urgent}<Badge tone="attention">{m.task_urgent()}</Badge>{/if}
+	{#if task.urgent}
+		<Badge tone="attention">{m.task_urgent()}</Badge>
+	{/if}
 	<Badge outline>{task.category.name}</Badge>
 </div>
 <h1 class="mt-2">{task.title}</h1>
@@ -72,14 +81,44 @@
 
 	<!-- the one thing to do here; sticks on large screens -->
 	<Card class="lg:sticky lg:top-4">
-		{#if task.shift.mine}
+		{#if task.shift.mine && task.shift.status === 'confirmed'}
+			<Badge tone="success">{m.task_status_confirmed()}</Badge>
+			<p class="mt-2 text-small text-muted">{m.task_confirmed_info()}</p>
+		{:else if task.shift.mine && task.shift.status === 'reported'}
+			<Badge tone="info">{m.task_status_reported()}</Badge>
+			<p class="mt-2 text-small text-muted">{m.task_reported_info()}</p>
+			{#if task.notes?.report}
+				<p class="mt-3 text-small font-semibold">{m.task_your_note()}</p>
+				<p class="text-small whitespace-pre-line">{task.notes.report}</p>
+			{/if}
+		{:else if task.shift.mine}
+			{#if task.notes?.sentBack}
+				<div role="status" class="mb-4 border-l-4 border-accent pl-3 text-small">
+					<p class="font-semibold">{m.task_sent_back_title()}</p>
+					<p class="whitespace-pre-line">{task.notes.sentBack}</p>
+				</div>
+			{/if}
 			<p class="font-semibold">{m.task_you_took_it()}</p>
-			<p class="mt-1 text-small text-muted">{m.task_release_hint()}</p>
+			<p class="mt-1 text-small text-muted">{m.task_report_hint()}</p>
+			<form
+				{...reportForm.enhance(async ({ submit }) => {
+					if (await submit()) toast(m.task_reported_toast());
+				})}
+				class="mt-4 grid gap-3"
+			>
+				<input {...reportForm.fields.shiftId.as('hidden', task.shift.id)} />
+				<FormField label={m.task_report_note()} error={noteError} optional>
+					<Textarea {...reportForm.fields.note.as('text')} rows={3} maxlength={1000} />
+				</FormField>
+				<Button type="submit" variant="accent" block disabled={reportForm.pending > 0}>
+					{m.task_report()}
+				</Button>
+			</form>
 			<form
 				{...releaseForm.enhance(async ({ submit }) => {
 					if (await submit()) toast(m.task_released_toast());
 				})}
-				class="mt-4"
+				class="mt-2"
 			>
 				<input {...releaseForm.fields.shiftId.as('hidden', task.shift.id)} />
 				<Button type="submit" variant="ghost" block disabled={releaseForm.pending > 0}>

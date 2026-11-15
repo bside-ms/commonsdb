@@ -195,6 +195,18 @@ Demo: end to end. Take, do, report, confirm, repros land.
 - The table is `ledger_account` (export `ledgerAccount`): `account`
   belongs to Better Auth (IdP links). Conceptually it is still the
   `Account` from ARCHITECTURE.md.
+- Shift gets `reported_at`, `report_note`, `send_back_note`,
+  `confirmed_at`, `confirmed_by`, `confirm_note` (one migration).
+  `confirmed_by` has no FK (audit field). A superadmin confirming her
+  own shift stays visible as `confirmed_by = assignee_id`.
+- Report note optional (max 1000). Admins may send a report back
+  (`reported → taken`, reason required) and correct the hours while
+  confirming; hours are locked once confirmed. Thanks = optional
+  `confirm_note`. Admins can't confirm their own shifts, superadmins can.
+- Send-back keeps only the latest reason; reporting again clears it.
+  A history (`shift_event`) waits until someone needs it.
+- Members see their own shifts in the task list until confirmed; done
+  work lives on the account screen.
 
 ---
 

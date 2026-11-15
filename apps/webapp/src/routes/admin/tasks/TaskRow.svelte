@@ -32,11 +32,21 @@
 	</div>
 
 	<div class="flex flex-wrap gap-1.5">
-		{#if task.urgent}<Badge tone="attention">{m.task_urgent()}</Badge>{/if}
+		{#if task.urgent}
+			<Badge tone="attention">{m.task_urgent()}</Badge>
+		{/if}
 		{#if task.shift.status === 'open'}
 			<Badge outline>{m.task_status_open()}</Badge>
-		{:else}
+		{:else if task.shift.status === 'reported'}
 			<Badge tone="info">
+				{task.shift.assigneeName
+					? m.task_reported_by({ name: task.shift.assigneeName })
+					: m.task_status_reported()}
+			</Badge>
+		{:else if task.shift.status === 'confirmed'}
+			<Badge tone="success">{m.task_status_confirmed()}</Badge>
+		{:else}
+			<Badge>
 				{task.shift.assigneeName
 					? m.task_taken_by({ name: task.shift.assigneeName })
 					: m.task_status_taken()}

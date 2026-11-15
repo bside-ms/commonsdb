@@ -32,7 +32,7 @@ import {
 	canManageCategory,
 	manageableCategories
 } from './policy.ts';
-import { TaskFilter, TaskInput, type TaskData } from './schema.ts';
+import { ReportInput, TaskFilter, TaskInput, type TaskData } from './schema.ts';
 
 // ---------------------------------------------------------------------------
 // Read models. Services return these shapes, never raw rows, so routes only
@@ -63,6 +63,8 @@ export type TaskDetail = TaskListItem & {
 	contact: string | null;
 	bring: string | null;
 	physicalDemands: string | null;
+	/** Only for the assignee: their report note and an admin's send-back reason. */
+	notes: { report: string | null; sentBack: string | null } | null;
 };
 
 export type AdminTaskListItem = Omit<TaskListItem, 'shift'> & {
@@ -189,7 +191,11 @@ export async function listTasksForMember(
 	const f = parse(TaskFilter, filter);
 	const where: SQL[] = [
 		isNull(task.deletedAt),
-		or(eq(shift.status, 'open'), eq(shift.assigneeId, actor.id))!
+		// open for everyone; own ones until confirmed (then they live on the account screen)
+		or(
+			eq(shift.status, 'open'),
+			and(eq(shift.assigneeId, actor.id), inArray(shift.status, ['taken', 'reported']))
+		)!
 	];
 	if (f.q) where.push(ilike(task.title, contains(f.q)));
 	if (f.categoryId) where.push(eq(task.categoryId, f.categoryId));
@@ -215,7 +221,9 @@ export async function getTaskForMember(db: Db, actor: Actor, taskId: string): Pr
 			selfService: task.selfService,
 			contact: task.contact,
 			bring: task.bring,
-			physicalDemands: task.physicalDemands
+			physicalDemands: task.physicalDemands,
+			reportNote: shift.reportNote,
+			sendBackNote: shift.sendBackNote
 		})
 		.from(task)
 		.innerJoin(category, eq(task.categoryId, category.id))
@@ -232,7 +240,8 @@ export async function getTaskForMember(db: Db, actor: Actor, taskId: string): Pr
 		selfService: r.selfService,
 		contact: r.contact,
 		bring: r.bring,
-		physicalDemands: r.physicalDemands
+		physicalDemands: r.physicalDemands,
+		notes: r.assigneeId === actor.id ? { report: r.reportNote, sentBack: r.sendBackNote } : null
 	};
 }
 
@@ -271,6 +280,20 @@ export async function releaseShift(db: Db, actor: Actor, shiftId: string) {
 		.where(and(eq(shift.id, shiftId), eq(shift.status, 'taken')))
 		.returning({ id: shift.id });
 	if (!row) throw new DomainError('shift_not_taken');
+}
+
+/**
+ * The assignee reports a taken shift as done. One conditional UPDATE, so a
+ * concurrent release or send-back can't be overwritten.
+ */
+export async function reportShift(db: Db, actor: Actor, shiftId: string, input: unknown) {
+	const { note } = parse(ReportInput, input);
+	const [row] = await db
+		.update(shift)
+		.set({ status: 'reported', reportedAt: new Date(), reportNote: note, sendBackNote: null })
+		.where(and(eq(shift.id, shiftId), eq(shift.status, 'taken'), eq(shift.assigneeId, actor.id)))
+		.returning({ id: shift.id });
+	if (!row) throw new DomainError('shift_not_reportable');
 }
 
 // ---------------------------------------------------------------------------
