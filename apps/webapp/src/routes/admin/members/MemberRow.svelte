@@ -47,9 +47,9 @@
 	<details bind:open class="text-small">
 		<summary class="cursor-pointer font-semibold">{m.admin_members_adjust()}</summary>
 		<form
-			{...f.enhance(async ({ form, submit }) => {
+			{...f.enhance(async ({ element, submit }) => {
 				if (await submit()) {
-					form.reset();
+					element.reset();
 					open = false;
 					toast(m.admin_members_adjusted_toast());
 				}
