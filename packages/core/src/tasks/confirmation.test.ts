@@ -136,6 +136,19 @@ describe('confirmShift', () => {
 		const result = await codeOf(() => confirmShift(db, admin, shiftId, { hours: '0' }));
 		assert.deepEqual(result.fields, { hours: 'task_hours_too_small' });
 	});
+
+	test('the account shows the thanks and who sent it', async () => {
+		const { shiftId } = await reported();
+		await confirmShift(db, admin, shiftId, { hours: '1,5', note: 'Danke dir!' });
+		const [entry] = (await getOwnAccount(db, kim)).entries;
+		assert.deepEqual(entry.thanks, { note: 'Danke dir!', from: 'Alex' });
+	});
+
+	test('no note, no thanks', async () => {
+		const { shiftId } = await reported();
+		await confirmShift(db, admin, shiftId, { hours: '1,5' });
+		assert.equal((await getOwnAccount(db, kim)).entries[0].thanks, null);
+	});
 });
 
 describe('sendBackShift', () => {

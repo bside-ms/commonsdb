@@ -6,7 +6,7 @@ import { createTestDb, insertCategories, insertUser } from '@commonsdb/db/testin
 import type { Actor } from '../roles.ts';
 import { createTask, getTaskForAdmin } from '../tasks/service.ts';
 import { creditShift, ensureUserAccount } from './internal.ts';
-import { getOwnAccount } from './service.ts';
+import { getOwnAccount, getOwnBalance } from './service.ts';
 
 const t = await createTestDb();
 const { db } = t;
@@ -35,6 +35,7 @@ const credit = (userId = kim.id, amountTenths = 15) =>
 
 test('no account yet: balance 0, no entries', async () => {
 	assert.deepEqual(await getOwnAccount(db, kim), { balanceTenths: 0, entries: [] });
+	assert.equal(await getOwnBalance(db, kim), 0);
 });
 
 test('ensureUserAccount is idempotent', async () => {

@@ -2,17 +2,26 @@
 	import { ListChecks } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
-	import { Button, EmptyState } from '#lib/ui';
 	import TaskCard from '#lib/components/TaskCard.svelte';
-	import { myTasks } from './tasks/tasks.remote';
 	import type { PageProps } from './$types';
+	import { formatRepros } from '#lib/format.ts';
+	import { Balance, Button, EmptyState } from '#lib/ui';
+	import { myTasks } from './tasks/tasks.remote';
+	import { ownBalance } from './account/account.remote';
 
 	let { data }: PageProps = $props();
 
-	const mine = $derived(await myTasks());
+	const [mine, balance] = $derived(await Promise.all([myTasks(), ownBalance()]));
 </script>
 
 <h1>{m.home_greeting({ name: data.user?.displayName ?? '' })}</h1>
+
+<Balance
+	class="mt-6 max-w-xs"
+	href={resolve('/account')}
+	value={formatRepros(balance)}
+	label={m.account_balance_label()}
+/>
 
 <section class="mt-8" aria-labelledby="mine-heading">
 	<div class="flex flex-wrap items-end justify-between gap-3">

@@ -33,13 +33,6 @@ export function formatWhen(t: {
 	return `${formatDay(t.startsOn, false)} – ${formatDay(t.endsOn, false)}`;
 }
 
-/** 15 → "1,5" (for inputs) */
-export const hoursValue = (tenths: number) =>
-	(tenths / 10).toLocaleString(getLocale(), { maximumFractionDigits: 1 });
-
-/** 15 → "1,5 Std." */
-export const formatHours = (tenths: number) => m.ui_hours({ hours: hoursValue(tenths) });
-
 /** A point in time as a calendar day: "15.11." or "15.11.2025". */
 export function formatDate(date: Date) {
 	const sameYear = date.getFullYear() === new Date().getFullYear();
@@ -49,3 +42,17 @@ export function formatDate(date: Date) {
 		year: sameYear ? undefined : 'numeric'
 	}).format(date);
 }
+
+/** 15 → "1,5" (for inputs) */
+export const hoursValue = (tenths: number) =>
+	(tenths / 10).toLocaleString(getLocale(), { maximumFractionDigits: 1 });
+
+/** 15 → "1,5 Std." */
+export const formatHours = (tenths: number) => m.ui_hours({ hours: hoursValue(tenths) });
+
+/** 15 → "1,5", -20 → "−2" (typographic minus) */
+export const formatRepros = (tenths: number) =>
+	(tenths / 10).toLocaleString(getLocale(), { maximumFractionDigits: 1 }).replace('-', '−');
+
+/** 15 → "+1,5", -20 → "−2" (ledger entries) */
+export const formatReproChange = (tenths: number) => (tenths > 0 ? '+' : '') + formatRepros(tenths);

@@ -214,6 +214,10 @@ Demo: end to end. Take, do, report, confirm, repros land.
 - The queue includes soft-deleted tasks; oldest report first.
 - No assignee (user deleted after reporting) → no credit
   (`shift_no_assignee`); send back or delete.
+- Account screen at `/account` ("Konto" in the member nav): balance,
+  latest 50 entries, thanks inside the entry it belongs to. The start
+  page shows the balance as a link. `Balance` moved to `lib/ui`
+  (second use).
 
 ---
 

@@ -24,6 +24,7 @@
 	"nav_start": "Start",
 	"nav_back_to_app": "Zur App",
 	"nav_tasks": "Aufgaben",
+	"nav_account": "Konto",
 
 	"onboarding_title": "Willkommen!",
 	"onboarding_intro": "Erzähl uns kurz, wer du bist. Du kannst alles später ändern.",
@@ -80,6 +81,16 @@
 	"task_status_reported": "Gemeldet",
 	"task_status_confirmed": "Bestätigt",
 	"task_reported_by": "Gemeldet von {name}",
+
+	"account_title": "Dein Konto",
+	"account_balance_label": "Repros",
+	"account_intro": "Für jede bestätigte Stunde bekommst du einen Repro. Damit kannst du später Räume und Geräte buchen.",
+	"account_entries": "Buchungen",
+	"account_empty_title": "Noch keine Buchungen",
+	"account_empty_hint": "Übernimm eine Aufgabe und melde sie als erledigt. Sobald sie bestätigt ist, stehen die Repros hier.",
+	"account_adjustment": "Korrektur",
+	"account_thanks": "Dankeschön",
+	"account_thanks_from": "Danke von {name}",
 
 	"visibility_members": "Alle Mitglieder",
 	"visibility_admins": "Nur Admins",

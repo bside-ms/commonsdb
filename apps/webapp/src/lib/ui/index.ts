@@ -10,6 +10,7 @@ export * from './textarea/index.ts';
 export * from './select/index.ts';
 export * from './checkbox/index.ts';
 export * from './card/index.ts';
+export * from './balance/index.ts';
 export * from './badge/index.ts';
 export * from './chip/index.ts';
 export * from './avatar/index.ts';

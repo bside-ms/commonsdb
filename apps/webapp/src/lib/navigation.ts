@@ -1,4 +1,4 @@
-import { CheckCheck, House, KeyRound, ListChecks } from '@lucide/svelte';
+import { CheckCheck, House, KeyRound, ListChecks, Wallet } from '@lucide/svelte';
 import { resolve } from '$app/paths';
 import { m } from '#lib/paraglide/messages.js';
 import type { NavItem } from '#lib/ui';
@@ -14,7 +14,8 @@ import type { NavItem } from '#lib/ui';
  */
 export const memberNav = (): NavItem[] => [
 	{ href: resolve('/'), label: m.nav_start(), icon: House, area: 'start' },
-	{ href: resolve('/tasks'), label: m.nav_tasks(), icon: ListChecks, area: 'tasks' }
+	{ href: resolve('/tasks'), label: m.nav_tasks(), icon: ListChecks, area: 'tasks' },
+	{ href: resolve('/account'), label: m.nav_account(), icon: Wallet, area: 'commons' }
 ];
 
 /**

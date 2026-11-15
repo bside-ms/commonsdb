@@ -24,7 +24,7 @@ text on top.
 ## Stack
 
 | Concern            | Choice                                                                  |
-| ------------------ | ----------------------------------------------------------------------- |
+|--------------------|-------------------------------------------------------------------------|
 | Styling            | Tailwind v4, theme defined in `src/lib/ui/tokens.css` (`@theme static`) |
 | Headless behaviour | [Bits UI](https://bits-ui.com) for Dialog, Tabs, Popover, Combobox, …   |
 | Variants           | `tailwind-variants` (`tv`), via our own `tv` export                     |
@@ -123,13 +123,13 @@ anywhere in the app.
 | `Toast`      | done  | `toast(message, { tone })` + `<Toaster/>` in the root layout; client-side only                                                 |
 | `AppShell`   | done  | `variant` member/admin, `items` from `#lib/navigation.ts`, `actions` / `footer` snippets, skip link; nav hidden with < 2 items |
 | `Select`     | done  | native; `options` or `groups` (renders `<optgroup>`), `placeholder`                                                            |
+| `Balance`    | done  | the "Saldo": `value` (pre-formatted) + `label`, optional `href` makes the tile a link; `text-saldo`, area-commons fill         |
 
 The root `+layout.svelte` picks the shell: admin variant under `/admin`,
 member variant elsewhere, no shell when logged out (login), no nav during
 onboarding. New areas are added in `src/lib/navigation.ts`.
 
-Stays in routes until a second use: task row, stat tile, balance
-("Saldo"), tabs, table, "thanks" card.
+Stays in routes until a second use: task row, stat tile, tabs, table, "thanks" card.
 
 ## In routes
 
@@ -139,7 +139,7 @@ Stays in routes until a second use: task row, stat tile, balance
   renders nothing.
 - New nav entries go in `src/lib/navigation.ts`; the member nav appears
   as soon as there are two items.
-- Patterns used once (task row, stat tile, balance) stay in the route
+- Patterns used once (task row, stat tile) stay in the route
   until a second use, then move to `lib/ui`.
 - Domain UI that's used by more than one route but isn't generic
   (`TaskForm`, `TaskRow`) lives in the route folder, not in `lib/ui`.
