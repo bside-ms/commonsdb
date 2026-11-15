@@ -1,6 +1,6 @@
 {
-  "id": "350a8b02-e55e-4181-8753-d5d7b88615a6",
-  "prevId": "609e1f5a-1922-4f33-a543-7e91d6f97433",
+  "id": "64a389fc-32fe-4e71-8364-3e45269c4186",
+  "prevId": "c8dc143d-59d6-4e27-b8f9-1785d5763a73",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -484,11 +484,11 @@
       "checkConstraints": {
         "profile_visibility_check": {
           "name": "profile_visibility_check",
-          "value": "\n            \"profile\".\"visibility\"\n            in ('members', 'admins')\n        "
+          "value": "\"profile\".\"visibility\" in ('members', 'admins')"
         },
         "profile_photo_visibility_check": {
           "name": "profile_photo_visibility_check",
-          "value": "\n                \"profile\".\"photo_visibility\"\n                in ('members', 'admins', 'nobody')\n            "
+          "value": "\"profile\".\"photo_visibility\" in ('members', 'admins', 'nobody')"
         }
       },
       "isRLSEnabled": false
@@ -697,6 +697,42 @@
           "primaryKey": false,
           "notNull": false
         },
+        "reported_at": {
+          "name": "reported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "report_note": {
+          "name": "report_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "send_back_note": {
+          "name": "send_back_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmed_by": {
+          "name": "confirmed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirm_note": {
+          "name": "confirm_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -778,15 +814,15 @@
       "checkConstraints": {
         "shift_hours_check": {
           "name": "shift_hours_check",
-          "value": "\"shift\".\"hours_tenths\"\n            > 0"
+          "value": "\"shift\".\"hours_tenths\" > 0"
         },
         "shift_status_check": {
           "name": "shift_status_check",
-          "value": "\"shift\".\"status\"\n            in ('open', 'taken', 'reported', 'confirmed')"
+          "value": "\"shift\".\"status\" in ('open', 'taken', 'reported', 'confirmed')"
         },
         "shift_open_unassigned_check": {
           "name": "shift_open_unassigned_check",
-          "value": "\"shift\".\"status\"\n            <> 'open' or\n            \"shift\".\"assignee_id\"\n            is\n            null"
+          "value": "\"shift\".\"status\" <> 'open' or \"shift\".\"assignee_id\" is null"
         }
       },
       "isRLSEnabled": false
@@ -1001,7 +1037,73 @@
       "checkConstraints": {
         "task_when_check": {
           "name": "task_when_check",
-          "value": "(\"task\".\"when_kind\" = 'date' and \"task\".\"ends_on\" is null)\n                or (\n                \"task\".\"when_kind\"\n                =\n                'range'\n                and\n                \"task\".\"ends_on\"\n                is\n                not\n                null\n                and\n                \"task\".\"ends_on\"\n                >=\n                \"task\".\"starts_on\"\n                )"
+          "value": "(\"task\".\"when_kind\" = 'date' and \"task\".\"ends_on\" is null) or (\"task\".\"when_kind\" = 'range' and \"task\".\"ends_on\" is not null and \"task\".\"ends_on\" >= \"task\".\"starts_on\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ledger_account": {
+      "name": "ledger_account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ledger_account_user_id_user_id_fk": {
+          "name": "ledger_account_user_id_user_id_fk",
+          "tableFrom": "ledger_account",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ledger_account_user_id_unique": {
+          "name": "ledger_account_user_id_unique",
+          "columns": [
+            "user_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "ledger_account_kind_check": {
+          "name": "ledger_account_kind_check",
+          "value": "\"ledger_account\".\"kind\" in ('user', 'initiative')"
         }
       },
       "isRLSEnabled": false
@@ -1101,13 +1203,13 @@
         }
       },
       "foreignKeys": {
-        "ledger_entry_account_id_account_id_fk": {
-          "name": "ledger_entry_account_id_account_id_fk",
+        "ledger_entry_account_id_ledger_account_id_fk": {
+          "name": "ledger_entry_account_id_ledger_account_id_fk",
           "tableFrom": "ledger_entry",
           "columnsFrom": [
             "account_id"
           ],
-          "tableTo": "account",
+          "tableTo": "ledger_account",
           "columnsTo": [
             "id"
           ],

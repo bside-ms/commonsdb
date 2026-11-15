@@ -36,19 +36,10 @@ export const profile = pgTable(
 			.$onUpdate(() => new Date())
 	},
 	(t) => [
-		check(
-			'profile_visibility_check',
-			sql`
-            ${t.visibility}
-            in ('members', 'admins')
-        `
-		),
+		check('profile_visibility_check', sql`${t.visibility} in ('members', 'admins')`),
 		check(
 			'profile_photo_visibility_check',
-			sql`
-                ${t.photoVisibility}
-                in ('members', 'admins', 'nobody')
-            `
+			sql`${t.photoVisibility} in ('members', 'admins', 'nobody')`
 		)
 	]
 );

@@ -96,21 +96,7 @@ export const task = pgTable(
 		index('task_category_idx').on(t.categoryId),
 		check(
 			'task_when_check',
-			sql`(${t.whenKind} = 'date' and ${t.endsOn} is null)
-                or (
-                ${t.whenKind}
-                =
-                'range'
-                and
-                ${t.endsOn}
-                is
-                not
-                null
-                and
-                ${t.endsOn}
-                >=
-                ${t.startsOn}
-                )`
+			sql`(${t.whenKind} = 'date' and ${t.endsOn} is null) or (${t.whenKind} = 'range' and ${t.endsOn} is not null and ${t.endsOn} >= ${t.startsOn})`
 		)
 	]
 );
@@ -148,21 +134,10 @@ export const shift = pgTable(
 		index('shift_task_idx').on(t.taskId),
 		index('shift_assignee_idx').on(t.assigneeId),
 		check('shift_hours_check', sql`${t.hoursTenths} > 0`),
-		check(
-			'shift_status_check',
-			sql`${t.status}
-            in ('open', 'taken', 'reported', 'confirmed')`
-		),
+		check('shift_status_check', sql`${t.status} in ('open', 'taken', 'reported', 'confirmed')`),
 		// open shifts never have an assignee; the reverse isn't enforced, so
 		// deleting a user (set null) can't fail on their old shifts
-		check(
-			'shift_open_unassigned_check',
-			sql`${t.status}
-            <> 'open' or
-            ${t.assigneeId}
-            is
-            null`
-		)
+		check('shift_open_unassigned_check', sql`${t.status} <> 'open' or ${t.assigneeId} is null`)
 	]
 );
 
