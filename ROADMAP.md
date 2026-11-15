@@ -109,6 +109,11 @@ Builds on the `users` table and `LocalAuthProvider` already in place.
 
 Demo: a colleague registers, logs in, edits their profile.
 
+Status: **done.** Login/logout through Better Auth against Keycloak,
+onboarding (profile fields + house rules) instead of in-app
+registration, profile view and edit, `platform_role` in the session.
+Tested in core (integration, PGlite) and end to end.
+
 ---
 
 ## Slice 2 — Tasks: admin creates, member grabs
@@ -177,6 +182,14 @@ users hold balances in v1 — one extra table now, no migration when
 initiatives arrive.
 
 Demo: end to end. Take, do, report, confirm, repros land.
+
+Status: **done.** Members report with an optional note; admins confirm
+(hours correctable, optional thanks) or send back with a reason, in a
+queue scoped by category capability. Confirming credits the ledger in
+the same transaction. Members see their balance on the start page and
+their entries at `/account`; superadmins correct balances at
+`/admin/members`. Tested in core (integration, PGlite) and end to end
+(`e2e/repros.e2e.ts`).
 
 **Decided:**
 
@@ -318,9 +331,9 @@ Certificates gating tasks and resources.
 Things the prototype implies that we should _not_ settle yet. Revisit
 when the design side stabilises.
 
-- **Past tasks.** A task whose date has passed can still be taken.
-  Probably fine until reporting (slice 3) and series (slice 5) give
-  "overdue" a meaning; decide then.
+- **Past tasks.** A task whose date has passed can still be taken and
+  reported. Slice 3 gave "done" a meaning but not "overdue"; decide with
+  series (slice 5), where completion-relative repeats need it anyway.
 - **Registration.** Self-serve with a rules checkbox, per the prototype.
   Whether admins approve is unresolved.
 - **Tenant grace.** Guidance or enforcement? Their copy says a minus is
@@ -330,6 +343,9 @@ when the design side stabilises.
 - **Completion criteria.** A checklist ticked when reporting a task or
   returning a resource. Same concept for both; model it when the first
   of them needs it.
+- **Send-back history.** Only the latest reason is kept; reporting again
+  clears it. If admins want to see how often something went back and
+  forth, add a `shift_event` log.
 
 ---
 

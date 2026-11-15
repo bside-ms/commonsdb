@@ -357,8 +357,12 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 3 — report, confirm, repros**: in progress (ledger, report, confirm done; account screen, adjustments, e2e
-  next).
+- **Slice 4 — multi-shift tasks**: next. Confirmation and crediting
+  work per shift already, so the queue and ledger need no change; the
+  admin form and member detail do.
+- **Admin views of a member's ledger**: superadmins see balances, not
+  entries. `getAccountForAdmin` with the `getOwnAccount` read model when
+  someone asks.
 - **CI**: GitHub Actions with a Postgres service running `pnpm check`,
   `pnpm test`, `pnpm test:e2e`.
 - **Admin roles**: still set by SQL. `/admin/members` exists since slice 3 (balances, adjustments); role assignment
