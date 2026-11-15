@@ -58,10 +58,7 @@
 									· {entry.memo}{/if}
 							</p>
 						</div>
-						<p
-							class="shrink-0 text-h3 tabular-nums"
-							class:text-danger={entry.amountTenths < 0}
-						>
+						<p class="shrink-0 text-h3 tabular-nums" class:text-danger={entry.amountTenths < 0}>
 							{formatReproChange(entry.amountTenths)}
 						</p>
 					</div>

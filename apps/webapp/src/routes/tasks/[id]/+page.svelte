@@ -17,7 +17,6 @@
 	import { Badge, Button, Card, FormField, Modal, RichText, Textarea, toast } from '#lib/ui';
 	import { memberTask, release, report, take } from '../tasks.remote';
 
-
 	const task = $derived(await memberTask(page.params.id!));
 
 	const takeForm = $derived(take.for(task.shift.id));

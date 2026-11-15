@@ -24,7 +24,7 @@ text on top.
 ## Stack
 
 | Concern            | Choice                                                                  |
-|--------------------|-------------------------------------------------------------------------|
+| ------------------ | ----------------------------------------------------------------------- |
 | Styling            | Tailwind v4, theme defined in `src/lib/ui/tokens.css` (`@theme static`) |
 | Headless behaviour | [Bits UI](https://bits-ui.com) for Dialog, Tabs, Popover, Combobox, …   |
 | Variants           | `tailwind-variants` (`tv`), via our own `tv` export                     |
@@ -107,7 +107,7 @@ anywhere in the app.
 ### Status
 
 | Component    | State | Notes                                                                                                                          |
-|--------------|-------|--------------------------------------------------------------------------------------------------------------------------------|
+| ------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                                |
 | `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                                   |
 | `Input`      | done  | text-like types, `bind:value`                                                                                                  |

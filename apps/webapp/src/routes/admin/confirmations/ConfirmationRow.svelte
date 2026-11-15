@@ -94,9 +94,7 @@
 			</form>
 		{:else}
 			<p class="text-small text-muted">
-				{item.own
-					? m.admin_confirmations_own_hint()
-					: m.admin_confirmations_no_assignee_hint()}
+				{item.own ? m.admin_confirmations_own_hint() : m.admin_confirmations_no_assignee_hint()}
 			</p>
 		{/if}
 
