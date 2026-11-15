@@ -1,4 +1,4 @@
-import { CheckCheck, House, KeyRound, ListChecks, Wallet } from '@lucide/svelte';
+import { CheckCheck, House, KeyRound, ListChecks, Users, Wallet } from '@lucide/svelte';
 import { resolve } from '$app/paths';
 import { m } from '#lib/paraglide/messages.js';
 import type { NavItem } from '#lib/ui';
@@ -27,6 +27,9 @@ export const adminNav = (user: { isSuperadmin: boolean }): NavItem[] => [
 	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: ListChecks },
 	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: CheckCheck },
 	...(user.isSuperadmin
-		? [{ href: resolve('/admin/capabilities'), label: m.admin_nav_capabilities(), icon: KeyRound }]
+		? [
+				{ href: resolve('/admin/members'), label: m.admin_nav_members(), icon: Users },
+				{ href: resolve('/admin/capabilities'), label: m.admin_nav_capabilities(), icon: KeyRound }
+			]
 		: [])
 ];

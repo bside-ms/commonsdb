@@ -31,7 +31,3 @@ export async function canManageCategory(db: Db, actor: Actor, categoryId: string
 export async function assertManagesCategory(db: Db, actor: Actor, categoryId: string) {
 	if (!(await canManageCategory(db, actor, categoryId))) throw new DomainError('forbidden');
 }
-
-export function assertSuperadmin(actor: Actor) {
-	if (!isSuperadmin(actor)) throw new DomainError('forbidden');
-}

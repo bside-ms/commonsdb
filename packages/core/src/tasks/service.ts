@@ -24,14 +24,9 @@ import {
 	type WhenKind
 } from '@commonsdb/db/schema';
 import { DomainError, ValidationError } from '../errors.ts';
-import type { Actor } from '../roles.ts';
+import { assertSuperadmin, type Actor } from '../roles.ts';
 import { parse } from '../validation.ts';
-import {
-	assertManagesCategory,
-	assertSuperadmin,
-	canManageCategory,
-	manageableCategories
-} from './policy.ts';
+import { assertManagesCategory, canManageCategory, manageableCategories } from './policy.ts';
 import { ReportInput, TaskFilter, TaskInput, type TaskData } from './schema.ts';
 
 // ---------------------------------------------------------------------------

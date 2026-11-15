@@ -218,6 +218,11 @@ Demo: end to end. Take, do, report, confirm, repros land.
   latest 50 entries, thanks inside the entry it belongs to. The start
   page shows the balance as a link. `Balance` moved to `lib/ui`
   (second use).
+- Manual adjustments: superadmins, at `/admin/members` (minimal list:
+  name, email, role, balance). Signed half steps, ±1000, memo required
+  and shown to the member. Fixed by another adjustment, never edited.
+  Superadmins may adjust their own balance; `actor_id` records it.
+- Only `confirmation.ts` and `ledger/admin.ts` write ledger entries.
 
 ---
 

@@ -361,8 +361,8 @@ Database: Postgres, decided.
   next).
 - **CI**: GitHub Actions with a Postgres service running `pnpm check`,
   `pnpm test`, `pnpm test:e2e`.
-- **Admin roles**: still set by SQL; a superadmin user list with role
-  assignment is open (with "Mitglieder" in the admin nav).
+- **Admin roles**: still set by SQL. `/admin/members` exists since slice 3 (balances, adjustments); role assignment
+  belongs there.
 - **Keycloak logout**: signing out ends the app session only; decide
   whether to also end the IdP session.
 - **Experimental SvelteKit features** (remote functions, Svelte async):
