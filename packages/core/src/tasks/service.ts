@@ -586,7 +586,8 @@ export async function createTask(db: Db, actor: Actor, input: unknown): Promise<
 
 /**
  * Edit a task and its shifts. Moving it to another category needs both
- * categories. Shifts are matched by id:
+ * categories. Editing an occurrence of a series marks it as edited.
+ * Shifts are matched by id:
  *
  * - new rows (no id) are added as open shifts
  * - open shifts may change freely or be removed
@@ -646,7 +647,11 @@ export async function updateTask(db: Db, actor: Actor, taskId: string, input: un
 		if (removed.some((s) => s.status !== 'open')) errors.shifts = 'shift_remove_locked';
 		if (Object.keys(errors).length > 0) throw new ValidationError(errors);
 
-		await tx.update(task).set(taskColumns(data)).where(eq(task.id, taskId));
+		await tx
+			.update(task)
+			// an occurrence edited on its own: series changes leave it alone from now on
+			.set({ ...taskColumns(data), seriesEdited: sql`${task.seriesId} is not null` })
+			.where(eq(task.id, taskId));
 		if (removed.length > 0) {
 			await tx.delete(shift).where(
 				inArray(

@@ -6,7 +6,7 @@ import { endsNextDay } from './shifts.ts';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-const isoDate = (code: string) =>
+export const isoDate = (code: string) =>
 	v.pipe(v.string(code), v.trim(), v.regex(ISO_DATE, code), v.isoDate(code));
 
 /**
@@ -88,31 +88,39 @@ export type ShiftData = v.InferOutput<typeof ShiftInput>;
 /** At most this many shifts per task: a guard, not a product rule. */
 export const MAX_SHIFTS = 30;
 
+/**
+ * What a task and a series template share: everything but the when.
+ * Spread into TaskInput and SeriesInput (series/schema.ts).
+ */
+export const templateFields = {
+	title: v.pipe(
+		v.string('task_title_required'),
+		v.trim(),
+		v.nonEmpty('task_title_required'),
+		v.maxLength(120, 'task_title_too_long')
+	),
+	categoryId: v.pipe(v.string('task_category_required'), v.uuid('task_category_required')),
+	description: Description,
+	urgent: checkbox(),
+	selfService: checkbox(),
+	place: optionalText(200, 'task_place_too_long'),
+	contact: optionalText(200, 'task_contact_too_long'),
+	bring: optionalText(500, 'task_bring_too_long'),
+	physicalDemands: optionalText(500, 'task_physical_demands_too_long'),
+	shifts: v.pipe(
+		v.array(ShiftInput, 'task_shifts_required'),
+		v.minLength(1, 'task_shifts_required'),
+		v.maxLength(MAX_SHIFTS, 'task_shifts_too_many')
+	)
+};
+
 export const TaskInput = v.pipe(
 	v.object({
-		title: v.pipe(
-			v.string('task_title_required'),
-			v.trim(),
-			v.nonEmpty('task_title_required'),
-			v.maxLength(120, 'task_title_too_long')
-		),
-		categoryId: v.pipe(v.string('task_category_required'), v.uuid('task_category_required')),
-		description: Description,
-		urgent: checkbox(),
-		selfService: checkbox(),
-		place: optionalText(200, 'task_place_too_long'),
-		contact: optionalText(200, 'task_contact_too_long'),
-		bring: optionalText(500, 'task_bring_too_long'),
-		physicalDemands: optionalText(500, 'task_physical_demands_too_long'),
+		...templateFields,
 		whenKind: v.picklist(WHEN_KINDS, 'task_when_kind_invalid'),
 		startsOn: isoDate('task_starts_on_invalid'),
 		// only read for 'range'; '' from an empty date input is fine for 'date'
-		endsOn: v.optional(v.string(), ''),
-		shifts: v.pipe(
-			v.array(ShiftInput, 'task_shifts_required'),
-			v.minLength(1, 'task_shifts_required'),
-			v.maxLength(MAX_SHIFTS, 'task_shifts_too_many')
-		)
+		endsOn: v.optional(v.string(), '')
 	}),
 	v.rawTransform(({ dataset, addIssue, NEVER }) => {
 		const { endsOn, whenKind, ...rest } = dataset.value;
@@ -134,7 +142,7 @@ export type TaskInput = v.InferInput<typeof TaskInput>;
 export type TaskData = v.InferOutput<typeof TaskInput>;
 
 /** Issue path for a cross-field error, so getDotPath yields the field name. */
-function pathTo(input: Record<string, unknown>, key: string) {
+export function pathTo(input: Record<string, unknown>, key: string) {
 	return [{ type: 'object', origin: 'value', input, key, value: input[key] }] as unknown as [
 		v.ObjectPathItem
 	];

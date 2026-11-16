@@ -374,3 +374,4 @@ Database: Postgres, decided.
   `svelte-check` tooling may lag — pin via catalog if it causes trouble.
 - Later: worker process, deployment docs (VPS/Docker), ledger semantics,
   Better Auth organization plugin vs. own initiative model.
+- **Worker process**: replaces `topUpSeriesDaily` with a nightly job.

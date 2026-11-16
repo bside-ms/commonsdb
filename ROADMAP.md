@@ -322,6 +322,20 @@ in core (shifts.test.ts, service.test.ts) and end to end (shifts.e2e.ts).
   Occurrences added by hand have no key.
 - Monthly "nth 5" = last weekday of the month; day 31 = last day.
   Ranges that have begun start today; until cuts ranges short.
+- `lastDone` = local day the latest confirmed shift was _reported_
+  (when the work happened, not when it was confirmed).
+- "Every N days" keeps one occurrence ahead, regardless of `lookahead`;
+  each confirmation generates the next in the same transaction.
+- Pending = live, not over, and some shift not yet confirmed. Lookahead
+  counts pending occurrences, generated or not.
+- Replan (series edit, resume, end, and a confirmation for "every N
+  days" or a minimum gap): untouched occurrences (generated, never taken,
+  not edited, not over) are hard-deleted and regenerated. A soft-deleted
+  occurrence keeps its period key, so it never comes back.
+- Pause and delete withdraw untouched occurrences; taken ones stay.
+  Editing an occurrence through the task form sets `series_edited`.
+- Daily top-up: `topUpSeriesDaily(db)` from task-list loads, once per
+  day and process. Code lives in `core/src/tasks/series/`.
 
 ---
 

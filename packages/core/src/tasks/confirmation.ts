@@ -7,6 +7,7 @@ import { isSuperadmin, type Actor } from '../roles.ts';
 import { parse } from '../validation.ts';
 import { assertManagesCategory, manageableCategories } from './policy.ts';
 import { ConfirmInput, SendBackInput } from './schema.ts';
+import { afterOccurrenceConfirmed } from './series/generator.ts';
 
 export type ConfirmationItem = {
 	shiftId: string;
@@ -103,6 +104,8 @@ async function loadReported(db: Db, actor: Actor, shiftId: string) {
 /**
  * Confirm a reported shift and credit the assignee, in one transaction.
  * The hours may be corrected here; the credit is what gets confirmed.
+ * For an occurrence of a series, the series' next occurrences follow in
+ * the same transaction (they may depend on this completion).
  */
 export async function confirmShift(db: Db, actor: Actor, shiftId: string, input: unknown) {
 	const { hours, note } = parse(ConfirmInput, input);
@@ -123,7 +126,8 @@ export async function confirmShift(db: Db, actor: Actor, shiftId: string, input:
 				confirmNote: note
 			})
 			.where(and(eq(shift.id, shiftId), eq(shift.status, 'reported')))
-			.returning({ assigneeId: shift.assigneeId });
+			.returning({ assigneeId: shift.assigneeId, taskId: shift.taskId });
+
 		// someone else confirmed or sent it back in the meantime
 		if (!row?.assigneeId) throw new DomainError('shift_not_reported');
 
@@ -133,6 +137,7 @@ export async function confirmShift(db: Db, actor: Actor, shiftId: string, input:
 			amountTenths: hours,
 			actorId: actor.id
 		});
+		await afterOccurrenceConfirmed(tx, row.taskId);
 	});
 }
 
