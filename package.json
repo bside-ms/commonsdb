@@ -18,7 +18,8 @@
 		"db:studio": "pnpm --filter @commonsdb/db studio",
 		"db:seed": "pnpm --filter @commonsdb/db seed",
 		"test:e2e": "pnpm --filter webapp test:e2e",
-		"db:up": "docker compose up -d db"
+		"db:up": "docker compose up -d db",
+		"db:down": "docker compose down db"
 	},
 	"devDependencies": {
 		"prettier": "^3.8.3",
