@@ -39,6 +39,7 @@ import {
 	SeriesTimingInput,
 	type SeriesData
 } from './schema.ts';
+import { type LinkView, listLinks, setLinks } from '../../knowledge/index.ts';
 
 type Today = { today?: string };
 
@@ -95,6 +96,7 @@ export type AdminSeries = Pick<
 	lookahead: number;
 	state: SeriesState;
 	upcoming: SeriesOccurrence[];
+	links: LinkView[];
 };
 
 const stateOf = (s: { pausedAt: Date | null; until: string | null }, today: string): SeriesState =>
@@ -241,7 +243,8 @@ export async function getSeriesForAdmin(
 		minGapDays: s.minGapDays,
 		lookahead: s.lookahead,
 		state: stateOf(s, today),
-		upcoming: (await upcomingOf(db, [s.id], today)).get(s.id) ?? []
+		upcoming: (await upcomingOf(db, [s.id], today)).get(s.id) ?? [],
+		links: await listLinks(db, { type: 'series', id: s.id })
 	};
 }
 
@@ -300,6 +303,8 @@ export async function createSeries(
 			.insert(taskSeries)
 			.values({ ...seriesColumns(data), createdBy: actor.id })
 			.returning({ id: taskSeries.id });
+		// links first: new occurrences copy them
+		await setLinks(tx, { type: 'series', id: s.id }, data.links);
 		await generateOccurrences(tx, s.id, { today });
 		return s.id;
 	});
@@ -323,6 +328,7 @@ export async function updateSeries(
 	}
 	await db.transaction(async (tx) => {
 		await tx.update(taskSeries).set(seriesColumns(data)).where(eq(taskSeries.id, seriesId));
+		await setLinks(tx, { type: 'series', id: seriesId }, data.links);
 		await generateOccurrences(tx, seriesId, { today, replan: true });
 	});
 }

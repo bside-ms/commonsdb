@@ -3,7 +3,7 @@
  * template fields (title ... shifts) and how to fill them from stored data.
  * TemplateFields.svelte renders them.
  */
-import type { AdminSeries, AdminShift } from '@commonsdb/core';
+import type { AdminSeries, AdminShift, LinkView } from '@commonsdb/core';
 import type { RichTextDoc } from '@commonsdb/richtext';
 import { hoursValue } from '#lib/format.ts';
 
@@ -27,9 +27,15 @@ export type TemplateFormData = {
 	bring?: string;
 	physicalDemands?: string;
 	shifts: ShiftFormData[];
+	/** Wiki pages as keys 'builtin:<page id>'. */
+	links?: string[];
 };
 
-export type TemplateInitial = Required<TemplateFormData> & { description: string };
+export type TemplateInitial = Required<TemplateFormData> & {
+	description: string;
+	/** Titles of the stored links, for the list before anything changes. */
+	linkViews: LinkView[];
+};
 
 export const EMPTY_SHIFT: ShiftFormData = { id: '', startsTime: '', endsTime: '', hours: '' };
 
@@ -45,6 +51,7 @@ export function templateInitial(
 		contact: string | null;
 		bring: string | null;
 		physicalDemands: string | null;
+		links?: LinkView[];
 	},
 	shifts?: (AdminShift | AdminSeries['shiftTemplates'][number])[]
 ): TemplateInitial {
@@ -65,6 +72,8 @@ export function templateInitial(
 					endsTime: s.endsTime ?? '',
 					hours: hoursValue(s.hoursTenths)
 				}))
-			: [EMPTY_SHIFT]
+			: [EMPTY_SHIFT],
+		links: source?.links?.map((l) => l.key) ?? [],
+		linkViews: source?.links ?? []
 	};
 }

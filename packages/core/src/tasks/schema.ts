@@ -3,6 +3,7 @@ import { parseRichText } from '@commonsdb/richtext';
 import { WHEN_KINDS } from '@commonsdb/db/schema';
 import { checkbox, optionalText } from '../validation.ts';
 import { endsNextDay } from './shifts.ts';
+import { LinksInput } from '../knowledge/index.ts';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -111,7 +112,9 @@ export const templateFields = {
 		v.array(ShiftInput, 'task_shifts_required'),
 		v.minLength(1, 'task_shifts_required'),
 		v.maxLength(MAX_SHIFTS, 'task_shifts_too_many')
-	)
+	),
+	/** Wiki pages, as keys 'builtin:<page id>' (knowledge/links.ts). */
+	links: LinksInput
 };
 
 export const TaskInput = v.pipe(

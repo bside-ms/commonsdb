@@ -22,6 +22,7 @@ import {
 	listTasksForAdmin,
 	releaseShift,
 	restoreTask,
+	searchWiki,
 	updateTask
 } from '@commonsdb/core';
 import { toHtml } from '@commonsdb/richtext';
@@ -56,6 +57,17 @@ export const adminTasks = query(
 export const adminTask = query(Id, async (id) => {
 	const task = await getTaskForAdmin(db, requireAdmin(), id).catch(toHttpError);
 	return { ...task, descriptionHtml: toHtml('description', task.description) };
+});
+
+/** Wiki pages for the link picker of the task and series forms. */
+export const wikiLinkSearch = query(v.string(), async (q) => {
+	requireAdmin();
+	if (q.trim().length < 2) return [];
+	return (await searchWiki(db, q, 8)).map((h) => ({
+		key: `builtin:${h.id}`,
+		title: h.title,
+		snippet: h.snippet?.replace(/[«»]/g, '') ?? null
+	}));
 });
 
 // ---- writes ---------------------------------------------------------------

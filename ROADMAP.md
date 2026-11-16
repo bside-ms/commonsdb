@@ -439,6 +439,8 @@ Status: **done.**
 
 ## Slice 6b — Built-in wiki
 
+Status: **done.**
+
 **Decided:**
 
 - Saves carry the base revision; a stale base fails with
@@ -476,6 +478,17 @@ cached_title)` is provider-neutral. Tasks and series templates get a
 - On a save conflict the text stays in the editor, the new version
   opens in a new tab; the edit form keeps its starting revision even
   when queries refresh.
+- Links (step 3): task and series forms get an "Im Wiki" picker (search,
+  up to 10 pages, posted as `links[i]` = `builtin:<page id>`). Members see
+  them under the description as "Gut zu wissen": title + ~160 characters.
+- Occurrences copy the series' links when created; a series edit replaces
+  untouched occurrences, so they get the new links, taken/edited ones keep
+  theirs. Duplicating a task copies its links.
+- A deleted wiki page stays linked with its cached title and shows
+  "nicht mehr verfügbar"; saving the task keeps it. Unknown pages are
+  refused (`knowledge_link_not_found`).
+- Links go with a task only when it is hard-deleted (withdrawn
+  occurrences); soft-deleted tasks keep them for restore.
 
 ---
 

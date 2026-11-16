@@ -17,6 +17,7 @@ import type { Db } from '@commonsdb/db';
 import { shift, task, taskSeries, type TaskSeries } from '@commonsdb/db/schema';
 import { localToday } from '../shifts.ts';
 import { nextPeriods, type Period } from './rule.ts';
+import { copyLinks, deleteLinks } from '../../knowledge/index.ts';
 
 /** A db or a transaction. */
 export type Executor = Pick<Db, 'select' | 'insert' | 'update' | 'delete'>;
@@ -64,6 +65,11 @@ export async function withdrawUntouched(db: Executor, seriesId: string, today: s
 		.delete(task)
 		.where(untouched(db, seriesId, today))
 		.returning({ id: task.id });
+	await deleteLinks(
+		db,
+		'task',
+		gone.map((t) => t.id)
+	);
 	return gone.length;
 }
 
@@ -128,6 +134,7 @@ export async function insertOccurrence(
 			hoursTenths: tpl.hoursTenths
 		}))
 	);
+	await copyLinks(db, { type: 'series', id: s.id }, { type: 'task', id: t.id });
 	return t.id;
 }
 

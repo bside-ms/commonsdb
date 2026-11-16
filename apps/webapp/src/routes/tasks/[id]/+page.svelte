@@ -121,6 +121,29 @@
 
 		<RichText html={task.descriptionHtml} />
 
+		{#if task.links.length > 0}
+			<section aria-labelledby="wiki-heading">
+				<h2 id="wiki-heading" class="text-h3">{m.task_wiki_title()}</h2>
+				<ul class="mt-2 grid gap-3">
+					{#each task.links as link (link.key)}
+						<li class="border-l-4 border-area-qual pl-3">
+							{#if link.slug}
+								<a href={resolve('/wiki/[slug]', { slug: link.slug })} class="font-semibold"
+									>{link.title}</a
+								>
+								{#if link.preview}
+									<p class="mt-0.5 text-small text-muted">{link.preview}</p>
+								{/if}
+							{:else}
+								<span class="font-semibold text-muted">{link.title}</span>
+								<p class="mt-0.5 text-small text-muted">{m.wiki_link_unavailable()}</p>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
 		<!-- the task chat is for people on a shift; anyone can ask the admins -->
 		<div class="flex flex-wrap gap-2">
 			{#if mine}

@@ -1,7 +1,8 @@
 <!--
 	The parts the task form and the series form share: what (title,
-	category, description), the shift rows, and the details. The form's own
-	"when" goes in between, through the `when` snippet.
+	category, description), the shift rows, the details and the linked
+	wiki pages. The form's own "when" goes in between, through the `when`
+	snippet.
 
 	Shift rows live in the form's own state (fields.shifts.value()/set()),
 	not in a separate $state: a failed submit (with or without JS) comes
@@ -17,6 +18,7 @@
 	import { errorMessage, fieldError as err } from '#lib/i18n/errors.ts';
 	import { Button, Checkbox, Editor, FormField, Input, Select, Textarea } from '#lib/ui';
 	import ShiftStatusBadge from './ShiftStatusBadge.svelte';
+	import WikiLinks from './WikiLinks.svelte';
 	import {
 		EMPTY_SHIFT,
 		type ShiftFormData,
@@ -215,3 +217,5 @@
 		hint={m.task_self_service_hint()}
 	/>
 </fieldset>
+
+<WikiLinks fields={f} initial={initial.links} views={initial.linkViews} />

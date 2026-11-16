@@ -26,6 +26,13 @@ import {
 	type WhenKind
 } from '@commonsdb/db/schema';
 import { DomainError, ValidationError, type FieldErrors } from '../errors.ts';
+import {
+	listLinks,
+	listTaskLinks,
+	setLinks,
+	type LinkView,
+	type TaskLink
+} from '../knowledge/links.ts';
 import { assertSuperadmin, type Actor } from '../roles.ts';
 import { parse } from '../validation.ts';
 import { assertManagesCategory, canManageCategory, manageableCategories } from './policy.ts';
@@ -102,6 +109,8 @@ export type TaskDetail = Omit<TaskListItem, 'shifts'> & {
 	physicalDemands: string | null;
 	summary: ShiftSummary;
 	shifts: MemberShift[];
+	/** Linked wiki pages (slice 6b). */
+	links: TaskLink[];
 };
 
 /** One shift as admins see it, in the list and on the edit page. */
@@ -119,8 +128,8 @@ export type AdminTaskListItem = Omit<TaskListItem, 'shifts'> & {
 	shifts: AdminShift[];
 };
 
-/** TaskData without the date/range narrowing and the shifts. */
-type TaskFields = Omit<TaskData, 'whenKind' | 'endsOn' | 'shifts'> & {
+/** TaskData without the date/range narrowing, the shifts and the links. */
+type TaskFields = Omit<TaskData, 'whenKind' | 'endsOn' | 'shifts' | 'links'> & {
 	whenKind: WhenKind;
 	endsOn: string | null;
 };
@@ -132,6 +141,7 @@ export type AdminTask = TaskFields & {
 	/** The series this task is an occurrence of; null for one-off tasks. */
 	series: { id: string; title: string } | null;
 	shifts: AdminShift[];
+	links: LinkView[];
 };
 
 // ---------------------------------------------------------------------------
@@ -394,7 +404,8 @@ export async function getTaskForMember(
 				assigneeName: s.status === 'open' ? null : s.assigneeName,
 				notes: mine ? { report: s.reportNote, sentBack: s.sendBackNote } : null
 			};
-		})
+		}),
+		links: await listTaskLinks(db, taskId)
 	};
 }
 
@@ -555,11 +566,16 @@ export async function getTaskForAdmin(db: Db, actor: Actor, taskId: string): Pro
 		endsOn: t.endsOn,
 		deleted: t.deletedAt !== null,
 		series: t.series ?? null,
-		shifts: shifts.map(toAdminShift)
+		shifts: shifts.map(toAdminShift),
+		links: await listLinks(db, { type: 'task', id: taskId })
 	};
 }
 
-const taskColumns = ({ shifts: _, ...rest }: TaskFields & { shifts?: unknown }) => rest;
+const taskColumns = ({
+	shifts: _,
+	links: __,
+	...rest
+}: TaskFields & { shifts?: unknown; links?: unknown }) => rest;
 
 /** The columns a shift template sets (no id, no status). */
 const shiftValues = (s: Omit<ShiftData, 'id'>, position: number) => ({
@@ -576,13 +592,15 @@ async function insertTaskWithShifts(
 	tx: Tx,
 	actor: Actor,
 	fields: TaskFields,
-	shifts: Omit<ShiftData, 'id'>[]
+	shifts: Omit<ShiftData, 'id'>[],
+	links: string[]
 ): Promise<string> {
 	const [t] = await tx
 		.insert(task)
 		.values({ ...taskColumns(fields), createdBy: actor.id })
 		.returning({ id: task.id });
 	await tx.insert(shift).values(shifts.map((s, i) => ({ taskId: t.id, ...shiftValues(s, i) })));
+	await setLinks(tx, { type: 'task', id: t.id }, links);
 	return t.id;
 }
 
@@ -591,7 +609,7 @@ export async function createTask(db: Db, actor: Actor, input: unknown): Promise<
 	const data = parse(TaskInput, input);
 	await assertManagesCategory(db, actor, data.categoryId);
 	// ids only mean something when editing
-	return db.transaction((tx) => insertTaskWithShifts(tx, actor, data, data.shifts));
+	return db.transaction((tx) => insertTaskWithShifts(tx, actor, data, data.shifts, data.links));
 }
 
 /**
@@ -674,6 +692,7 @@ export async function updateTask(db: Db, actor: Actor, taskId: string, input: un
 			if (s.id === null) await tx.insert(shift).values({ taskId, ...shiftValues(s, i) });
 			else await tx.update(shift).set(shiftValues(s, i)).where(eq(shift.id, s.id));
 		}
+		await setLinks(tx, { type: 'task', id: taskId }, data.links);
 	});
 }
 
@@ -684,6 +703,7 @@ export async function duplicateTask(db: Db, actor: Actor, taskId: string): Promi
 		deleted: __,
 		series: ___,
 		shifts,
+		links,
 		...source
 	} = await getTaskForAdmin(db, actor, taskId);
 
@@ -697,7 +717,8 @@ export async function duplicateTask(db: Db, actor: Actor, taskId: string): Promi
 				endsTime: s.endsTime,
 				endsNextDay: s.endsNextDay,
 				hoursTenths: s.hoursTenths
-			}))
+			})),
+			links.map((l) => l.key)
 		)
 	);
 }

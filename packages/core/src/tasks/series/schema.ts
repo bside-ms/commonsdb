@@ -150,6 +150,7 @@ export const SeriesInput = v.pipe(
 			bring: input.bring,
 			physicalDemands: input.physicalDemands,
 			shiftTemplates: input.shifts.map(({ id: _, ...t }) => t),
+			links: input.links,
 			...timing
 		};
 	})

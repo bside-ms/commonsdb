@@ -120,7 +120,10 @@ and simple.
   to Outline later. The port returns sanitised HTML (`KnowledgeEntry.html`), so the app
   shows entries from any provider in place. Providers with protected
   media (Outline) route them through an authenticated proxy route in the
-  app.
+  app. Links are stored provider-neutral in `knowledge_link` and posted by forms
+  as keys `provider:ref`. `core/knowledge/links.ts` resolves them; today only
+  `builtin` is accepted. An adapter adds its key format and a resolver there
+  (title for `cached_title`, liveness for "nicht mehr verfügbar").
 
 All wiring happens in one **composition root** per app
 (`apps/webapp/src/lib/server/services.ts`): it reads env, creates `db`
