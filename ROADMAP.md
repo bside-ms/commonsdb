@@ -468,6 +468,14 @@ cached_title)` is provider-neutral. Tasks and series templates get a
   attachments go through an authenticated proxy route of ours (Outline
   URLs need its login); one API token, limited to one collection; short
   cache; editing stays in Outline (`editUrl`).
+- UI: `/wiki` (search via ?q, page tree), `/wiki/[slug]` (breadcrumbs,
+  subpages; admins: edit, subpage, Markdown, delete), `/wiki/new`
+  (?parent), `/wiki/[slug]/edit` (+ move), `/wiki/[slug]/history`
+  (?rev, restore), `/wiki/trash`, `/wiki/[slug]/markdown` (download).
+  "Wiki" in the member nav (area colour `qual`).
+- On a save conflict the text stays in the editor, the new version
+  opens in a new tab; the edit form keeps its starting revision even
+  when queries refresh.
 
 ---
 

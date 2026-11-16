@@ -1,4 +1,5 @@
 import {
+	BookOpen,
 	CheckCheck,
 	House,
 	Inbox,
@@ -32,6 +33,7 @@ export const memberNav = ({ unread = 0 }: { unread?: number } = {}): NavItem[] =
 		count: unread,
 		countLabel: unread ? m.nav_messages_unread({ count: unread }) : undefined
 	},
+	{ href: resolve('/wiki'), label: m.nav_wiki(), icon: BookOpen, area: 'qual' },
 	{ href: resolve('/account'), label: m.nav_account(), icon: Wallet, area: 'commons' }
 ];
 
