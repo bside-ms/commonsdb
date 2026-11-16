@@ -6,11 +6,20 @@ import { createTestDb, insertCategories, insertUser } from '@commonsdb/db/testin
 import { fromPlainText } from '@commonsdb/richtext';
 import { ValidationError } from '../errors.ts';
 import type { Actor } from '../roles.ts';
-import { createTask, getTaskForAdmin, releaseShift, takeShift } from '../tasks/service.ts';
+import { confirmShift, sendBackShift } from '../tasks/confirmation.ts';
 import {
+	createTask,
+	getTaskForAdmin,
+	releaseShift,
+	reportShift,
+	takeShift
+} from '../tasks/service.ts';
+import {
+	adminInboxCounts,
 	archiveThreads,
 	blockUser,
 	claimThread,
+	countAdminUnread,
 	countUnread,
 	defaultAdminInboxCategories,
 	deleteThreadsForAdmins,
@@ -286,4 +295,41 @@ test('search finds subject and member name', async () => {
 	assert.equal(await find('schlüssel'), 1);
 	assert.equal(await find('Lu'), 1);
 	assert.equal(await find('%'), 0);
+});
+
+// ---- system messages from confirmations -------------------------------------
+
+test('send-back and thanks land in one task thread; admins see it once the member answers', async () => {
+	const tk = await taskWithShifts(1);
+	await takeShift(db, kim, tk.shifts[0]);
+	await reportShift(db, kim, tk.shifts[0], {});
+	await sendBackShift(db, sa, tk.shifts[0], { note: 'Bitte noch die Hecke hinten.' });
+	await reportShift(db, kim, tk.shifts[0], {});
+	await confirmShift(db, sa, tk.shifts[0], { hours: '1', note: 'Danke dir!' });
+
+	const [item] = await listInbox(db, kim);
+	assert.equal(item.kind, 'admin');
+	assert.equal(item.subject, 'Hecke schneiden');
+	assert.equal(item.unread, 2);
+	const view = await openThread(db, kim, item.id);
+	assert.deepEqual(
+		view.messages.map((msg) => msg.system),
+		['shift_sent_back', 'shift_confirmed']
+	);
+	assert.equal(view.messages[0].author, null);
+
+	const open = { tab: 'open', categories: 'all' } as const;
+	assert.equal((await listAdminInbox(db, admin, open)).length, 0, 'only system messages so far');
+	assert.equal(await countAdminUnread(db, admin), 0);
+
+	await reply(db, kim, item.id, { body: body('Gern!') });
+	const [adminItem] = await listAdminInbox(db, admin, open);
+	assert.equal(adminItem.unread, 1, 'system messages are not unread for admins');
+	assert.equal(await countAdminUnread(db, admin), 1);
+	assert.deepEqual(await adminInboxCounts(db, admin, { categories: 'all' }), {
+		open: 1,
+		unclaimed: 1,
+		mine: 0,
+		archive: 0
+	});
 });

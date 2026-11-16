@@ -72,3 +72,28 @@ test('Kim asks the admins about nothing in particular', async ({ as }) => {
 	await expect(kim.getByRole('heading', { level: 1 })).toHaveText('Schlüssel');
 	await expect(kim.getByText('Noch kümmert sich niemand')).toBeVisible();
 });
+
+test('an admin sees it, answers (and so takes it on), then archives it', async ({ as }) => {
+	const admin = await as('admin');
+	await admin.goto('/admin');
+	await admin.getByRole('link', { name: 'Postfach 1 ungelesen' }).click();
+	await expect(admin.getByRole('link', { name: 'Niemand kümmert sich (1)' })).toBeVisible();
+	await admin.getByRole('link', { name: 'Schlüssel' }).click();
+	await expect(admin.getByText('Noch kümmert sich niemand. Wer antwortet')).toBeVisible();
+
+	const reply = admin.getByRole('textbox', { name: 'Antworten' });
+	await reply.fill('Am Brett neben der Tür.');
+	await reply.press('Enter');
+	await expect(admin.getByText('Du kümmerst dich um diese Anfrage.')).toBeVisible();
+
+	const kim = await as('kim');
+	await kim.goto('/messages');
+	await kim.getByRole('link', { name: /Schlüssel/ }).click();
+	await expect(kim.getByText('Am Brett neben der Tür.')).toBeVisible();
+	await expect(kim.getByText(/Es kümmert sich:/)).toBeVisible();
+
+	await admin.getByRole('button', { name: 'Archivieren' }).click();
+	await expect(admin.getByText('Liegt im Archiv.')).toBeVisible();
+	await admin.goto('/admin/messages?tab=archive');
+	await expect(admin.getByRole('link', { name: 'Schlüssel' })).toBeVisible();
+});

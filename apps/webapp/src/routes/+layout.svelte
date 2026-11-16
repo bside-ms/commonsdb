@@ -11,9 +11,9 @@
 	import { adminNav, memberNav } from '#lib/navigation.ts';
 	import type { LayoutProps } from './$types';
 	import { resolve } from '$app/paths';
-	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { unreadCount } from './messages/messages.remote';
+	import { adminUnread } from './admin/messages/messages.remote';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -22,13 +22,31 @@
 	// during onboarding every other page redirects back, so no nav there
 	const inOnboarding = $derived(path.startsWith(resolve('/onboarding')));
 
-	// unread messages for the nav badge; re-read after every navigation,
-	// so opening a conversation clears it
+	// Unread messages for the nav badges. Loaded after each navigation and
+	// kept in plain state, deliberately not awaited in the markup: an
+	// awaited query here would hold up (and on refresh re-suspend) every
+	// page below this layout, e.g. while a form is being submitted.
 	const showMemberNav = $derived(Boolean(data.user) && !inAdmin && !inOnboarding);
-	const unread = $derived(showMemberNav ? await unreadCount() : 0);
-	afterNavigate(() => {
-		if (showMemberNav) void unreadCount().refresh();
+	const showAdminNav = $derived(Boolean(data.user?.isAdmin) && inAdmin);
+	let unread = $state(0);
+	let adminUnreadCount = $state(0);
+	// re-read on every page change (path), so opening a conversation clears it
+	$effect(() => {
+		void page.url.pathname;
+		void loadBadges(showMemberNav, showAdminNav);
 	});
+	async function loadBadges(member: boolean, admin: boolean) {
+		if (member) {
+			const q = unreadCount();
+			await q.refresh();
+			unread = await q;
+		}
+		if (admin) {
+			const q = adminUnread();
+			await q.refresh();
+			adminUnreadCount = await q;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -47,7 +65,7 @@
 	{@const user = data.user}
 	<AppShell
 		variant="admin"
-		items={adminNav(user)}
+		items={adminNav(user, { unread: adminUnreadCount })}
 		homeHref={resolve('/admin')}
 		title={m.nav_admin()}
 	>

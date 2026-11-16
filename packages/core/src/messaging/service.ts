@@ -80,6 +80,8 @@ export type ThreadView = {
 	/** Admin threads: the member who wrote to the admins. */
 	member: Person | null;
 	claimedBy: Person | null;
+	/** The reading admin is the one who took it on. */
+	claimedByMe: boolean;
 	archived: boolean;
 	asAdmin: boolean;
 	/** Everyone in the conversation except the actor (admin threads: none). */
@@ -138,14 +140,18 @@ async function addMessage(
 
 const directKey = (a: string, b: string) => [a, b].sort().join(':');
 
-/** Messages newer than the joined participant row's last_read_at, not by the actor. */
-const unreadFor = (actorId: string) =>
+/**
+ * Messages newer than the joined participant row's last_read_at, not by
+ * the actor. For admins, system messages don't count: an admin caused them.
+ */
+const unreadFor = (actorId: string, { system = true } = {}) =>
 	sql<number>`(
 		select count(*) from ${message} m
 		where m.thread_id = ${thread.id}
 			and m.retracted_at is null
 			and m.author_id is distinct from ${actorId}
 			and m.created_at > coalesce(${threadParticipant.lastReadAt}, '-infinity'::timestamptz)
+			${system ? sql`` : sql`and m.system is null`}
 	)`.mapWith(Number);
 
 const hasMessages = sql`exists (select 1 from ${message} m where m.thread_id = ${thread.id})`;
@@ -266,6 +272,7 @@ export async function openThread(db: Db, actor: Actor, threadId: string): Promis
 		task: t.taskId ? await taskRef(db, t.taskId) : null,
 		member: t.memberId ? await person(db, t.memberId) : null,
 		claimedBy: t.claimedBy ? await person(db, t.claimedBy) : null,
+		claimedByMe: t.claimedBy === actor.id,
 		archived: t.archivedAt !== null,
 		asAdmin,
 		others,
@@ -574,7 +581,18 @@ export async function listAdminInbox(
 	const member = alias(profile, 'member');
 	const claimer = alias(profile, 'claimer');
 
-	const where: SQL[] = [eq(thread.kind, 'admin'), isNull(thread.adminDeletedAt), hasMessages];
+	// threads that only collect system messages (send-backs, thanks) show
+	// up once the member writes something there
+	const memberWrote = sql`exists (
+		select 1 from ${message} m
+		where m.thread_id = ${thread.id} and m.author_id = ${thread.memberId}
+	)`;
+	const where: SQL[] = [
+		eq(thread.kind, 'admin'),
+		isNull(thread.adminDeletedAt),
+		hasMessages,
+		or(isNull(thread.taskLog), memberWrote)!
+	];
 	if (opts.tab === 'archive') where.push(isNotNull(thread.archivedAt));
 	else where.push(isNull(thread.archivedAt));
 	if (opts.tab === 'unclaimed') where.push(isNull(thread.claimedBy));
@@ -605,7 +623,7 @@ export async function listAdminInbox(
 			archivedAt: thread.archivedAt,
 			firstMessageAt,
 			lastMessageAt: thread.lastMessageAt,
-			unread: unreadFor(actor.id)
+			unread: unreadFor(actor.id, { system: false })
 		})
 		.from(thread)
 		.leftJoin(
@@ -630,6 +648,29 @@ export async function listAdminInbox(
 		lastMessageAt: r.lastMessageAt,
 		unread: r.unread
 	}));
+}
+
+export type AdminInboxCounts = Record<AdminInboxTab, number>;
+
+/** Threads per tab, for the tab labels. Same filter as the list. */
+export async function adminInboxCounts(
+	db: Db,
+	actor: Actor,
+	opts: { categories: 'all' | string[]; q?: string }
+): Promise<AdminInboxCounts> {
+	const tabs = ['open', 'unclaimed', 'mine', 'archive'] as const;
+	const lists = await Promise.all(tabs.map((tab) => listAdminInbox(db, actor, { ...opts, tab })));
+	return Object.fromEntries(tabs.map((tab, i) => [tab, lists[i].length])) as AdminInboxCounts;
+}
+
+/**
+ * The admin nav badge: open threads in the admin's own categories with
+ * something unread for them.
+ */
+export async function countAdminUnread(db: Db, actor: Actor): Promise<number> {
+	const categories = await defaultAdminInboxCategories(db, actor);
+	const list = await listAdminInbox(db, actor, { tab: 'open', categories });
+	return list.filter((t) => t.unread > 0).length;
 }
 
 /** "Ich kümmere mich" (also takes it over from another admin) / release one's own claim. */

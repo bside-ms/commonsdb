@@ -8,6 +8,7 @@ import { parse } from '../validation.ts';
 import { assertManagesCategory, manageableCategories } from './policy.ts';
 import { ConfirmInput, SendBackInput } from './schema.ts';
 import { afterOccurrenceConfirmed } from './series/generator.ts';
+import { postTaskLogMessage } from '../messaging/internal.ts';
 
 export type ConfirmationItem = {
 	shiftId: string;
@@ -91,7 +92,13 @@ export async function listConfirmations(db: Db, actor: Actor): Promise<Confirmat
 /** A reported shift the actor manages, or the matching error. */
 async function loadReported(db: Db, actor: Actor, shiftId: string) {
 	const [s] = await db
-		.select({ status: shift.status, assigneeId: shift.assigneeId, categoryId: task.categoryId })
+		.select({
+			status: shift.status,
+			assigneeId: shift.assigneeId,
+			categoryId: task.categoryId,
+			taskId: task.id,
+			taskTitle: task.title
+		})
 		.from(shift)
 		.innerJoin(task, eq(shift.taskId, task.id))
 		.where(eq(shift.id, shiftId));
@@ -138,18 +145,42 @@ export async function confirmShift(db: Db, actor: Actor, shiftId: string, input:
 			actorId: actor.id
 		});
 		await afterOccurrenceConfirmed(tx, row.taskId);
+		// the thanks (or just "confirmed") lands in the member's inbox
+		await postTaskLogMessage(tx, {
+			memberId: row.assigneeId,
+			taskId: row.taskId,
+			taskTitle: s.taskTitle,
+			system: 'shift_confirmed',
+			note,
+			actorId: actor.id
+		});
 	});
 }
 
-/** Back to 'taken' with a reason; the assignee sees it on the task. */
+/**
+ * Back to 'taken' with a reason. The assignee sees it on the task and,
+ * as a message, in their inbox, where every send-back stays readable.
+ */
 export async function sendBackShift(db: Db, actor: Actor, shiftId: string, input: unknown) {
 	const { note } = parse(SendBackInput, input);
-	await loadReported(db, actor, shiftId);
+	const s = await loadReported(db, actor, shiftId);
 
-	const [row] = await db
-		.update(shift)
-		.set({ status: 'taken', reportedAt: null, sendBackNote: note })
-		.where(and(eq(shift.id, shiftId), eq(shift.status, 'reported')))
-		.returning({ id: shift.id });
-	if (!row) throw new DomainError('shift_not_reported');
+	await db.transaction(async (tx) => {
+		const [row] = await tx
+			.update(shift)
+			.set({ status: 'taken', reportedAt: null, sendBackNote: note })
+			.where(and(eq(shift.id, shiftId), eq(shift.status, 'reported')))
+			.returning({ assigneeId: shift.assigneeId });
+		if (!row) throw new DomainError('shift_not_reported');
+		if (row.assigneeId) {
+			await postTaskLogMessage(tx, {
+				memberId: row.assigneeId,
+				taskId: s.taskId,
+				taskTitle: s.taskTitle,
+				system: 'shift_sent_back',
+				note,
+				actorId: actor.id
+			});
+		}
+	});
 }

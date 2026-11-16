@@ -358,6 +358,8 @@ for members, marked "Serie" for admins with a link back. Tested in core
 Member inbox, admin inbox with claiming, direct and group messages,
 task chats, block list and `dm_open`.
 
+Status: **done.**
+
 **Decided:**
 
 - Four thread kinds: `admin` (a member writes to all admins), `direct`,
@@ -410,14 +412,30 @@ task chats, block list and `dm_open`.
 - Member UI: `/messages` (inbox), `/messages/new` (recipient picker,
   filters in the browser; one person → direct, several → group),
   `/messages/admins` (`?task=` attaches a task), `/messages/[id]`.
-  "Postfach" in the member nav with an unread badge, re-read after
-  every navigation. The task page has "Chat zur Aufgabe" (shift holders)
+  "Postfach" in the member and admin nav with an unread badge, loaded
+  after every navigation into plain state; never awaited in the root
+  layout, since that would hold up every page below it (form redirects
+  hung in e2e). The task page has "Chat zur Aufgabe" (shift holders)
   and "Frage an die Admins" (everyone).
 - Opening a conversation marks it read (the thread query calls core's
   `openThread`). Only the thread page calls it.
 - Reachability lives on `/profile`: `dm_open` and the block list with
   "Aufheben". Blocking happens from a direct conversation, with a
   confirmation; the blocked person isn't told.
+- Admin inbox `/admin/messages`: tabs with counts, search (subject,
+  member), order (newest / waiting longest), "Meine Bereiche" / "Alle
+  Bereiche" (default: own categories; the toggle only shows for admins
+  with capabilities). Bulk archive / bring back / delete for admins
+  (one form, the pressed button decides). The conversation view is
+  shared with members (`Conversation.svelte`) plus a claim/archive bar.
+  The admin nav badge counts open threads in the own categories with
+  something unread.
+- Send-back reasons and confirmations post system messages
+  (`messaging/internal.ts`, inside the confirmation transaction) to one
+  admin thread per member and task (`task_log`). Members see it right
+  away; the admin inbox shows it only once the member writes there.
+  System messages never count as unread for admins. A new system
+  message brings the thread back (top, out of the archive, undeleted).
 
 ## Slice 6b — Built-in wiki
 

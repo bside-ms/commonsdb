@@ -35,15 +35,18 @@ export const memberNav = ({ unread = 0 }: { unread?: number } = {}): NavItem[] =
 	{ href: resolve('/account'), label: m.nav_account(), icon: Wallet, area: 'commons' }
 ];
 
-/**
- * Later: Bestätigen CheckCheck, Postfach Inbox, Mitglieder Users.
- * Admins without superadmin rights see one item, so the nav stays hidden
- * for them until slice 3 adds "Bestätigen".
- */
-export const adminNav = (user: { isSuperadmin: boolean }): NavItem[] => [
+/** `unread`: open admin threads in the admin's categories with something new. */
+export const adminNav = (user: { isSuperadmin: boolean }, { unread = 0 } = {}): NavItem[] => [
 	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: ListChecks },
 	{ href: resolve('/admin/series'), label: m.admin_nav_series(), icon: Repeat },
 	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: CheckCheck },
+	{
+		href: resolve('/admin/messages'),
+		label: m.admin_nav_messages(),
+		icon: Inbox,
+		count: unread,
+		countLabel: unread ? m.nav_messages_unread({ count: unread }) : undefined
+	},
 	...(user.isSuperadmin
 		? [
 				{ href: resolve('/admin/members'), label: m.admin_nav_members(), icon: Users },
