@@ -407,6 +407,17 @@ task chats, block list and `dm_open`.
   inbox. People who released their shift lose access to the chat.
 - In group threads a blocked person can still reply; blocking stops new
   conversations and direct replies.
+- Member UI: `/messages` (inbox), `/messages/new` (recipient picker,
+  filters in the browser; one person → direct, several → group),
+  `/messages/admins` (`?task=` attaches a task), `/messages/[id]`.
+  "Postfach" in the member nav with an unread badge, re-read after
+  every navigation. The task page has "Chat zur Aufgabe" (shift holders)
+  and "Frage an die Admins" (everyone).
+- Opening a conversation marks it read (the thread query calls core's
+  `openThread`). Only the thread page calls it.
+- Reachability lives on `/profile`: `dm_open` and the block list with
+  "Aufheben". Blocking happens from a direct conversation, with a
+  confirmation; the blocked person isn't told.
 
 ## Slice 6b — Built-in wiki
 

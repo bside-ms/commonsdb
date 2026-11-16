@@ -466,7 +466,12 @@ export async function hideThread(db: Db, actor: Actor, threadId: string) {
  * People the actor may write to, for the recipient picker. Same rules
  * as canWriteTo, in one query.
  */
-export async function listRecipients(db: Db, actor: Actor, q = ''): Promise<Recipient[]> {
+export async function listRecipients(
+	db: Db,
+	actor: Actor,
+	q = '',
+	limit = 500
+): Promise<Recipient[]> {
 	const where: SQL[] = [ne(user.id, actor.id), isNotNull(profile.onboardedAt)];
 	if (!isAdmin(actor)) {
 		where.push(
@@ -486,7 +491,7 @@ export async function listRecipients(db: Db, actor: Actor, q = ''): Promise<Reci
 		.innerJoin(profile, eq(profile.userId, user.id))
 		.where(and(...where))
 		.orderBy(asc(profile.displayName))
-		.limit(50);
+		.limit(limit);
 	return rows.map(({ role, ...r }) => ({
 		...r,
 		isAdmin: role === 'admin' || role === 'superadmin'
@@ -517,6 +522,17 @@ export async function listBlocked(db: Db, actor: Actor): Promise<Person[]> {
 		.innerJoin(profile, eq(profile.userId, userBlock.blockedId))
 		.where(eq(userBlock.blockerId, actor.id))
 		.orderBy(asc(profile.displayName));
+}
+
+export type MessagingSettings = { dmOpen: boolean; blocked: Person[] };
+
+/** The actor's own reachability settings, for the profile page. */
+export async function getMessagingSettings(db: Db, actor: Actor): Promise<MessagingSettings> {
+	const [p] = await db
+		.select({ dmOpen: profile.dmOpen })
+		.from(profile)
+		.where(eq(profile.userId, actor.id));
+	return { dmOpen: p?.dmOpen ?? true, blocked: await listBlocked(db, actor) };
 }
 
 /** "Andere Mitglieder dürfen mir schreiben". Admins and task chats still reach. */

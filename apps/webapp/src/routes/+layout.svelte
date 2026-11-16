@@ -11,7 +11,9 @@
 	import { adminNav, memberNav } from '#lib/navigation.ts';
 	import type { LayoutProps } from './$types';
 	import { resolve } from '$app/paths';
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
+	import { unreadCount } from './messages/messages.remote';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -19,6 +21,14 @@
 	const inAdmin = $derived(path === resolve('/admin') || path.startsWith(`${resolve('/admin')}/`));
 	// during onboarding every other page redirects back, so no nav there
 	const inOnboarding = $derived(path.startsWith(resolve('/onboarding')));
+
+	// unread messages for the nav badge; re-read after every navigation,
+	// so opening a conversation clears it
+	const showMemberNav = $derived(Boolean(data.user) && !inAdmin && !inOnboarding);
+	const unread = $derived(showMemberNav ? await unreadCount() : 0);
+	afterNavigate(() => {
+		if (showMemberNav) void unreadCount().refresh();
+	});
 </script>
 
 <svelte:head>
@@ -62,7 +72,7 @@
 	{@const user = data.user}
 	<AppShell
 		variant="member"
-		items={inOnboarding ? [] : memberNav()}
+		items={inOnboarding ? [] : memberNav({ unread })}
 		homeHref={resolve('/')}
 		title={m.app_name()}
 	>

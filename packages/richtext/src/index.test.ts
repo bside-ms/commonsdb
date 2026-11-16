@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { parseRichText, toHtml, toText, type RichTextDoc } from './index.ts';
+import { parseRichText, toHtml, toText, type RichTextDoc, fromPlainText } from './index.ts';
 
 const doc = (...content: unknown[]) => ({ type: 'doc', content });
 const p = (...content: unknown[]) => ({ type: 'paragraph', content });

@@ -14,6 +14,7 @@ import {
 	countUnread,
 	defaultAdminInboxCategories,
 	deleteThreadsForAdmins,
+	getMessagingSettings,
 	hideThread,
 	listAdminInbox,
 	listInbox,
@@ -158,6 +159,10 @@ test('blocking stops new and direct messages; unblocking restores', async () => 
 	assert.equal((await openThread(db, lu, id)).canReply, true, 'the blocker can still write');
 	await assert.rejects(blockUser(db, lu, lu.id), { code: 'user_block_self' });
 
+	assert.deepEqual(await getMessagingSettings(db, lu), {
+		dmOpen: true,
+		blocked: [{ id: 'kim', name: 'Kim' }]
+	});
 	await unblockUser(db, lu, kim.id);
 	await reply(db, kim, id, { body: body() });
 });

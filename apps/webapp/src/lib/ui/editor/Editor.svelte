@@ -11,12 +11,20 @@
 	`html` (server-rendered, optional) is shown until the editor has
 	loaded, and is all that's visible without JavaScript. The hidden input
 	is rendered on the server too, so a no-JS save keeps the old content.
+
+	variant="message": a compact editor for chat messages (profile
+	`message`): smaller, its own toolbar (no headings, plus strike and code).
+	`submitOnEnter`: Enter submits the surrounding form, Shift+Enter makes a
+	line break; inside lists and code blocks Enter keeps its usual meaning.
+	On touch devices Enter is a new line and only the send button sends.
+	Ctrl/Cmd+Enter always sends. Resetting the form clears the editor.
 -->
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { Editor, type Extensions, type JSONContent } from '@tiptap/core';
+	import { flushSync, untrack } from 'svelte';
+	import { Editor, Extension, type Extensions, type JSONContent } from '@tiptap/core';
 	import {
 		Bold,
+		Code,
 		Heading2,
 		Heading3,
 		Italic,
@@ -24,6 +32,8 @@
 		List,
 		ListOrdered,
 		Redo2,
+		SquareCode,
+		Strikethrough,
 		Undo2
 	} from '@lucide/svelte';
 	import { m } from '#lib/paraglide/messages.js';
@@ -40,6 +50,10 @@
 		html?: string;
 		/** Validates a link target before it's set (same rule as the server). */
 		isAllowedHref?: (href: string) => boolean;
+		/** 'document' (default): long text with headings. 'message': compact, for chats. */
+		variant?: 'document' | 'message';
+		/** Enter submits the surrounding form (see above). */
+		submitOnEnter?: boolean;
 		class?: string;
 	};
 
@@ -49,8 +63,12 @@
 		extensions,
 		html,
 		isAllowedHref = () => true,
+		variant = 'document',
+		submitOnEnter = false,
 		class: className
 	}: Props = $props();
+
+	const compact = $derived(variant === 'message');
 
 	const field = getFieldContext();
 
@@ -71,10 +89,13 @@
 	$effect(() => {
 		// untrack: read the props once. Later changes to `extensions` or
 		// `value` must not rebuild the editor (and lose the cursor).
-		const [initialExtensions, initialValue] = untrack(() => [extensions, value] as const);
+		const [initialExtensions, initialValue, enter, isCompact] = untrack(
+			() => [extensions, value, submitOnEnter, compact] as const
+		);
+		const form = element.closest('form');
 		const instance = new Editor({
 			element,
-			extensions: initialExtensions,
+			extensions: enter ? [...initialExtensions, enterSends(form)] : initialExtensions,
 			content: initialValue ?? '',
 			editorProps: {
 				attributes: {
@@ -83,7 +104,10 @@
 					...(field && { 'aria-labelledby': field.labelId, id: field.id }),
 					...(field?.describedBy && { 'aria-describedby': field.describedBy }),
 					...(field?.invalid && { 'aria-invalid': 'true' }),
-					class: 'prose max-w-none min-h-40 px-3 py-3 focus:outline-none'
+					class: cn(
+						'prose max-w-none px-3 focus:outline-none',
+						isCompact ? 'min-h-16 py-2' : 'min-h-40 py-3'
+					)
 				}
 			},
 			onTransaction: () => revision++,
@@ -94,8 +118,38 @@
 			}
 		});
 		editor = instance;
-		return () => instance.destroy();
+
+		// form.reset() (e.g. after a successful send) empties the editor too
+		const clear = () => instance.commands.clearContent(true);
+		form?.addEventListener('reset', clear);
+		return () => {
+			form?.removeEventListener('reset', clear);
+			instance.destroy();
+		};
 	});
+
+	/** Enter sends, except on touch devices and inside lists or code blocks. */
+	function enterSends(form: HTMLFormElement | null) {
+		const send = () => {
+			flushSync(); // the hidden input must hold the latest JSON before submitting
+			form?.requestSubmit();
+			return true;
+		};
+		return Extension.create({
+			name: 'enterSends',
+			addKeyboardShortcuts() {
+				return {
+					Enter: ({ editor: e }) => {
+						if (matchMedia('(pointer: coarse)').matches) return false;
+						if (e.isActive('codeBlock') || e.isActive('listItem')) return false;
+						if (e.isEmpty) return true;
+						return send();
+					},
+					'Mod-Enter': ({ editor: e }) => (e.isEmpty ? true : send())
+				};
+			}
+		});
+	}
 
 	// Keep aria in sync when the field gets an error after a failed submit.
 	$effect(() => {
@@ -157,27 +211,69 @@
 		enabled?: () => boolean;
 	};
 
-	const groups: Tool[][] = $derived([
+	const bold: Tool = {
+		label: m.ui_editor_bold(),
+		icon: Bold,
+		run: (e) => e.chain().focus().toggleBold().run(),
+		pressed: () => active('bold')
+	};
+	const italic: Tool = {
+		label: m.ui_editor_italic(),
+		icon: Italic,
+		run: (e) => e.chain().focus().toggleItalic().run(),
+		pressed: () => active('italic')
+	};
+	const link: Tool = {
+		label: m.ui_editor_link(),
+		icon: Link,
+		run: openLink,
+		pressed: () => active('link')
+	};
+	const bulletList: Tool = {
+		label: m.ui_editor_bullet_list(),
+		icon: List,
+		run: (e) => e.chain().focus().toggleBulletList().run(),
+		pressed: () => active('bulletList')
+	};
+	const orderedList: Tool = {
+		label: m.ui_editor_ordered_list(),
+		icon: ListOrdered,
+		run: (e) => e.chain().focus().toggleOrderedList().run(),
+		pressed: () => active('orderedList')
+	};
+
+	const messageGroups: Tool[][] = $derived([
 		[
+			bold,
+			italic,
 			{
-				label: m.ui_editor_bold(),
-				icon: Bold,
-				run: (e) => e.chain().focus().toggleBold().run(),
-				pressed: () => active('bold')
+				label: m.ui_editor_strike(),
+				icon: Strikethrough,
+				run: (e) => e.chain().focus().toggleStrike().run(),
+				pressed: () => active('strike')
 			},
 			{
-				label: m.ui_editor_italic(),
-				icon: Italic,
-				run: (e) => e.chain().focus().toggleItalic().run(),
-				pressed: () => active('italic')
+				label: m.ui_editor_code(),
+				icon: Code,
+				run: (e) => e.chain().focus().toggleCode().run(),
+				pressed: () => active('code')
 			},
-			{
-				label: m.ui_editor_link(),
-				icon: Link,
-				run: openLink,
-				pressed: () => active('link')
-			}
+			link
 		],
+		[
+			bulletList,
+			orderedList,
+			{
+				label: m.ui_editor_code_block(),
+				icon: SquareCode,
+				run: (e) => e.chain().focus().toggleCodeBlock().run(),
+				pressed: () => active('codeBlock')
+			}
+		]
+	]);
+
+	const documentGroups: Tool[][] = $derived([
+		[bold, italic, link],
 		[
 			{
 				label: m.ui_editor_heading2(),
@@ -191,18 +287,8 @@
 				run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
 				pressed: () => active('heading', { level: 3 })
 			},
-			{
-				label: m.ui_editor_bullet_list(),
-				icon: List,
-				run: (e) => e.chain().focus().toggleBulletList().run(),
-				pressed: () => active('bulletList')
-			},
-			{
-				label: m.ui_editor_ordered_list(),
-				icon: ListOrdered,
-				run: (e) => e.chain().focus().toggleOrderedList().run(),
-				pressed: () => active('orderedList')
-			}
+			bulletList,
+			orderedList
 		],
 		[
 			{
@@ -219,6 +305,8 @@
 			}
 		]
 	]);
+
+	const groups = $derived(compact ? messageGroups : documentGroups);
 </script>
 
 <div
@@ -247,7 +335,7 @@
 						disabled={!editor || (tool.enabled ? !tool.enabled() : false)}
 						onmousedown={(e) => e.preventDefault()}
 						onclick={() => editor && tool.run(editor)}
-						class="inline-flex size-(--touch-min) cursor-pointer items-center justify-center hover:bg-hover-strong disabled:cursor-not-allowed disabled:opacity-35 aria-pressed:bg-ink aria-pressed:text-paper"
+						class="inline-flex size-(--touch-min) shrink-0 cursor-pointer items-center justify-center hover:bg-hover-strong disabled:cursor-not-allowed disabled:opacity-35 aria-pressed:bg-ink aria-pressed:text-paper"
 					>
 						<Icon class="size-4.5" strokeWidth={2} aria-hidden="true" />
 					</button>
@@ -258,8 +346,12 @@
 
 	{#if !editor && html}
 		<!-- server-rendered preview until TipTap has mounted; html comes from toHtml() -->
-		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-		<div class="prose min-h-40 max-w-none px-3 py-3 text-muted">{@html html}</div>
+		<div
+			class={cn('prose max-w-none px-3 text-muted', compact ? 'min-h-16 py-2' : 'min-h-40 py-3')}
+		>
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+			{@html html}
+		</div>
 	{/if}
 	<div bind:this={element} class={cn(!editor && 'hidden')}></div>
 

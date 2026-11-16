@@ -82,3 +82,16 @@ export function weekdayName(weekday: number, style: 'long' | 'short' = 'long') {
 /** Today where the space is, as 'YYYY-MM-DD' (form defaults). */
 export const todayIso = () =>
 	new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date());
+
+/** A message time: "14:05" today, "15.11., 14:05" otherwise (year if not this one). */
+export function formatStamp(date: Date) {
+	const now = new Date();
+	const today = date.toDateString() === now.toDateString();
+	return new Intl.DateTimeFormat(getLocale(), {
+		day: today ? undefined : '2-digit',
+		month: today ? undefined : '2-digit',
+		year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+		hour: '2-digit',
+		minute: '2-digit'
+	}).format(date);
+}

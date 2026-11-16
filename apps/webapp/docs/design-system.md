@@ -106,24 +106,25 @@ anywhere in the app.
 
 ### Status
 
-| Component    | State | Notes                                                                                                                          |
-| ------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                                |
-| `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                                   |
-| `Input`      | done  | text-like types, `bind:value`                                                                                                  |
-| `Textarea`   | done  | min 88px, vertical resize                                                                                                      |
-| `Select`     | done  | native, `options` array, Lucide chevron                                                                                        |
-| `Checkbox`   | done  | own label/hint/error, native                                                                                                   |
-| `Card`       | done  | optional `title` (+ `level`) and `actions` header strip, `padded`                                                              |
-| `Badge`      | done  | `tone` neutral/attention/success/info (by meaning, not colour; 4 values, open for discussion), `outline`                       |
-| `Chip`       | done  | toggle with `aria-pressed`, `size` md/sub, `href` for no-JS filters                                                            |
-| `Avatar`     | done  | `name` → initials + accessible name, `src` with fallback, `size` sm/md/lg, area `color` (auto from name if omitted)            |
-| `EmptyState` | done  | dashed box, `title`, `description`, Lucide `icon`, `action` snippet                                                            |
-| `Modal`      | done  | Bits `Dialog`; bottom sheet < `lg`, centred above; `bind:open` or `trigger` snippet; `actions` row                             |
-| `Toast`      | done  | `toast(message, { tone })` + `<Toaster/>` in the root layout; client-side only                                                 |
-| `AppShell`   | done  | `variant` member/admin, `items` from `#lib/navigation.ts`, `actions` / `footer` snippets, skip link; nav hidden with < 2 items |
-| `Select`     | done  | native; `options` or `groups` (renders `<optgroup>`), `placeholder`                                                            |
-| `Balance`    | done  | the "Saldo": `value` (pre-formatted) + `label`, optional `href` makes the tile a link; `text-saldo`, area-commons fill         |
+| Component    | State | Notes                                                                                                                                                                                          |
+| ------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                                                                                                |
+| `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                                                                                                   |
+| `Input`      | done  | text-like types, `bind:value`                                                                                                                                                                  |
+| `Textarea`   | done  | min 88px, vertical resize                                                                                                                                                                      |
+| `Select`     | done  | native, `options` array, Lucide chevron                                                                                                                                                        |
+| `Checkbox`   | done  | own label/hint/error, native                                                                                                                                                                   |
+| `Card`       | done  | optional `title` (+ `level`) and `actions` header strip, `padded`                                                                                                                              |
+| `Badge`      | done  | `tone` neutral/attention/success/info (by meaning, not colour; 4 values, open for discussion), `outline`                                                                                       |
+| `Chip`       | done  | toggle with `aria-pressed`, `size` md/sub, `href` for no-JS filters                                                                                                                            |
+| `Avatar`     | done  | `name` → initials + accessible name, `src` with fallback, `size` sm/md/lg, area `color` (auto from name if omitted)                                                                            |
+| `EmptyState` | done  | dashed box, `title`, `description`, Lucide `icon`, `action` snippet                                                                                                                            |
+| `Modal`      | done  | Bits `Dialog`; bottom sheet < `lg`, centred above; `bind:open` or `trigger` snippet; `actions` row                                                                                             |
+| `Toast`      | done  | `toast(message, { tone })` + `<Toaster/>` in the root layout; client-side only                                                                                                                 |
+| `AppShell`   | done  | `variant` member/admin, `items` from `#lib/navigation.ts`, `actions` / `footer` snippets, skip link; nav hidden with < 2 items; `count` badge in both shells (`countLabel` for screen readers) |
+| `Editor`     | done  | TipTap; `variant` document/message (compact, own toolbar), `submitOnEnter` (Enter sends, Shift+Enter breaks, not on touch), clears on form reset                                               |
+| `Select`     | done  | native; `options` or `groups` (renders `<optgroup>`), `placeholder`                                                                                                                            |
+| `Balance`    | done  | the "Saldo": `value` (pre-formatted) + `label`, optional `href` makes the tile a link; `text-saldo`, area-commons fill                                                                         |
 
 The root `+layout.svelte` picks the shell: admin variant under `/admin`,
 member variant elsewhere, no shell when logged out (login), no nav during

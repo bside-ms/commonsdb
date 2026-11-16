@@ -21,6 +21,7 @@
 	import { formatHours, formatHoursRange, formatShiftTime, formatWhen } from '#lib/format.ts';
 	import { Badge, Button, Card, FormField, Modal, RichText, Textarea, toast } from '#lib/ui';
 	import { memberTask, release, report, take } from '../tasks.remote';
+	import { taskChat } from '../../messages/messages.remote';
 
 	const task = $derived(await memberTask(page.params.id!));
 
@@ -42,6 +43,7 @@
 		const issue = reportForm.fields.note.issues()?.[0];
 		return issue ? errorMessage(issue.message) : undefined;
 	});
+	const chatForm = $derived(taskChat.for(task.id));
 
 	let confirmOpen = $state(false);
 	const formId = $props.id();
@@ -118,6 +120,19 @@
 		{/if}
 
 		<RichText html={task.descriptionHtml} />
+
+		<!-- the task chat is for people on a shift; anyone can ask the admins -->
+		<div class="flex flex-wrap gap-2">
+			{#if mine}
+				<form {...chatForm}>
+					<input {...chatForm.fields.taskId.as('hidden', task.id)} />
+					<Button type="submit" size="sm" variant="ghost">{m.task_chat()}</Button>
+				</form>
+			{/if}
+			<Button size="sm" variant="ghost" href={`${resolve('/messages/admins')}?task=${task.id}`}>
+				{m.task_ask_admins()}
+			</Button>
+		</div>
 	</div>
 
 	<!-- the one thing to do here; sticks on large screens -->

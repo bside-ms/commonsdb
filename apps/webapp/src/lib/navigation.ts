@@ -1,4 +1,13 @@
-import { CheckCheck, House, KeyRound, ListChecks, Repeat, Users, Wallet } from '@lucide/svelte';
+import {
+	CheckCheck,
+	House,
+	Inbox,
+	KeyRound,
+	ListChecks,
+	Repeat,
+	Users,
+	Wallet
+} from '@lucide/svelte';
 import { resolve } from '$app/paths';
 import { m } from '#lib/paraglide/messages.js';
 import type { NavItem } from '#lib/ui';
@@ -12,9 +21,17 @@ import type { NavItem } from '#lib/ui';
  *   Start House · Aufgaben ListChecks · Commons Box · Initiativen Users ·
  *   Qualifikationen GraduationCap
  */
-export const memberNav = (): NavItem[] => [
+export const memberNav = ({ unread = 0 }: { unread?: number } = {}): NavItem[] => [
 	{ href: resolve('/'), label: m.nav_start(), icon: House, area: 'start' },
 	{ href: resolve('/tasks'), label: m.nav_tasks(), icon: ListChecks, area: 'tasks' },
+	{
+		href: resolve('/messages'),
+		label: m.nav_messages(),
+		icon: Inbox,
+		area: 'start',
+		count: unread,
+		countLabel: unread ? m.nav_messages_unread({ count: unread }) : undefined
+	},
 	{ href: resolve('/account'), label: m.nav_account(), icon: Wallet, area: 'commons' }
 ];
 

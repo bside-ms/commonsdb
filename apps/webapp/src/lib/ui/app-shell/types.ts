@@ -11,8 +11,10 @@ export type NavItem = {
 	icon?: typeof House;
 	/** Member shell: colours the active item with the area colour. */
 	area?: Area;
-	/** Admin shell: count badge (e.g. open confirmations). Hidden when 0. */
+	/** Count badge (open confirmations, unread messages). Hidden when 0. */
 	count?: number;
+	/** Screen-reader text for the badge ("3 ungelesen"); the bare number otherwise. */
+	countLabel?: string;
 	/** Custom "is this the current page" check. Default: exact match for '/', prefix match otherwise. */
 	match?: (pathname: string) => boolean;
 };

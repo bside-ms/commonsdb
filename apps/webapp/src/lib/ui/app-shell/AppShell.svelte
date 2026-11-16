@@ -98,10 +98,25 @@
 								: 'hover:bg-hover lg:hover:bg-hover'
 						)}
 					>
-						{#if item.icon}
-							<item.icon class="size-5.25" strokeWidth={1.9} aria-hidden="true" />
-						{/if}
+						<span class="relative">
+							{#if item.icon}
+								<item.icon class="size-5.25" strokeWidth={1.9} aria-hidden="true" />
+							{/if}
+							{#if item.count}
+								<span
+									class="absolute -top-1.5 -right-2.5 min-w-4.5 border border-ink bg-accent px-1 text-center text-caps lg:hidden"
+									aria-hidden="true">{item.count}</span
+								>
+							{/if}
+						</span>
 						<span>{item.label}</span>
+						{#if item.count}
+							<span
+								class="hidden border border-ink bg-accent px-1.5 text-caps lg:ml-auto lg:inline"
+								aria-hidden="true">{item.count}</span
+							>
+							<span class="sr-only">{item.countLabel ?? item.count}</span>
+						{/if}
 					</a>
 				{/each}
 			</nav>

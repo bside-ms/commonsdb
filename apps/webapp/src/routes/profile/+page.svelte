@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
-	import { Avatar, Button, Card } from '#lib/ui';
+	import { errorMessage } from '#lib/i18n/errors.ts';
+	import { Avatar, Button, Card, Checkbox, toast } from '#lib/ui';
+	import { messagingSettings, saveDmOpen, unblock } from '../messages/messages.remote';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const p = $derived(data.profile);
 	const roleLabel = { member: m.role_member, admin: m.role_admin, superadmin: m.role_superadmin };
+
+	const messaging = $derived(await messagingSettings());
 </script>
 
 <div class="flex flex-wrap items-end justify-between gap-4">
@@ -35,4 +39,52 @@
 		<dt class="font-semibold text-muted">{m.profile_role()}</dt>
 		<dd>{roleLabel[data.platformRole]()}</dd>
 	</dl>
+</Card>
+
+<Card class="mt-6 max-w-2xl" title={m.profile_messages_title()}>
+	<form
+		{...saveDmOpen.enhance(async ({ submit }) => {
+			if (await submit()) toast(m.profile_messages_saved_toast());
+		})}
+		class="grid gap-3"
+	>
+		<Checkbox
+			{...saveDmOpen.fields.dmOpen.as('checkbox', messaging.dmOpen)}
+			label={m.profile_dm_open()}
+			hint={m.profile_dm_open_hint()}
+		/>
+		<div>
+			<Button type="submit" size="sm" disabled={saveDmOpen.pending > 0}>{m.profile_save()}</Button>
+		</div>
+	</form>
+
+	<h3 class="mt-6">{m.profile_blocked_title()}</h3>
+	{#if messaging.blocked.length === 0}
+		<p class="mt-1 text-small text-muted">{m.profile_blocked_none()}</p>
+	{:else}
+		<ul class="mt-2 divide-y divide-hair border border-ink">
+			{#each messaging.blocked as person (person.id)}
+				{@const f = unblock.for(person.id)}
+				<li class="flex items-center justify-between gap-3 px-3 py-2">
+					<span class="flex items-center gap-2 font-semibold">
+						<Avatar name={person.name} size="sm" decorative />
+						{person.name}
+					</span>
+					<form
+						{...f.enhance(async ({ submit }) => {
+							if (await submit()) toast(m.profile_unblocked_toast({ name: person.name }));
+						})}
+					>
+						<input {...f.fields.userId.as('hidden', person.id)} />
+						<Button type="submit" size="sm" variant="ghost">{m.profile_unblock()}</Button>
+					</form>
+				</li>
+				{#each f.fields.issues() ?? [] as issue (issue.message)}
+					<li role="alert" class="px-3 py-2 text-small text-danger">
+						{errorMessage(issue.message)}
+					</li>
+				{/each}
+			{/each}
+		</ul>
+	{/if}
 </Card>
