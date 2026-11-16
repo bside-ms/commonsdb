@@ -356,7 +356,7 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 6 — messaging**: next (or 6b/7, they're independent).
+- **Slice 6**: 6a messaging in progress, 6b wiki next.
 - **Admin views of a member's ledger**: superadmins see balances, not
   entries. `getAccountForAdmin` with the `getOwnAccount` read model when
   someone asks.

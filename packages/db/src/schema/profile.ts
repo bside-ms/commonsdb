@@ -27,6 +27,8 @@ export const profile = pgTable(
 			.default('members'),
 		notifyByEmail: boolean('notify_by_email').notNull().default(true),
 		notifyNewTasks: boolean('notify_new_tasks').notNull().default(false),
+		/** Other members may start conversations with this person (slice 6a). Admins always can. */
+		dmOpen: boolean('dm_open').notNull().default(true),
 		onboardedAt: timestamp('onboarded_at', { withTimezone: true }),
 		rulesAcceptedAt: timestamp('rules_accepted_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

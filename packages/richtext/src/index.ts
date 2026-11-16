@@ -94,3 +94,30 @@ export function toText(profile: Profile, doc: RichTextDoc | null): string {
 	const node = schemaFor(profile).nodeFromJSON(doc);
 	return node.textBetween(0, node.content.size, '\n\n', ' ');
 }
+
+/**
+ * A document from plain text: blank lines separate paragraphs, single
+ * line breaks become hard breaks. For text written outside an editor
+ * (send-back reasons, thanks) that has to appear as a message.
+ */
+export function fromPlainText(text: string): RichTextDoc | null {
+	const paragraphs = text
+		.replace(/\r\n?/g, '\n')
+		.trim()
+		.split(/\n\s*\n/)
+		.map((p) => p.trim())
+		.filter(Boolean);
+	if (paragraphs.length === 0) return null;
+	return {
+		type: 'doc',
+		content: paragraphs.map((p) => ({
+			type: 'paragraph',
+			content: p
+				.split('\n')
+				.flatMap((line, i) => [
+					...(i > 0 ? [{ type: 'hardBreak' }] : []),
+					...(line ? [{ type: 'text', text: line }] : [])
+				])
+		}))
+	};
+}

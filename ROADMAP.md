@@ -353,24 +353,81 @@ for members, marked "Serie" for admins with a link back. Tested in core
 
 ---
 
-## Slice 6 — Messaging
+## Slice 6a — Messaging
 
-`threads` (subject, kind, optional task reference, participants,
-`claimed_by`, archived) and `messages` with per-user read tracking.
-Member inbox, admin inbox with claiming, direct messages respecting
-`dm_open` and block lists.
+Member inbox, admin inbox with claiming, direct and group messages,
+task chats, block list and `dm_open`.
 
-Self-contained — can move earlier or later freely.
+**Decided:**
+
+- Four thread kinds: `admin` (a member writes to all admins), `direct`,
+  `group` (several recipients), `task` (everyone currently holding a
+  shift on the task). One table `thread`, kind as a text code.
+- Access is derived in core, not stored: admin threads = the member +
+  every admin; task threads = current shift holders (taking/releasing
+  changes access, nothing to sync); direct/group = participant rows.
+- `thread_participant (thread_id, user_id, last_read_at, hidden_at)`:
+  read state is one timestamp per person, not per message. Admins get a
+  row lazily when they first open an admin thread.
+- All admins see all admin threads. The inbox filters by category via
+  the referenced task; default = the admin's capabilities (all for
+  superadmins / admins without capabilities), threads without a task
+  always shown. Tabs: Offen, Niemand, Meine, Archiv.
+- Replying to an unclaimed admin thread claims it; claims can be taken
+  over. Archive and claim are per thread (shared by all admins). Delete
+  for admins is a soft delete (`admin_deleted_at`); the member keeps
+  their copy.
+- Message bodies are TipTap JSON, profile `message` (bold, italic,
+  strike, inline code, code block, links, lists; no headings, no
+  images), max 4000 characters of plain text. Enter sends, Shift+Enter
+  is a new line (touch: button sends).
+- Authors can retract a message at any time (`retracted_at`, body
+  cleared, shown as "zurückgenommen").
+- "Remove from my inbox" sets `hidden_at`; a newer message brings the
+  thread back.
+- Anyone may write to anyone (like Mattermost); members can opt out
+  (`profile.dm_open = false`), then only admins and task chats reach
+  them. Blocks (`user_block`) stop direct/group messages from the
+  blocked person; admins are never blocked. Profiles with
+  `visibility = admins` appear in the recipient picker for admins only.
+- System messages (`message.system`, no author): send-back reasons and
+  confirmation thanks go into one admin thread per member and task,
+  which becomes the visible history of that task's back and forth.
+  `confirmation.ts` calls messaging inside its transaction.
+- No real time and no email in this slice: inboxes refresh on
+  navigation and after sending. Email waits for notification delivery.
+- Later: "An Awareness melden" (report a thread to the admins with an
+  excerpt; `thread.reported_thread_id`).
+- Core lives in `core/src/messaging/` (schema, policy, service). Access
+  is checked by `threadAccess`; anything not readable is
+  `thread_not_found`. Unread = messages after the participant's
+  `last_read_at`, not by the reader, not retracted.
+- One direct thread per pair (`direct_key`, unique), one chat per task
+  (partial unique index). Task chats without messages stay out of the
+  inbox. People who released their shift lose access to the chat.
+- In group threads a blocked person can still reply; blocking stops new
+  conversations and direct replies.
 
 ## Slice 6b — Built-in wiki
 
-Pages (title, TipTap content, parent, revisions), Postgres full-text
-search, a link picker on tasks. `KnowledgeProvider` port with the
-built-in implementation; `knowledge_links` table used by later slices
-for resources and qualifications. Markdown export per page.
+**Decided:**
 
-Outline adapter: later, when a space needs it (B-Side: once the
-built-in version has shown what's actually used).
+- Everyone reads; admins create, edit, move and delete. Every save is
+  an immutable `wiki_revision` (full TipTap JSON + title + author);
+  restoring is a new revision. Opening editing to members later is a
+  policy change only.
+- Pages nest at most 3 levels (`parent_id`, checked in core).
+- URLs use slugs generated from the title, unique, kept on rename.
+- Saves carry the base revision; a stale base fails with
+  `wiki_page_conflict`.
+- Search: generated `tsvector` (German config) over title + plain text,
+  GIN index. `richtext` gets `toPlainText` and `toMarkdown` (own small
+  serializer, no dependency) and a `wiki` profile.
+- `KnowledgeProvider` port in core with the built-in implementation;
+  `knowledge_link (entity_type, entity_id, provider, ref,
+cached_title)` is provider-neutral. Tasks and series templates get a
+  link picker; occurrences copy the series' links.
+- Markdown export per page.
 
 ---
 
@@ -426,8 +483,6 @@ when the design side stabilises.
   Whether admins approve is unresolved.
 - **Tenant grace.** Guidance or enforcement? Their copy says a minus is
   normal and not an error.
-- **Wiki permissions.** Built-in pages visible to all members, editable
-  by admins? Or editable by everyone, with revisions as the safety net?
 - **Completion criteria.** A checklist ticked when reporting a task or
   returning a resource. Same concept for both; model it when the first
   of them needs it.

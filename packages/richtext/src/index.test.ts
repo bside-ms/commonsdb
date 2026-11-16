@@ -76,3 +76,42 @@ test('drops attributes the schema does not know', () => {
 	assert.equal(JSON.stringify(result.doc).includes('onclick'), false);
 	assert.ok(!toHtml('description', result.doc as RichTextDoc).includes('onclick'));
 });
+
+// ---- message profile (slice 6a) ----------------------------------------------
+
+test('message: strike, inline code and code blocks are allowed', () => {
+	const result = parseRichText(
+		'message',
+		doc(p(text('weg', [{ type: 'strike' }]), text(' '), text('npm i', [{ type: 'code' }])), {
+			type: 'codeBlock',
+			content: [text('x = 1')]
+		})
+	);
+	assert.equal(result.ok, true);
+	assert.match(
+		toHtml('message', result.ok ? result.doc : null),
+		/<s>weg<\/s>.*<code>npm i<\/code>/s
+	);
+});
+
+test('message: headings and quotes are rejected', () => {
+	for (const node of [
+		{ type: 'heading', attrs: { level: 2 }, content: [text('Titel')] },
+		{ type: 'blockquote', content: [p(text('Zitat'))] }
+	]) {
+		assert.deepEqual(parseRichText('message', doc(node)), {
+			ok: false,
+			reason: 'schema'
+		});
+	}
+});
+
+test('fromPlainText: blank lines split paragraphs, single newlines become breaks', () => {
+	assert.equal(fromPlainText('  \n '), null);
+	const result = fromPlainText('Zeile 1\nZeile 2\n\nAbsatz 2');
+	assert.deepEqual(
+		result,
+		doc(p(text('Zeile 1'), { type: 'hardBreak' }, text('Zeile 2')), p(text('Absatz 2')))
+	);
+	assert.equal(parseRichText('message', result).ok, true);
+});

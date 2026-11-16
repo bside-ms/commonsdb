@@ -1,5 +1,5 @@
 import type { Extensions } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import StarterKit, { type StarterKitOptions } from '@tiptap/starter-kit';
 
 /** Link targets we render. Everything else is rejected on save. */
 export const ALLOWED_PROTOCOLS = ['https:', 'http:', 'mailto:', 'tel:'] as const;
@@ -15,6 +15,16 @@ export function isAllowedHref(href: unknown): href is string {
 
 /** h1 is the page title, so documents start at h2. */
 export const HEADING_LEVELS = [2, 3] as const;
+
+/** Same link behaviour everywhere: typed URLs become links, new tab, no referrer. */
+const link: StarterKitOptions['link'] = {
+	openOnClick: false,
+	autolink: true,
+	defaultProtocol: 'https',
+	protocols: ['mailto', 'tel'],
+	isAllowedUri: (url) => isAllowedHref(url),
+	HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer nofollow' }
+};
 
 /**
  * Extensions per use. The editor, the server-side validation and the HTML
@@ -35,14 +45,20 @@ export const profiles = {
 			horizontalRule: false,
 			strike: false,
 			underline: false,
-			link: {
-				openOnClick: false,
-				autolink: true,
-				defaultProtocol: 'https',
-				protocols: ['mailto', 'tel'],
-				isAllowedUri: (url) => isAllowedHref(url),
-				HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer nofollow' }
-			}
+			link
+		})
+	],
+	/**
+	 * Chat messages, modelled on Signal/Telegram: bold, italic, strike,
+	 * inline code, code block, links, lists. No headings, quotes or rules.
+	 */
+	message: (): Extensions => [
+		StarterKit.configure({
+			heading: false,
+			blockquote: false,
+			horizontalRule: false,
+			underline: false,
+			link
 		})
 	]
 } satisfies Record<string, () => Extensions>;
