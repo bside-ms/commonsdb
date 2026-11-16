@@ -57,6 +57,13 @@
       "when": 1794844005019,
       "tag": "0007_spicy_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794853073124,
+      "tag": "0008_wiki",
+      "breakpoints": true
     }
   ]
 }

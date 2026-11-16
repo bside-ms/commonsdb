@@ -121,3 +121,5 @@ export function fromPlainText(text: string): RichTextDoc | null {
 		}))
 	};
 }
+
+export { toMarkdown } from './markdown.ts';

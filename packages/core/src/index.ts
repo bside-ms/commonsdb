@@ -5,3 +5,4 @@ export * from './profile/index.ts';
 export * from './tasks/index.ts';
 export * from './ledger/index.ts';
 export * from './messaging/index.ts';
+export * from './knowledge/index.ts';

@@ -60,6 +60,18 @@ export const profiles = {
 			underline: false,
 			link
 		})
+	],
+	/**
+	 * Wiki pages: everything the description has, plus quotes, code,
+	 * strike and rules. The page title is the h1. No images yet: media
+	 * need uploads (ROADMAP slice 6b, "later").
+	 */
+	wiki: (): Extensions => [
+		StarterKit.configure({
+			heading: { levels: [...HEADING_LEVELS] },
+			underline: false,
+			link
+		})
 	]
 } satisfies Record<string, () => Extensions>;
 

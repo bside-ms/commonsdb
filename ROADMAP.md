@@ -441,22 +441,33 @@ Status: **done.**
 
 **Decided:**
 
-- Everyone reads; admins create, edit, move and delete. Every save is
-  an immutable `wiki_revision` (full TipTap JSON + title + author);
-  restoring is a new revision. Opening editing to members later is a
-  policy change only.
-- Pages nest at most 3 levels (`parent_id`, checked in core).
-- URLs use slugs generated from the title, unique, kept on rename.
 - Saves carry the base revision; a stale base fails with
   `wiki_page_conflict`.
-- Search: generated `tsvector` (German config) over title + plain text,
-  GIN index. `richtext` gets `toPlainText` and `toMarkdown` (own small
-  serializer, no dependency) and a `wiki` profile.
 - `KnowledgeProvider` port in core with the built-in implementation;
   `knowledge_link (entity_type, entity_id, provider, ref,
 cached_title)` is provider-neutral. Tasks and series templates get a
   link picker; occurrences copy the series' links.
 - Markdown export per page.
+- Everyone reads; admins create, edit, move, delete, restore. Every
+  save is an immutable `wiki_revision`; unchanged saves create none;
+  restoring = a new revision. Saves carry `baseRevisionId`; a stale
+  base fails with `wiki_page_conflict`.
+- Max 3 levels, also when moving a subtree; not into itself. Only pages
+  without subpages can be deleted (soft). A restored page whose parent
+  is gone returns at top level.
+- Slugs from the title (umlauts spelled out, `-2` … on clashes), kept
+  on rename. Links store the page id as `ref`.
+- Search: generated `tsvector` (title A, text B, German config) + GIN;
+  query = web-search syntax OR every word as prefix, because German
+  compounds ("Schlüsselbund") don't stem to "schlüssel".
+- `richtext`: profile `wiki` (h2/h3, quotes, code, strike, rules,
+  lists, links; no images until uploads exist) and `toMarkdown`
+  (own serializer, no dependency).
+- Later (Outline adapter): the port returns sanitised HTML, so external
+  entries render in the app. Outline's Markdown → HTML on our server;
+  attachments go through an authenticated proxy route of ours (Outline
+  URLs need its login); one API token, limited to one collection; short
+  cache; editing stays in Outline (`editUrl`).
 
 ---
 

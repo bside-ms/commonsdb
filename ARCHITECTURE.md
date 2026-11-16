@@ -117,7 +117,10 @@ and simple.
   API. Links are stored provider-neutral
   (`entity, provider, ref, cached title`), so switching providers needs
   no schema change. Built-in pages export to Markdown so a space can move
-  to Outline later.
+  to Outline later. The port returns sanitised HTML (`KnowledgeEntry.html`), so the app
+  shows entries from any provider in place. Providers with protected
+  media (Outline) route them through an authenticated proxy route in the
+  app.
 
 All wiring happens in one **composition root** per app
 (`apps/webapp/src/lib/server/services.ts`): it reads env, creates `db`

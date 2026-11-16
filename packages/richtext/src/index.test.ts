@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { parseRichText, toHtml, toText, type RichTextDoc, fromPlainText } from './index.ts';
+import {
+	parseRichText,
+	toHtml,
+	toText,
+	type RichTextDoc,
+	fromPlainText,
+	toMarkdown
+} from './index.ts';
 
 const doc = (...content: unknown[]) => ({ type: 'doc', content });
 const p = (...content: unknown[]) => ({ type: 'paragraph', content });
@@ -114,4 +121,77 @@ test('fromPlainText: blank lines split paragraphs, single newlines become breaks
 		doc(p(text('Zeile 1'), { type: 'hardBreak' }, text('Zeile 2')), p(text('Absatz 2')))
 	);
 	assert.equal(parseRichText('message', result).ok, true);
+});
+
+// ---- wiki profile and Markdown export (slice 6b) ------------------------------
+
+test('wiki: quotes, rules and code blocks are allowed, h1 is not', () => {
+	assert.equal(
+		parseRichText(
+			'wiki',
+			doc({ type: 'blockquote', content: [p(text('Zitat'))] }, { type: 'horizontalRule' })
+		).ok,
+		true
+	);
+	assert.deepEqual(
+		parseRichText('wiki', doc({ type: 'heading', attrs: { level: 1 }, content: [text('X')] })),
+		{ ok: false, reason: 'schema' }
+	);
+});
+
+test('toMarkdown: headings, marks, links, nested lists, quotes, code', () => {
+	const md = toMarkdown(
+		doc(
+			{ type: 'heading', attrs: { level: 2 }, content: [text('Schlüssel')] },
+			p(
+				text('Liegt '),
+				text('im Büro', [{ type: 'bold' }]),
+				text(', siehe '),
+				text('Plan', [{ type: 'link', attrs: { href: 'https://b-side.ms/plan' } }]),
+				text(' (*nicht* weitergeben)')
+			),
+			{
+				type: 'bulletList',
+				content: [
+					{ type: 'listItem', content: [p(text('eins'))] },
+					{
+						type: 'listItem',
+						content: [
+							p(text('zwei')),
+							{
+								type: 'orderedList',
+								attrs: { start: 1 },
+								content: [{ type: 'listItem', content: [p(text('a'))] }]
+							}
+						]
+					}
+				]
+			},
+			{ type: 'blockquote', content: [p(text('Zitat'))] },
+			{ type: 'codeBlock', attrs: { language: null }, content: [text('npm i')] }
+		) as RichTextDoc,
+		'Haus'
+	);
+	assert.equal(
+		md,
+		[
+			'# Haus',
+			'',
+			'## Schlüssel',
+			'',
+			'Liegt **im Büro**, siehe [Plan](https://b-side.ms/plan) (\\*nicht\\* weitergeben)',
+			'',
+			'- eins',
+			'- zwei',
+			'',
+			'  1. a',
+			'',
+			'> Zitat',
+			'',
+			'```',
+			'npm i',
+			'```',
+			''
+		].join('\n')
+	);
 });
