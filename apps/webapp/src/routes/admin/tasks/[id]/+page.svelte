@@ -62,6 +62,15 @@
 		</div>
 	{/if}
 
+	{#if task.series}
+		<p class="border-l-4 border-area-tasks pl-3 text-small">
+			{m.task_series_hint({ title: task.series.title })}
+			<a href={resolve('/admin/series/[id]', { id: task.series.id })} class="font-semibold">
+				{m.task_series_link()}
+			</a>
+		</p>
+	{/if}
+
 	{#if held.length > 0}
 		<Card title={m.admin_task_shifts_title()}>
 			<p class="text-small text-muted">{m.admin_task_release_hint()}</p>

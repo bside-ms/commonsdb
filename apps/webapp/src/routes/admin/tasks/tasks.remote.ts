@@ -27,6 +27,8 @@ import {
 import { toHtml } from '@commonsdb/richtext';
 import { db } from '#lib/server/services.ts';
 import { requireAdmin, toFormIssues, toHttpError } from '#lib/server/guards.ts';
+import { topUpSeries } from '#lib/server/series.ts';
+import type { TemplateFormData } from './template.ts';
 
 // ---- reads ----------------------------------------------------------------
 
@@ -43,6 +45,7 @@ export const adminTasks = query(
 	}),
 	async ({ categoryId, ...filter }) => {
 		const actor = requireAdmin();
+		await topUpSeries();
 		// straight from ?category=: anything that isn't a uuid means "all"
 		const category = v.is(Id, categoryId) ? categoryId : undefined;
 		return listTasksForAdmin(db, actor, { ...filter, categoryId: category }).catch(toHttpError);
@@ -62,21 +65,11 @@ export const adminTask = query(Id, async (id) => {
  * type only shapes `fields.*` for the component. core's TaskInput is the
  * one place that validates (and turns "1,5" into 15 tenths).
  */
-export type TaskFormData = {
+export type TaskFormData = TemplateFormData & {
 	id?: string;
-	title: string;
-	categoryId: string;
-	description?: string;
-	urgent?: boolean;
-	selfService?: boolean;
-	place?: string;
-	contact?: string;
-	bring?: string;
-	physicalDemands?: string;
 	whenKind: 'date' | 'range';
 	startsOn: string;
 	endsOn?: string;
-	shifts: ShiftFormData[];
 };
 
 /** One shift row: id for existing shifts, '' for new ones; times '' = none. */

@@ -21,7 +21,7 @@ export function parse<S extends v.GenericSchema>(schema: S, input: unknown): v.I
 /**
  * Our schemas put codes into their messages. One case they can't reach:
  * a required key that is missing altogether, where valibot reports its
- * own English text ("Invalid key: …"). That becomes `field_required`.
+ * own English text ("Invalid key: ..."). That becomes `field_required`.
  */
 function codeOf(issue: v.BaseIssue<unknown>): string {
 	const missingKey =

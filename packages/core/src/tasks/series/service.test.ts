@@ -26,6 +26,7 @@ import {
 	getSeriesForAdmin,
 	listSeriesForAdmin,
 	pauseSeries,
+	previewSeries,
 	resumeSeries,
 	updateSeries
 } from './service.ts';
@@ -389,6 +390,24 @@ describe('pause, resume, end, delete', () => {
 		const id = await createSeries(db, admin, input());
 		assert.deepEqual(await codeOf(() => pauseSeries(db, otherAdmin, id)), { code: 'forbidden' });
 		assert.deepEqual(await codeOf(() => deleteSeries(db, kim, id)), { code: 'forbidden' });
+	});
+});
+
+describe('previewSeries', () => {
+	test('the next dates of a rule, without saving anything', async () => {
+		const ps = await previewSeries(db, admin, {
+			repeat: 'weekly',
+			weekday: String(weekdayOf(addDays(TODAY, 1))),
+			anchor: TODAY
+		});
+		assert.deepEqual(
+			ps.map((p) => p.startsOn),
+			[addDays(TODAY, 1), addDays(TODAY, 8), addDays(TODAY, 15)]
+		);
+	});
+
+	test('an incomplete rule gives no dates', async () => {
+		assert.deepEqual(await previewSeries(db, admin, { repeat: 'weekly', anchor: TODAY }), []);
 	});
 });
 

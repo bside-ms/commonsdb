@@ -12,7 +12,7 @@ export type RepeatMode = (typeof REPEAT_MODES)[number];
 /**
  * When occurrences fall. The shape decides the occurrence's kind: a
  * weekday or a day of the month gives a fixed date, a window a range.
- * Weekdays: 0 = Monday … 6 = Sunday.
+ * Weekdays: 0 = Monday ... 6 = Sunday.
  */
 export type SeriesRuleJson =
 	/** On one weekday, every week or every other week (counted from the anchor's week). */

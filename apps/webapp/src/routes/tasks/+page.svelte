@@ -1,5 +1,5 @@
 <!--
-	Member task list. Filters are links (?super=…&category=…, toggles
+	Member task list. Filters are links (?super=...&category=..., toggles
 	?urgent=1&now=1&together=1) and a GET search form, so everything works
 	without JS and can be bookmarked.
 	"Meine Aufgaben" first, then what's open.

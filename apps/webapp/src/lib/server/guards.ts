@@ -5,7 +5,7 @@ import { DomainError, ValidationError, isAdmin, isSuperadmin, type Actor } from 
 /*
  * Helpers for remote functions (*.remote.ts).
  *
- * Remote functions are called at their own URL (/_app/remote/…), not at
+ * Remote functions are called at their own URL (/_app/remote/...), not at
  * the page's path. The /admin check in hooks.server.ts never sees them,
  * so every remote function has to say who may call it. These helpers are
  * that line, at the top of each function.

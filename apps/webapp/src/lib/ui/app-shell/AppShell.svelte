@@ -11,7 +11,7 @@
 	translated and resolved. With fewer than two items the nav is hidden.
 
 	<AppShell variant="member" items={memberNav()} homeHref={resolve('/')} title={m.app_name()}>
-		{#snippet actions()}…avatar, logout…{/snippet}
+		{#snippet actions()}...avatar, logout...{/snippet}
 		{@render children()}
 	</AppShell>
 -->

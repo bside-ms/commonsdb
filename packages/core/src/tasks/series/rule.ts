@@ -5,7 +5,7 @@
  *
  * Dates are calendar days ('YYYY-MM-DD'), like task.starts_on. Arithmetic
  * runs on UTC dates, so no time zone or DST change can shift a day.
- * Weekdays: 0 = Monday … 6 = Sunday (as in the prototype).
+ * Weekdays: 0 = Monday ... 6 = Sunday (as in the prototype).
  */
 import type { SeriesRuleJson, Weekday, WhenKind } from '@commonsdb/db/schema';
 

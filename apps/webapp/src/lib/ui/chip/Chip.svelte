@@ -6,7 +6,7 @@
 	<Chip pressed={category === 'bar'} onclick={() => (category = 'bar')}>Bar</Chip>
 
 	For a filter that must work without JS, render chips as links to
-	?category=… instead and pass `href`.
+	?category=... instead and pass `href`.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';

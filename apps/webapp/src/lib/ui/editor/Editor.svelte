@@ -4,7 +4,7 @@
 	input, so it works in a plain form action. Validate on the server with
 	parseRichText() from @commonsdb/richtext, using the same profile.
 
-	<FormField label={m.task_description()} optional error={…}>
+	<FormField label={m.task_description()} optional error={...}>
 		<Editor name="description" value={values.description} extensions={profiles.description()} html={values.descriptionHtml} />
 	</FormField>
 

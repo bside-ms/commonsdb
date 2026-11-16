@@ -26,7 +26,7 @@ text on top.
 | Concern            | Choice                                                                  |
 | ------------------ | ----------------------------------------------------------------------- |
 | Styling            | Tailwind v4, theme defined in `src/lib/ui/tokens.css` (`@theme static`) |
-| Headless behaviour | [Bits UI](https://bits-ui.com) for Dialog, Tabs, Popover, Combobox, …   |
+| Headless behaviour | [Bits UI](https://bits-ui.com) for Dialog, Tabs, Popover, Combobox, ... |
 | Variants           | `tailwind-variants` (`tv`), via our own `tv` export                     |
 | Class merging      | `cn()` = `clsx` + `tailwind-merge`, configured for our tokens           |
 | Icons              | [Lucide](https://lucide.dev) (`@lucide/svelte`), stroke 1.9–2           |
@@ -134,7 +134,7 @@ Stays in routes until a second use: task row, stat tile, tabs, table, "thanks" c
 ## In routes
 
 - Headings are plain `<h1>`–`<h3>`; size comes from `app.css`.
-- Only token colours (`bg-ink`, `text-muted`, `bg-area-tasks` …).
+- Only token colours (`bg-ink`, `text-muted`, `bg-area-tasks` ...).
   Tailwind's default palette doesn't exist here: `bg-black` silently
   renders nothing.
 - New nav entries go in `src/lib/navigation.ts`; the member nav appears
@@ -142,8 +142,9 @@ Stays in routes until a second use: task row, stat tile, tabs, table, "thanks" c
 - Patterns used once (task row, stat tile) stay in the route
   until a second use, then move to `lib/ui`.
 - Domain UI that's used by more than one route but isn't generic
-  (`TaskForm`, `TaskRow`, `ShiftStatusBadge`) lives in the route folder,
-  not in `lib/ui`.
+  (`TaskForm`, `TaskRow`, `ShiftStatusBadge`, `TemplateFields`) lives in
+  the route folder, not in `lib/ui`. Shared form errors go through
+  `fieldError` from `#lib/i18n/errors.ts`.
 - Forms: inputs spread from `form.fields.x.as(...)` straight into the
   primitives (`<Input {...f.title.as('text', initial)} />`); messages via
   `errorMessage(issue.message)`.
@@ -154,7 +155,7 @@ Stays in routes until a second use: task row, stat tile, tabs, table, "thanks" c
   first (it becomes the link's accessible name), badges after.
 - Confirmations (`Modal`) are an enhancement: the button is a real submit
   button that opens the modal only when JS runs; the modal's confirm
-  button submits via `form="…"`.
+  button submits via `form="..."`.
 
 ## Showcase
 

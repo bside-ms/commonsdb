@@ -146,7 +146,7 @@ authenticate, call a service in `core`, and return the result. Nothing in
   own URL, and the hooks guard only sees the calling page, so it can't
   protect them.
 - They stay thin: authorize, call core, translate errors. Validation of
-  domain input is core's job (`form('unchecked', …)`); a valibot schema in
+  domain input is core's job (`form('unchecked', ...)`); a valibot schema in
   the remote function only for plain arguments like ids.
 - Core errors: `toFormIssues` in forms (per-field issues, codes as
   messages), `toHttpError` in queries (403/404/400). The UI translates
@@ -304,7 +304,7 @@ and `core`, `db`, `webapp → richtext` (which depends on nothing internal).
   read source directly. Relative imports use the `.ts` extension
   (`allowImportingTsExtensions`).
 - **Shared versions via the pnpm catalog** (`better-auth`, `drizzle-orm`,
-  `typescript`, …) so packages cannot drift apart.
+  `typescript`, ...) so packages cannot drift apart.
 - **Supply chain**: `minimumReleaseAge` and an explicit `allowBuilds`
   allowlist in `pnpm-workspace.yaml`; install scripts are opt-in per
   package.
@@ -356,8 +356,7 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 5 — recurring series**: next. Occurrences are materialised
-  tasks (see ROADMAP, slice 5 decisions).
+- **Slice 6 — messaging**: next (or 6b/7, they're independent).
 - **Admin views of a member's ledger**: superadmins see balances, not
   entries. `getAccountForAdmin` with the `getOwnAccount` read model when
   someone asks.

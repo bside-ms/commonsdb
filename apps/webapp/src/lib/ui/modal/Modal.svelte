@@ -12,9 +12,9 @@
 	</Modal>
 
 	With its own trigger (props carry the aria wiring, spread them):
-	<Modal title="…">
+	<Modal title="...">
 		{#snippet trigger(props)}<Button {...props}>Öffnen</Button>{/snippet}
-		…
+		...
 	</Modal>
 -->
 <script lang="ts">

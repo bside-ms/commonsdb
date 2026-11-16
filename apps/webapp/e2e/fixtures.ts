@@ -3,7 +3,7 @@
  * call gets its own browser context, so one test can have Alex and Kim
  * side by side, like two people on two phones.
  *
- *   test('…', async ({ as }) => {
+ *   test('...', async ({ as }) => {
  *     const alex = await as('admin');
  *     const kim = await as('kim');
  *   });

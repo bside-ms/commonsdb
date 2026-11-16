@@ -114,6 +114,8 @@ export type AdminShift = ShiftTimes & {
 
 export type AdminTaskListItem = Omit<TaskListItem, 'shifts'> & {
 	deleted: boolean;
+	/** Occurrence of a series (slice 5). */
+	seriesId: string | null;
 	shifts: AdminShift[];
 };
 
@@ -127,6 +129,8 @@ type TaskFields = Omit<TaskData, 'whenKind' | 'endsOn' | 'shifts'> & {
 export type AdminTask = TaskFields & {
 	id: string;
 	deleted: boolean;
+	/** The series this task is an occurrence of; null for one-off tasks. */
+	series: { id: string; title: string } | null;
 	shifts: AdminShift[];
 };
 
@@ -506,7 +510,7 @@ export async function listTasksForAdmin(
 	if (f.categoryId) where.push(eq(task.categoryId, f.categoryId));
 
 	const rows = await db
-		.select({ ...listColumns, deletedAt: task.deletedAt })
+		.select({ ...listColumns, deletedAt: task.deletedAt, seriesId: task.seriesId })
 		.from(task)
 		.innerJoin(category, eq(task.categoryId, category.id))
 		.where(and(...where))
@@ -516,16 +520,21 @@ export async function listTasksForAdmin(
 		db,
 		rows.map((r) => r.id)
 	);
+
 	return rows.map((r) => ({
 		...baseItem(r),
 		deleted: r.deletedAt !== null,
+		seriesId: r.seriesId,
 		shifts: (shifts.get(r.id) ?? []).map(toAdminShift)
 	}));
 }
 
 /** The full task for the edit form, deleted or not. */
 export async function getTaskForAdmin(db: Db, actor: Actor, taskId: string): Promise<AdminTask> {
-	const t = await db.query.task.findFirst({ where: eq(task.id, taskId) });
+	const t = await db.query.task.findFirst({
+		where: eq(task.id, taskId),
+		with: { series: { columns: { id: true, title: true } } }
+	});
 	if (!t) throw new DomainError('task_not_found');
 	await assertManagesCategory(db, actor, t.categoryId);
 	const shifts = (await loadShifts(db, [taskId])).get(taskId) ?? [];
@@ -545,6 +554,7 @@ export async function getTaskForAdmin(db: Db, actor: Actor, taskId: string): Pro
 		startsOn: t.startsOn,
 		endsOn: t.endsOn,
 		deleted: t.deletedAt !== null,
+		series: t.series ?? null,
 		shifts: shifts.map(toAdminShift)
 	};
 }
@@ -669,7 +679,14 @@ export async function updateTask(db: Db, actor: Actor, taskId: string, input: un
 
 /** Copy of a task with the same shift templates, all open. Returns the new id. */
 export async function duplicateTask(db: Db, actor: Actor, taskId: string): Promise<string> {
-	const { id: _, deleted: __, shifts, ...source } = await getTaskForAdmin(db, actor, taskId);
+	const {
+		id: _,
+		deleted: __,
+		series: ___,
+		shifts,
+		...source
+	} = await getTaskForAdmin(db, actor, taskId);
+
 	return db.transaction((tx) =>
 		insertTaskWithShifts(
 			tx,

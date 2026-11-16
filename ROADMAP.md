@@ -303,6 +303,13 @@ in core (shifts.test.ts, service.test.ts) and end to end (shifts.e2e.ts).
   after every confirmation, not only nightly.
 - Series health view for admins; members only ever see occurrences
 
+Status: **done.** Admins create series at `/admin/series` (weekly,
+biweekly, monthly by weekday/day/window, every N days after the last
+completion, manual dates), with a live preview of the next dates; pause,
+resume, end, delete and add dates by hand. Occurrences are ordinary tasks
+for members, marked "Serie" for admins with a link back. Tested in core
+(rule.test.ts, series/service.test.ts) and end to end (series.e2e.ts).
+
 **Decided:**
 
 - Occurrences are materialised: real `task` + `shift` rows with
@@ -336,6 +343,13 @@ in core (shifts.test.ts, service.test.ts) and end to end (shifts.e2e.ts).
   Editing an occurrence through the task form sets `series_edited`.
 - Daily top-up: `topUpSeriesDaily(db)` from task-list loads, once per
   day and process. Code lives in `core/src/tasks/series/`.
+- The series form shares title ... details and the shift rows with the
+  task form (`admin/tasks/TemplateFields.svelte`); its rule inputs are
+  all posted, shown per mode once JS runs, read per mode by core.
+- The preview is a remote query (`previewSeries`); core stays
+  server-only.
+- `topUpSeriesDaily` runs from the member list, "Meine Aufgaben", the
+  admin task list and the series list; failures are logged, not shown.
 
 ---
 

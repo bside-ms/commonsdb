@@ -15,6 +15,7 @@ import {
 } from '@commonsdb/core';
 import { toHtml } from '@commonsdb/richtext';
 import { db } from '#lib/server/services.ts';
+import { topUpSeries } from '#lib/server/series.ts';
 import { requireActor, toFormIssues, toHttpError } from '#lib/server/guards.ts';
 
 const Id = v.pipe(v.string(), v.uuid());
@@ -35,17 +36,22 @@ export const memberTasks = query(
 		now: v.optional(v.boolean()),
 		together: v.optional(v.boolean())
 	}),
-	async ({ superCategoryId, categoryId, ...filter }) =>
-		listTasksForMember(db, requireActor(), {
+	async ({ superCategoryId, categoryId, ...filter }) => {
+		const actor = requireActor();
+		await topUpSeries();
+		return listTasksForMember(db, actor, {
 			...filter,
 			superCategoryId: idOrNothing(superCategoryId),
 			categoryId: idOrNothing(categoryId)
-		}).catch(toHttpError)
+		}).catch(toHttpError);
+	}
 );
 
 /** Only the tasks the member has taken (start page). */
 export const myTasks = query(async () => {
-	const tasks = await listTasksForMember(db, requireActor()).catch(toHttpError);
+	const actor = requireActor();
+	await topUpSeries();
+	const tasks = await listTasksForMember(db, actor).catch(toHttpError);
 	return tasks.filter((t) => t.shifts.mine !== null);
 });
 

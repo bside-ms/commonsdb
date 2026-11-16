@@ -17,7 +17,7 @@ spaces can run their own copy with their own login and calendar systems.
   use resources
 - **Users and initiatives**: people can belong to and run one or more
   initiatives (groups) within the space
-- **Resources and bookings** (rooms, kitchen, cargo bikes, …), with access
+- **Resources and bookings** (rooms, kitchen, cargo bikes, ...), with access
   rules such as required qualifications _(planned after the first release)_
 
 The full picture, including design decisions, is in
@@ -44,7 +44,7 @@ rewrite. Details and trade-offs in ARCHITECTURE.md.
 │   ├── db/            # Drizzle schema + migrations
 │   ├── auth/          # Better Auth setup
 │   └── richtext/      # TipTap profiles, validation, rendering
-├── docs/              # cross-cutting docs (adapters, …)
+├── docs/              # cross-cutting docs (adapters, ...)
 ├── docker-compose.yml # Postgres (+ optional local Keycloak)
 ├── ARCHITECTURE.md    # conceptual/architectural decisions, living doc
 ├── ROADMAP.md         # order of work, slice by slice
@@ -76,7 +76,7 @@ pnpm dev                  # http://localhost:5173
 ```
 
 New users start as members. To make yourself superadmin:
-`update "user" set platform_role = 'superadmin' where email = '…';`
+`update "user" set platform_role = 'superadmin' where email = '...';`
 
 ```sh
 pnpm check                # types

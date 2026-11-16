@@ -42,6 +42,9 @@
 		{#if task.urgent}
 			<Badge tone="attention">{m.task_urgent()}</Badge>
 		{/if}
+		{#if task.seriesId}
+			<Badge outline>{m.task_series_badge()}</Badge>
+		{/if}
 		{#if total === 1}
 			<ShiftStatusBadge shift={task.shifts[0]} />
 		{:else}

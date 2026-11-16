@@ -71,3 +71,14 @@ export function formatShiftTime(s: {
 	const window = `${s.startsTime}–${s.endsTime}`;
 	return s.endsNextDay ? `${window} ${m.task_shift_next_day_short()}` : window;
 }
+
+/** Weekday name, 0 = Monday: "Mittwoch" (long) or "Mi." (short). */
+export function weekdayName(weekday: number, style: 'long' | 'short' = 'long') {
+	// 2024-01-01 was a Monday
+	const day = new Date(Date.UTC(2024, 0, 1 + weekday));
+	return new Intl.DateTimeFormat(getLocale(), { weekday: style, timeZone: 'UTC' }).format(day);
+}
+
+/** Today where the space is, as 'YYYY-MM-DD' (form defaults). */
+export const todayIso = () =>
+	new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date());

@@ -5,13 +5,13 @@
 
 	<Card title="Zu bestätigen">
 		{#snippet actions()}<Button size="sm" variant="ghost">Alle ansehen</Button>{/snippet}
-		…
+		...
 	</Card>
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn } from '../utils.ts';
+	import { cn } from '#lib/ui';
 
 	type Props = Omit<HTMLAttributes<HTMLElement>, 'class' | 'title'> & {
 		title?: string;

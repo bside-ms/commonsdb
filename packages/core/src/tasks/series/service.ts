@@ -6,6 +6,7 @@
  * Scope: like tasks, a series belongs to a category, and admins manage
  * the series of their categories.
  */
+import * as v from 'valibot';
 import { and, asc, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm';
 import type { Db } from '@commonsdb/db';
 import {
@@ -24,9 +25,20 @@ import { parse } from '../../validation.ts';
 import { assertManagesCategory, manageableCategories } from '../policy.ts';
 import { byWindow, hhmm, localToday } from '../shifts.ts';
 import type { TaskData } from '../schema.ts';
-import { generateOccurrences, insertOccurrence, withdrawUntouched } from './generator.ts';
-import type { SeriesRule } from './rule.ts';
-import { EndSeriesInput, OccurrenceInput, SeriesInput, type SeriesData } from './schema.ts';
+import {
+	generateOccurrences,
+	insertOccurrence,
+	lastDoneOf,
+	withdrawUntouched
+} from './generator.ts';
+import { nextPeriods, type Period, type SeriesRule } from './rule.ts';
+import {
+	EndSeriesInput,
+	OccurrenceInput,
+	SeriesInput,
+	SeriesTimingInput,
+	type SeriesData
+} from './schema.ts';
 
 type Today = { today?: string };
 
@@ -231,6 +243,27 @@ export async function getSeriesForAdmin(
 		state: stateOf(s, today),
 		upcoming: (await upcomingOf(db, [s.id], today)).get(s.id) ?? []
 	};
+}
+
+/**
+ * The next dates a rule would give, for the form's preview. Validates only
+ * the rule fields; an invalid rule gives no dates (the form shows its
+ * errors on submit). Editing a series: its last completion counts.
+ */
+export async function previewSeries(
+	db: Db,
+	actor: Actor,
+	input: unknown,
+	{ seriesId, today = localToday(), count = 3 }: Today & { seriesId?: string; count?: number } = {}
+): Promise<Period[]> {
+	const result = v.safeParse(SeriesTimingInput, input);
+	if (!result.success) return [];
+	let lastDone: string | null = null;
+	if (seriesId) {
+		await loadSeries(db, actor, seriesId); // scope check
+		lastDone = await lastDoneOf(db, seriesId);
+	}
+	return nextPeriods(result.output, { today, lastDone, count });
 }
 
 // ---- writes ----------------------------------------------------------------------

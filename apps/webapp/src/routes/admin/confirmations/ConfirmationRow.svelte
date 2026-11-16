@@ -21,7 +21,7 @@
 		const issue = field.issues()?.[0];
 		return issue ? errorMessage(issue.message) : undefined;
 	};
-	// form-level errors (forbidden, someone was faster, …)
+	// form-level errors (forbidden, someone was faster, ...)
 	const formIssues = $derived([
 		...(confirmForm.fields.shiftId.issues() ?? []),
 		...(sendBackForm.fields.shiftId.issues() ?? [])

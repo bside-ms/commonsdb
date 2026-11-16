@@ -2,7 +2,7 @@
  * Domain errors carry a code, never user-facing text.
  * The UI maps codes to translated messages.
  *
- * Plain fields instead of `constructor(readonly code …)`: parameter
+ * Plain fields instead of `constructor(readonly code ...)`: parameter
  * properties are not erasable syntax, so Node's type stripping (seed
  * script, later the worker) refuses to run this file.
  */

@@ -89,7 +89,7 @@ export async function insertUser(
 }
 
 /**
- * Categories from a { superCategory: [category, …] } map.
+ * Categories from a { superCategory: [category, ...] } map.
  * Returns ids by name: `cat.Garten`, `sup['Haus & Hof']`.
  */
 export async function insertCategories(db: Db, taxonomy: Record<string, string[]>) {
