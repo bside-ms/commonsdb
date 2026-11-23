@@ -75,3 +75,7 @@
 		</ul>
 	{/if}
 </section>
+
+<p class="mt-12 text-small">
+	<a href={resolve('/about')} class="font-semibold">{m.about_link()}</a>
+</p>

@@ -558,26 +558,23 @@ Small, mostly CRUD, high visible value: suggestions (member reports
 something, admin converts it into a task), news on the start page, the
 superadmin-editable "About" page.
 
-**7a suggestions — decided:** `suggestion` (open | converted | rejected),
-optional category as routing: the category's admins, uncategorised → all
-admins, superadmins everything. Conversion goes through the normal task
-form (pre-filled) and `createTask`'s `within` hook, so the task and the
-status change commit together; a second admin gets
-`suggestion_already_handled`. The member's photo is carried over
-(`keepImageId`) and is visible to the admins who can handle the
-suggestion. No member nav entry: a button on the start page.
-Notifying the author on conversion/rejection: later, via messaging.
-Admin side: `/admin/suggestions` (open | converted | rejected via
-`?status`), detail page with the pre-filled task form and declining in a
-`<details>`. Nav badge counts open suggestions in scope, refreshed per
-navigation like the unread messages.
+Status: **done**.
 
-**7b news — done:** `news` (TipTap body, profile `news`: no headings,
-quotes or code), admins write. Draft = no `published_at`; republishing
-keeps the first date. Start page: all current pinned posts, then the
-newest three; `visible_until` (a day, inclusive) only drops a post from
-the start page, `/news` keeps it. Delete is for good. The editor toolbar
-hides tools the profile lacks.
+- **Suggestions:** `suggestion` (open | converted | rejected), routed by
+  optional category through the capability scope (uncategorised → all
+  admins). Conversion goes through the pre-filled task form and
+  `createTask`'s `within` hook (one transaction; a second admin gets
+  `suggestion_already_handled`). The photo carries over and is visible to
+  the admins who can handle it. Admin nav badge counts open ones.
+- **News:** `news` with its own rich-text profile (no headings, quotes,
+  code). Admins write. Draft = no `published_at`; republishing keeps the
+  first date. Start page: current pinned posts, then the newest three;
+  `visible_until` drops a post from the start page only, `/news` keeps it.
+  The editor toolbar hides tools a profile lacks.
+- **About:** `site_page` (slug-keyed, profile `wiki`), superadmin-only,
+  edited in place at `/about/edit`. House rules are the likely next slug.
+
+Later: tell the author when their suggestion is handled (messaging).
 
 ---
 

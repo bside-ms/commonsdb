@@ -8,3 +8,4 @@ export * from './messaging/index.ts';
 export * from './knowledge/index.ts';
 export * from './suggestions/index.ts';
 export * from './news/index.ts';
+export * from './site-pages/index.ts';

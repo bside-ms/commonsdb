@@ -489,6 +489,15 @@
 	"wiki_version_restore": "Diese Fassung wiederherstellen",
 	"wiki_version_pick": "Wähl links eine Version, um sie anzusehen.",
 	"wiki_link_unavailable": "nicht mehr verfügbar",
+	"about_title": "Über die B-Side",
+	"about_link": "Über die B-Side",
+	"about_edit": "Seite bearbeiten",
+	"about_content": "Inhalt",
+	"about_save": "Speichern",
+	"about_updated": "Zuletzt geändert am {date}",
+	"about_empty_title": "Hier steht bald, wer wir sind",
+	"about_empty_hint": "Der Text wird gerade geschrieben.",
+	"about_empty_hint_editor": "Noch leer. Über „Seite bearbeiten“ kannst du den Text schreiben.",
 	"news_title": "Neuigkeiten",
 	"news_all": "Alle Neuigkeiten",
 	"news_none": "Noch keine Neuigkeiten.",
@@ -675,5 +684,9 @@
 	"error_news_body_link_invalid": "Ein Link ist ungültig. Erlaubt sind http(s), mailto und tel.",
 	"error_news_body_too_long": "Der Text ist zu lang.",
 	"error_news_visible_until_invalid": "Bitte ein gültiges Datum.",
-	"error_news_not_found": "Diese Neuigkeit gibt es nicht (mehr)."
+	"error_news_not_found": "Diese Neuigkeit gibt es nicht (mehr).",
+	"error_site_page_invalid": "Der Text enthält etwas, das hier nicht geht.",
+	"error_site_page_link_invalid": "Ein Link ist ungültig. Erlaubt sind http(s), mailto und tel.",
+	"error_site_page_too_long": "Der Text ist zu lang.",
+	"error_site_page_not_found": "Diese Seite gibt es nicht."
 }
