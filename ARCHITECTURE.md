@@ -124,6 +124,17 @@ and simple.
   as keys `provider:ref`. `core/knowledge/links.ts` resolves them; today only
   `builtin` is accepted. An adapter adds its key format and a resolver there
   (title for `cached_title`, liveness for "nicht mehr verfügbar").
+- **`FileStorage`** — where uploaded files live. `put` (stream),
+  `get(key, { range })` (stream, optional byte range for audio/video
+  seeking), `delete`, addressed by an opaque key; core never sees paths
+  or URLs.
+  Reference implementations: **local disk** (default; a directory
+  configured by `UPLOAD_DIR`, on the VPS a mounted volume or separate
+  folder outside the app) and, later, **S3-compatible object storage**
+  (AWS S3, MinIO, Hetzner/Scaleway buckets) for spaces without a
+  persistent disk or with several app instances. The S3 adapter keeps
+  files private and the app still serves them through `/media`, so
+  access rules stay in one place; no public bucket URLs.
 
 All wiring happens in one **composition root** per app
 (`apps/webapp/src/lib/server/services.ts`): it reads env, creates `db`
@@ -159,6 +170,24 @@ authenticate, call a service in `core`, and return the result. Nothing in
   codes with `errorMessage()`.
 - Inputs come from `form.fields.<name>.as(...)`; `.for(id)` when the same
   form appears more than once (rows, one per entity).
+
+## Uploads
+
+- Two tables: `upload` (what was uploaded: kind, detected mime type,
+  original name, size, uploader, `meta` JSON) and `upload_file` (what is
+  stored: one row per variant, e.g. `large`, `thumb`; later `original`,
+  `preview`, `poster`). Entities reference `upload`, never a file.
+- The type comes from the file's bytes (`file-type`), not from the
+  browser or the filename. Each kind has a processor that turns the
+  input into variants; a type without a processor is rejected.
+- Images are always re-encoded (metadata stripped); originals are not
+  kept.
+- Everything is served by `/media/[id]/[variant]` behind the login.
+  Core decides access from what references the upload (a task image:
+  every member; a profile picture: its photo visibility). Headers:
+  stored content type, `nosniff`, `Content-Disposition` for documents,
+  a sandbox CSP for anything that isn't an image.
+- Size limits per kind in one place.
 
 ## Tests
 
@@ -362,21 +391,26 @@ Database: Postgres, decided.
 
 ## Open / next
 
-- **Slice 6**: 6a messaging done, 6b wiki next.
+- **Slice 6c — uploads, task images, profile pictures**: next, then
+  slice 7.
+- **Deployment adapter**: the webapp still uses `adapter-auto`; the VPS
+  target means `adapter-node`. Raise its `BODY_SIZE_LIMIT` (512 KB by
+  default) for uploads.
+- **CI**: GitHub Actions with a Postgres service running `pnpm check`,
+  `pnpm test`, `pnpm test:e2e`.
 - **Admin views of a member's ledger**: superadmins see balances, not
   entries. `getAccountForAdmin` with the `getOwnAccount` read model when
   someone asks.
-- **CI**: GitHub Actions with a Postgres service running `pnpm check`,
-  `pnpm test`, `pnpm test:e2e`.
-- **Admin roles**: still set by SQL. `/admin/members` exists since slice 3 (balances, adjustments); role assignment
-  belongs there.
+- **Admin roles**: still set by SQL. `/admin/members` exists since slice
+  3 (balances, adjustments); role assignment belongs there.
 - **Keycloak logout**: signing out ends the app session only; decide
   whether to also end the IdP session.
+- **Worker process**: replaces `topUpSeriesDaily` with a nightly job;
+  later also the upload cleanup.
 - **Experimental SvelteKit features** (remote functions, Svelte async):
   in use since slice 2; two dev-only warnings after form redirects are
   known (see slice 2 notes). Re-check on SvelteKit updates.
 - **TypeScript 7**: packages use the native compiler; editor and
-  `svelte-check` tooling may lag — pin via catalog if it causes trouble.
-- Later: worker process, deployment docs (VPS/Docker), ledger semantics,
-  Better Auth organization plugin vs. own initiative model.
-- **Worker process**: replaces `topUpSeriesDaily` with a nightly job.
+  `svelte-check` tooling may lag. Pin via catalog if it causes trouble.
+- Later: deployment docs (VPS/Docker), ledger semantics, Better Auth
+  organization plugin vs. own initiative model.

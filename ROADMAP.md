@@ -490,6 +490,36 @@ cached_title)` is provider-neutral. Tasks and series templates get a
 - Links go with a task only when it is hard-deleted (withdrawn
   occurrences); soft-deleted tasks keep them for restore.
 
+## Slice 6c — Uploads, task images, profile pictures
+
+The prototype shows photos on tasks, suggestions and profiles. Nothing
+can be uploaded yet, so this slice builds that once and uses it twice.
+
+- `FileStorage` port with a local-disk adapter (see ARCHITECTURE)
+- Uploads are generic: `upload` (kind `image | document | audio |
+  video`, detected mime type, original name, size, meta) and
+  `upload_file` (one row per stored variant). Each kind gets a
+  processor; only the image processor exists in this slice, every
+  other type is rejected. The type is detected from the file's bytes.
+- Images are re-encoded on the server: resized (large + thumbnail),
+  WebP, metadata stripped (no GPS from phone photos). Originals are
+  never stored. JPEG/PNG/WebP, up to 10 MB.
+- Served by `/media/[id]/[size]` behind the login; core decides who
+  may see which upload
+- **Task image**: one per task, optional alt text; shown on cards and
+  the detail page. Series templates carry one too; occurrences and
+  duplicates share it rather than copying.
+- **Profile picture**: upload, replace, remove; shown wherever an
+  avatar appears, following the photo visibility setting. Removed
+  pictures are deleted immediately.
+
+Deliberately not here: images inside rich text (wiki, descriptions),
+suggestion photos (slice 7 uses the same foundation), the S3 adapter,
+orphan cleanup (needs the worker).
+
+Demo: an admin adds a photo to a task, members see it in the list;
+Kim sets a profile picture visible to admins only, Lu sees initials.
+
 ---
 
 ## Slice 7 — Around the edges
@@ -537,9 +567,6 @@ Certificates gating tasks and resources.
 Things the prototype implies that we should _not_ settle yet. Revisit
 when the design side stabilises.
 
-- **Past tasks.** A task whose date has passed can still be taken and
-  reported. Slice 3 gave "done" a meaning but not "overdue"; decide with
-  series (slice 5), where completion-relative repeats need it anyway.
 - **Registration.** Self-serve with a rules checkbox, per the prototype.
   Whether admins approve is unresolved.
 - **Tenant grace.** Guidance or enforcement? Their copy says a minus is
@@ -550,6 +577,20 @@ when the design side stabilises.
 - **Send-back history.** Only the latest reason is kept; reporting again
   clears it. If admins want to see how often something went back and
   forth, add a `shift_event` log.
+- **Profile picture from the IdP.** OIDC has a `picture` claim
+  (Better Auth stores it in `user.image`); our Keycloak doesn't hold
+  pictures. If a space's IdP does: import once on first login through
+  the upload pipeline, fetching only from the IdP's origin.
+- **Orphaned uploads.** Replaced task images stay on disk until a
+  cleanup job removes files no task, series or profile references.
+  Belongs to the worker process.
+- **Other file types.** PDFs (stored as uploaded, served sandboxed or
+  as download; later a page-1 preview), audio and video (Range
+  requests for playback; transcoding and posters need the worker and
+  ffmpeg). Large files need a different upload path: presigned direct
+  upload with S3, resumable uploads (tus) with local disk. Several files
+  on one entity need an `attachment` table. Some documents may belong
+  in the wiki instead; decide with the first real case.
 
 ---
 
