@@ -16,11 +16,13 @@ import {
 	pauseSeries,
 	previewSeries,
 	resumeSeries,
+	SeriesInput,
 	updateSeries
 } from '@commonsdb/core';
 import { toHtml } from '@commonsdb/richtext';
 import { db } from '#lib/server/services.ts';
 import { topUpSeries } from '#lib/server/series.ts';
+import { withImage } from '#lib/server/template-image.ts';
 import { requireAdmin, toFormIssues, toHttpError } from '#lib/server/guards.ts';
 import type { TemplateFormData } from '../tasks/template.ts';
 
@@ -77,11 +79,12 @@ export type SeriesRuleFormData = {
 export type SeriesFormData = TemplateFormData & SeriesRuleFormData & { id?: string };
 
 /** Create, then open it (a manual series needs its first dates); update, back to the list. */
-export const saveSeries = form('unchecked', async ({ id, ...input }: SeriesFormData) => {
+export const saveSeries = form('unchecked', async ({ id, ...posted }: SeriesFormData) => {
 	const actor = requireAdmin();
 	if (id !== undefined && !v.is(Id, id)) error(400, 'series_not_found');
 	let target = '/admin/series';
 	try {
+		const input = await withImage(actor, posted, SeriesInput);
 		if (id) await updateSeries(db, actor, id, input);
 		else target = `/admin/series/${await createSeries(db, actor, input)}`;
 	} catch (e) {

@@ -29,9 +29,15 @@ export type TemplateFormData = {
 	shifts: ShiftFormData[];
 	/** Wiki pages as keys 'builtin:<page id>'. */
 	links?: string[];
+	/** A new photo; stored by the remote function, core only sees its id. */
+	image?: File;
+	removeImage?: boolean;
+	/** The current photo's upload id ('' = none), posted back to keep it. */
+	imageId?: string;
+	imageAlt?: string;
 };
 
-export type TemplateInitial = Required<TemplateFormData> & {
+export type TemplateInitial = Required<Omit<TemplateFormData, 'image' | 'removeImage'>> & {
 	description: string;
 	/** Titles of the stored links, for the list before anything changes. */
 	linkViews: LinkView[];
@@ -52,6 +58,8 @@ export function templateInitial(
 		bring: string | null;
 		physicalDemands: string | null;
 		links?: LinkView[];
+		imageId?: string | null;
+		imageAlt?: string | null;
 	},
 	shifts?: (AdminShift | AdminSeries['shiftTemplates'][number])[]
 ): TemplateInitial {
@@ -73,6 +81,8 @@ export function templateInitial(
 					hours: hoursValue(s.hoursTenths)
 				}))
 			: [EMPTY_SHIFT],
+		imageId: source?.imageId ?? '',
+		imageAlt: source?.imageAlt ?? '',
 		links: source?.links?.map((l) => l.key) ?? [],
 		linkViews: source?.links ?? []
 	};

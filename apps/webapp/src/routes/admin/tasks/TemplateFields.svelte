@@ -17,6 +17,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage, fieldError as err } from '#lib/i18n/errors.ts';
 	import { Button, Checkbox, Editor, FormField, Input, Select, Textarea } from '#lib/ui';
+	import ImageField from './ImageField.svelte';
 	import ShiftStatusBadge from './ShiftStatusBadge.svelte';
 	import WikiLinks from './WikiLinks.svelte';
 	import {
@@ -34,10 +35,20 @@
 		descriptionHtml?: string;
 		/** Stored shifts of a task: rows someone holds are locked. None for a series. */
 		stored?: AdminShift[];
+		/** Placeholder seed for the photo preview; none while creating. */
+		imageSeed?: string;
 		when: Snippet;
 	};
 
-	let { fields: f, initial, categories, descriptionHtml, stored = [], when }: Props = $props();
+	let {
+		fields: f,
+		initial,
+		categories,
+		descriptionHtml,
+		stored = [],
+		imageSeed,
+		when
+	}: Props = $props();
 
 	// The editor posts through its own hidden input; it only needs the name.
 	// After a failed submit without JS, value() holds what was posted.
@@ -122,6 +133,8 @@
 			{isAllowedHref}
 		/>
 	</FormField>
+
+	<ImageField fields={f} {initial} seed={imageSeed} />
 </fieldset>
 
 {@render when()}

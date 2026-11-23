@@ -149,6 +149,8 @@ export const SeriesInput = v.pipe(
 			contact: input.contact,
 			bring: input.bring,
 			physicalDemands: input.physicalDemands,
+			imageId: input.imageId,
+			imageAlt: input.imageAlt,
 			shiftTemplates: input.shifts.map(({ id: _, ...t }) => t),
 			links: input.links,
 			...timing

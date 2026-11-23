@@ -8,7 +8,8 @@
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatHours, formatWhen } from '#lib/format.ts';
-	import { Badge, Button, toast } from '#lib/ui';
+	import { mediaUrl } from '#lib/media.ts';
+	import { Badge, Button, Thumb, toast } from '#lib/ui';
 	import { duplicate, remove, restore } from './tasks.remote';
 	import ShiftStatusBadge from './ShiftStatusBadge.svelte';
 
@@ -24,6 +25,11 @@
 </script>
 
 <li class="flex flex-wrap items-center gap-x-5 gap-y-2.5 px-4 py-3.5">
+	<Thumb
+		class="max-sm:hidden"
+		seed={task.seriesId ?? task.id}
+		src={task.image && mediaUrl(task.image.id, 'thumb')}
+	/>
 	<div class="min-w-0 flex-1 basis-64">
 		<h2 class="text-h3">
 			<a href={resolve('/admin/tasks/[id]', { id: task.id })} class="no-underline hover:underline">

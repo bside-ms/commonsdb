@@ -497,7 +497,7 @@ can be uploaded yet, so this slice builds that once and uses it twice.
 
 - `FileStorage` port with a local-disk adapter (see ARCHITECTURE)
 - Uploads are generic: `upload` (kind `image | document | audio |
-  video`, detected mime type, original name, size, meta) and
+video`, detected mime type, original name, size, meta) and
   `upload_file` (one row per stored variant). Each kind gets a
   processor; only the image processor exists in this slice, every
   other type is rejected. The type is detected from the file's bytes.
@@ -525,13 +525,27 @@ Status: **in progress.**
   delete), `/media/[id]/[variant]`, adapter-node, upload demo on
   `/dev/ui`. Until step 2, only superadmins and the uploader can see an
   upload.
-- **Step 2 — task images: next.** Task and series forms, cards,
-  detail page.
-- **Step 3 — profile pictures.** Upload/replace/remove, avatars
+- **Step 2 — task images: done.** Photo field in the task and series
+  forms (file sent with "Speichern", works without JS; preview with JS;
+  remove checkbox; alt text). Thumbnail on member cards and admin rows,
+  full width on the task page. Without a photo: a pattern placeholder
+  (stripes/dots/grid/blocks/waves × area colours), derived from the task
+  id, or the series id for occurrences; nothing stored.
+- **Step 3 — profile pictures: next.** Upload/replace/remove, avatars
   everywhere, photo visibility enforced at `/media`.
 
 Demo: an admin adds a photo to a task, members see it in the list;
 Kim sets a profile picture visible to admins only, Lu sees initials.
+
+**Decided:**
+
+- Core's task services take an upload id, never a file. The app stores
+  the file first (only when the rest of the form is valid) and posts the id.
+  A different photo must be an image the actor uploaded.
+- Duplicates and occurrences share the upload. Replaced or removed photos
+  stay until the worker's orphan cleanup.
+- Card photo is decorative (the title names the link); the task page uses
+  the alt text.
 
 ---
 

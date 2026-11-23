@@ -9,7 +9,7 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type { Db } from '@commonsdb/db';
-import { upload, uploadFile } from '@commonsdb/db/schema';
+import { task, taskSeries, upload, uploadFile } from '@commonsdb/db/schema';
 import {
 	MediaError,
 	processUpload,
@@ -156,7 +156,7 @@ export async function getUploadView(db: Db, id: string): Promise<UploadView | nu
  * that references uploads adds its rule here:
  *
  *   - the uploader, and superadmins: always
- *   - (step 2) a task's image: every signed-in member
+ *   - a task's or series' photo: every signed-in member
  *   - (step 3) a profile picture: its owner, else by photo visibility
  *
  * Everything else, e.g. an upload nothing references any more: nobody else.
@@ -168,7 +168,23 @@ export async function canViewUpload(db: Db, actor: Actor, id: string): Promise<b
 		columns: { uploadedBy: true }
 	});
 	if (!row) return false;
-	return row.uploadedBy === actor.id;
+	if (row.uploadedBy === actor.id) return true;
+	return isTaskImage(db, id);
+}
+
+/**
+ * A task or series uses it as its photo. Every member may see those: the
+ * task list is open to all of them (also deleted tasks' photos, which only
+ * admins can still reach by URL; nothing private in a task photo).
+ */
+async function isTaskImage(db: Db, id: string): Promise<boolean> {
+	const [hit] = await db
+		.select({ id: task.id })
+		.from(task)
+		.where(eq(task.imageId, id))
+		.unionAll(db.select({ id: taskSeries.id }).from(taskSeries).where(eq(taskSeries.imageId, id)))
+		.limit(1);
+	return hit !== undefined;
 }
 
 /**

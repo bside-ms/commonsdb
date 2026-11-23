@@ -114,7 +114,18 @@ export const templateFields = {
 		v.maxLength(MAX_SHIFTS, 'task_shifts_too_many')
 	),
 	/** Wiki pages, as keys 'builtin:<page id>' (knowledge/links.ts). */
-	links: LinksInput
+	links: LinksInput,
+	/**
+	 * The upload to show as photo; '' or missing = none. The file itself
+	 * never comes through here: the app stores it first (core/uploads) and
+	 * posts the id. Who may use which upload: tasks/images.ts.
+	 */
+	imageId: v.pipe(
+		v.optional(v.nullable(v.string()), ''),
+		v.transform((s) => s || null),
+		v.nullable(v.pipe(v.string(), v.uuid('upload_not_found')))
+	),
+	imageAlt: optionalText(200, 'task_image_alt_too_long')
 };
 
 export const TaskInput = v.pipe(

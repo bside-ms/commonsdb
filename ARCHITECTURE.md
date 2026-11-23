@@ -185,10 +185,13 @@ authenticate, call a service in `core`, and return the result. Nothing in
 - Everything is served by `/media/[id]/[variant]` behind the login
   (ETag/304, Range/206 for later audio/video seeking). Any denial looks
   like a missing file (404 `upload_not_found`).
-  Core decides access from what references the upload (a task image:
-  every member; a profile picture: its photo visibility). Headers:
-  stored content type, `nosniff`, `Content-Disposition` for documents,
-  a sandbox CSP for anything that isn't an image.
+  Core decides access from what references the upload: a task's or
+  series' photo: every member; a profile picture: its photo visibility
+  (step 3).
+- Entities get an upload id from the app, never a file: the remote
+  function stores the file (`@commonsdb/core/uploads`), then calls the
+  service with the id. A service accepting a new id checks that the
+  actor uploaded it.
 - Size limits per kind in one place.
 
 ## Tests

@@ -34,6 +34,7 @@ import {
 	type TaskLink
 } from '../knowledge/links.ts';
 import { assertSuperadmin, type Actor } from '../roles.ts';
+import { assertUsableImage } from './images.ts';
 import { parse } from '../validation.ts';
 import { assertManagesCategory, canManageCategory, manageableCategories } from './policy.ts';
 import { ReportInput, TaskFilter, TaskInput, type ShiftData, type TaskData } from './schema.ts';
@@ -75,6 +76,9 @@ export type ShiftSummary = {
 	mine: { id: string; status: ShiftStatus; hoursTenths: number } | null;
 };
 
+/** A task's photo: the upload to show (`/media/<id>/<variant>`) and its alt text. */
+export type TaskImage = { id: string; alt: string | null };
+
 export type TaskListItem = {
 	id: string;
 	title: string;
@@ -84,6 +88,10 @@ export type TaskListItem = {
 	startsOn: string;
 	endsOn: string | null;
 	category: { id: string; name: string };
+	/** null: the app shows a placeholder. */
+	image: TaskImage | null;
+	/** Occurrence of a series (slice 5); occurrences share a look. */
+	seriesId: string | null;
 	shifts: ShiftSummary;
 };
 
@@ -123,8 +131,6 @@ export type AdminShift = ShiftTimes & {
 
 export type AdminTaskListItem = Omit<TaskListItem, 'shifts'> & {
 	deleted: boolean;
-	/** Occurrence of a series (slice 5). */
-	seriesId: string | null;
 	shifts: AdminShift[];
 };
 
@@ -270,7 +276,10 @@ const listColumns = {
 	startsOn: task.startsOn,
 	endsOn: task.endsOn,
 	categoryId: category.id,
-	categoryName: category.name
+	categoryName: category.name,
+	imageId: task.imageId,
+	imageAlt: task.imageAlt,
+	seriesId: task.seriesId
 };
 
 type ListRow = {
@@ -283,6 +292,9 @@ type ListRow = {
 	endsOn: string | null;
 	categoryId: string;
 	categoryName: string;
+	imageId: string | null;
+	imageAlt: string | null;
+	seriesId: string | null;
 };
 
 const baseItem = (r: ListRow) => ({
@@ -293,7 +305,9 @@ const baseItem = (r: ListRow) => ({
 	whenKind: r.whenKind,
 	startsOn: r.startsOn,
 	endsOn: r.endsOn,
-	category: { id: r.categoryId, name: r.categoryName }
+	category: { id: r.categoryId, name: r.categoryName },
+	image: r.imageId ? { id: r.imageId, alt: r.imageAlt } : null,
+	seriesId: r.seriesId
 });
 
 /** ilike pattern with the user's % and _ taken literally. */
@@ -521,7 +535,7 @@ export async function listTasksForAdmin(
 	if (f.categoryId) where.push(eq(task.categoryId, f.categoryId));
 
 	const rows = await db
-		.select({ ...listColumns, deletedAt: task.deletedAt, seriesId: task.seriesId })
+		.select({ ...listColumns, deletedAt: task.deletedAt })
 		.from(task)
 		.innerJoin(category, eq(task.categoryId, category.id))
 		.where(and(...where))
@@ -535,7 +549,6 @@ export async function listTasksForAdmin(
 	return rows.map((r) => ({
 		...baseItem(r),
 		deleted: r.deletedAt !== null,
-		seriesId: r.seriesId,
 		shifts: (shifts.get(r.id) ?? []).map(toAdminShift)
 	}));
 }
@@ -561,6 +574,8 @@ export async function getTaskForAdmin(db: Db, actor: Actor, taskId: string): Pro
 		contact: t.contact,
 		bring: t.bring,
 		physicalDemands: t.physicalDemands,
+		imageId: t.imageId,
+		imageAlt: t.imageAlt,
 		whenKind: t.whenKind,
 		startsOn: t.startsOn,
 		endsOn: t.endsOn,
@@ -608,6 +623,7 @@ async function insertTaskWithShifts(
 export async function createTask(db: Db, actor: Actor, input: unknown): Promise<string> {
 	const data = parse(TaskInput, input);
 	await assertManagesCategory(db, actor, data.categoryId);
+	await assertUsableImage(db, actor, data.imageId);
 	// ids only mean something when editing
 	return db.transaction((tx) => insertTaskWithShifts(tx, actor, data, data.shifts, data.links));
 }
@@ -630,13 +646,14 @@ export async function updateTask(db: Db, actor: Actor, taskId: string, input: un
 	const data = parse(TaskInput, input);
 	const current = await db.query.task.findFirst({
 		where: eq(task.id, taskId),
-		columns: { categoryId: true }
+		columns: { categoryId: true, imageId: true }
 	});
 	if (!current) throw new DomainError('task_not_found');
 	await assertManagesCategory(db, actor, current.categoryId);
 	if (data.categoryId !== current.categoryId) {
 		await assertManagesCategory(db, actor, data.categoryId);
 	}
+	await assertUsableImage(db, actor, data.imageId, current.imageId);
 
 	await db.transaction(async (tx) => {
 		const existing = await tx

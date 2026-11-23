@@ -19,7 +19,8 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage } from '#lib/i18n/errors.ts';
 	import { formatHours, formatHoursRange, formatShiftTime, formatWhen } from '#lib/format.ts';
-	import { Badge, Button, Card, FormField, Modal, RichText, Textarea, toast } from '#lib/ui';
+	import { mediaUrl } from '#lib/media.ts';
+	import { Badge, Button, Card, FormField, Modal, RichText, Textarea, Thumb, toast } from '#lib/ui';
 	import { memberTask, release, report, take } from '../tasks.remote';
 	import { taskChat } from '../../messages/messages.remote';
 
@@ -80,6 +81,14 @@
 	<Badge outline>{task.category.name}</Badge>
 </div>
 <h1 class="mt-2">{task.title}</h1>
+
+<Thumb
+	size="lg"
+	class="mt-4 max-w-4xl"
+	seed={task.seriesId ?? task.id}
+	src={task.image && mediaUrl(task.image.id, 'large')}
+	alt={task.image?.alt}
+/>
 
 <div class="mt-6 grid max-w-4xl gap-6 lg:grid-cols-[1fr_18rem] lg:items-start">
 	<div class="grid gap-6">

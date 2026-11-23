@@ -17,6 +17,7 @@ import {
 import type { RichTextDoc } from '@commonsdb/richtext';
 import type { SeriesRuleJson, ShiftTemplateJson } from './series-json.ts';
 import { user } from './auth.ts';
+import { upload } from './uploads.ts';
 
 export const WHEN_KINDS = ['date', 'range'] as const;
 export type WhenKind = (typeof WHEN_KINDS)[number];
@@ -93,6 +94,10 @@ export const taskSeries = pgTable(
 		contact: text('contact'),
 		bring: text('bring'),
 		physicalDemands: text('physical_demands'),
+		/** Photo (slice 6c). Occurrences and copies share the series' upload. */
+		imageId: uuid('image_id').references(() => upload.id, { onDelete: 'set null' }),
+		/** What the photo shows, for screen readers; null = decorative. */
+		imageAlt: text('image_alt'),
 		/** Shifts every occurrence gets, in form order. */
 		shiftTemplates: jsonb('shift_templates').$type<ShiftTemplateJson[]>().notNull(),
 		// rule
@@ -113,6 +118,7 @@ export const taskSeries = pgTable(
 	},
 	(t) => [
 		index('task_series_category_idx').on(t.categoryId),
+		index('task_series_image_idx').on(t.imageId),
 		check('task_series_until_check', sql`${t.until} is null or ${t.until} >= ${t.anchor}`),
 		check('task_series_min_gap_check', sql`${t.minGapDays} between 0 and 365`),
 		check('task_series_lookahead_check', sql`${t.lookahead} between 1 and 12`)
@@ -134,6 +140,10 @@ export const task = pgTable(
 		contact: text('contact'),
 		bring: text('bring'),
 		physicalDemands: text('physical_demands'),
+		/** Photo (slice 6c). Occurrences and copies share the series' upload. */
+		imageId: uuid('image_id').references(() => upload.id, { onDelete: 'set null' }),
+		/** What the photo shows, for screen readers; null = decorative. */
+		imageAlt: text('image_alt'),
 		whenKind: text('when_kind', { enum: WHEN_KINDS }).notNull(),
 		startsOn: date('starts_on', { mode: 'string' }).notNull(),
 		/** Only for 'range'. */
@@ -151,6 +161,7 @@ export const task = pgTable(
 	(t) => [
 		index('task_category_idx').on(t.categoryId),
 		index('task_series_idx').on(t.seriesId),
+		index('task_image_idx').on(t.imageId),
 		// the generator's idempotency: one occurrence per period and series
 		uniqueIndex('task_series_period_idx')
 			.on(t.seriesId, t.periodKey)

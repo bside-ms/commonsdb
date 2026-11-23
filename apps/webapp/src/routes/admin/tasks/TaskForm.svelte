@@ -40,7 +40,8 @@
 	});
 </script>
 
-<form {...form} class="grid gap-8">
+<!-- multipart: the photo is a file (remote forms don't add it on their own) -->
+<form {...form} enctype="multipart/form-data" class="grid gap-8">
 	{#if task}<input {...f.id.as('hidden', task.id)} />{/if}
 
 	<TemplateFields
@@ -49,6 +50,7 @@
 		{categories}
 		descriptionHtml={task?.descriptionHtml}
 		stored={task?.shifts}
+		imageSeed={task && (task.series?.id ?? task.id)}
 	>
 		{#snippet when()}
 			<fieldset class="when grid gap-5 sm:grid-cols-2">

@@ -23,6 +23,7 @@ import { DomainError, ValidationError } from '../../errors.ts';
 import type { Actor } from '../../roles.ts';
 import { parse } from '../../validation.ts';
 import { assertManagesCategory, manageableCategories } from '../policy.ts';
+import { assertUsableImage } from '../images.ts';
 import { byWindow, hhmm, localToday } from '../shifts.ts';
 import type { TaskData } from '../schema.ts';
 import {
@@ -86,6 +87,8 @@ export type AdminSeries = Pick<
 	| 'contact'
 	| 'bring'
 	| 'physicalDemands'
+	| 'imageId'
+	| 'imageAlt'
 > & {
 	id: string;
 	shiftTemplates: ShiftTemplateJson[];
@@ -233,6 +236,8 @@ export async function getSeriesForAdmin(
 		contact: s.contact,
 		bring: s.bring,
 		physicalDemands: s.physicalDemands,
+		imageId: s.imageId,
+		imageAlt: s.imageAlt,
 		// display order, like a task's shifts
 		shiftTemplates: [...s.shiftTemplates]
 			.map((t) => ({ ...t, startsTime: hhmm(t.startsTime), endsTime: hhmm(t.endsTime) }))
@@ -281,6 +286,8 @@ const seriesColumns = (d: SeriesData) => ({
 	contact: d.contact,
 	bring: d.bring,
 	physicalDemands: d.physicalDemands,
+	imageId: d.imageId,
+	imageAlt: d.imageAlt,
 	shiftTemplates: d.shiftTemplates,
 	rule: d.rule,
 	anchor: d.anchor,
@@ -298,6 +305,7 @@ export async function createSeries(
 ): Promise<string> {
 	const data = parse(SeriesInput, input);
 	await assertManagesCategory(db, actor, data.categoryId);
+	await assertUsableImage(db, actor, data.imageId);
 	return db.transaction(async (tx) => {
 		const [s] = await tx
 			.insert(taskSeries)
@@ -326,6 +334,7 @@ export async function updateSeries(
 	if (data.categoryId !== current.categoryId) {
 		await assertManagesCategory(db, actor, data.categoryId);
 	}
+	await assertUsableImage(db, actor, data.imageId, current.imageId);
 	await db.transaction(async (tx) => {
 		await tx.update(taskSeries).set(seriesColumns(data)).where(eq(taskSeries.id, seriesId));
 		await setLinks(tx, { type: 'series', id: seriesId }, data.links);

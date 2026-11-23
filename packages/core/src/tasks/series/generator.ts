@@ -113,6 +113,9 @@ export async function insertOccurrence(
 			contact: s.contact,
 			bring: s.bring,
 			physicalDemands: s.physicalDemands,
+			// shared, not copied: one upload for the whole series
+			imageId: s.imageId,
+			imageAlt: s.imageAlt,
 			whenKind: when.whenKind,
 			startsOn: when.startsOn,
 			endsOn: when.endsOn,

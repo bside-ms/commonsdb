@@ -125,6 +125,8 @@ anywhere in the app.
 | `Editor`     | done  | TipTap; `variant` document/message (compact, own toolbar), `submitOnEnter` (Enter sends, Shift+Enter breaks, not on touch), clears on form reset                                               |
 | `Select`     | done  | native; `options` or `groups` (renders `<optgroup>`), `placeholder`                                                                                                                            |
 | `Balance`    | done  | the "Saldo": `value` (pre-formatted) + `label`, optional `href` makes the tile a link; `text-saldo`, area-commons fill                                                                         |
+| `FileInput`  | done  | `type="file"` in the control style (styled browser button), field context; no `bind:value`                                                                                                     |
+| `Thumb`      | done  | photo or pattern placeholder; `seed` picks pattern × area colour (`placeholderFor`), `src`, `alt` ('' = decorative), `size` sm 84×64 / lg full × 200; falls back to the pattern on error       |
 
 The root `+layout.svelte` picks the shell: admin variant under `/admin`,
 member variant elsewhere, no shell when logged out (login), no nav during

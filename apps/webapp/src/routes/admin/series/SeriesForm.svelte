@@ -132,10 +132,17 @@
 	].map((label, i) => ({ value: String(i + 1), label: label() }));
 </script>
 
-<form {...form} class="grid gap-8">
+<!-- multipart: the photo is a file (remote forms don't add it on their own) -->
+<form {...form} enctype="multipart/form-data" class="grid gap-8">
 	{#if series}<input {...f.id.as('hidden', series.id)} />{/if}
 
-	<TemplateFields fields={f} {initial} {categories} descriptionHtml={series?.descriptionHtml}>
+	<TemplateFields
+		fields={f}
+		{initial}
+		{categories}
+		descriptionHtml={series?.descriptionHtml}
+		imageSeed={series?.id}
+	>
 		{#snippet when()}
 			<fieldset class="grid gap-5 sm:grid-cols-2">
 				<legend class="mb-4 text-h3">{m.series_section_rule()}</legend>

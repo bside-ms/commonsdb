@@ -23,12 +23,14 @@ import {
 	releaseShift,
 	restoreTask,
 	searchWiki,
+	TaskInput,
 	updateTask
 } from '@commonsdb/core';
 import { toHtml } from '@commonsdb/richtext';
 import { db } from '#lib/server/services.ts';
 import { requireAdmin, toFormIssues, toHttpError } from '#lib/server/guards.ts';
 import { topUpSeries } from '#lib/server/series.ts';
+import { withImage } from '#lib/server/template-image.ts';
 import type { TemplateFormData } from './template.ts';
 
 // ---- reads ----------------------------------------------------------------
@@ -93,10 +95,11 @@ export type ShiftFormData = {
 };
 
 /** Create (no id) or update (with id). Back to the list on success. */
-export const saveTask = form('unchecked', async ({ id, ...input }: TaskFormData) => {
+export const saveTask = form('unchecked', async ({ id, ...posted }: TaskFormData) => {
 	const actor = requireAdmin();
 	if (id !== undefined && !v.is(Id, id)) error(400, 'task_not_found');
 	try {
+		const input = await withImage(actor, posted, TaskInput);
 		if (id) await updateTask(db, actor, id, input);
 		else await createTask(db, actor, input);
 	} catch (e) {
