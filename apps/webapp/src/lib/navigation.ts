@@ -4,6 +4,7 @@ import {
 	House,
 	Inbox,
 	KeyRound,
+	Lightbulb,
 	ListChecks,
 	Repeat,
 	Users,
@@ -37,10 +38,23 @@ export const memberNav = ({ unread = 0 }: { unread?: number } = {}): NavItem[] =
 	{ href: resolve('/account'), label: m.nav_account(), icon: Wallet, area: 'commons' }
 ];
 
-/** `unread`: open admin threads in the admin's categories with something new. */
-export const adminNav = (user: { isSuperadmin: boolean }, { unread = 0 } = {}): NavItem[] => [
+/**
+ * `unread`: open admin threads in the admin's categories with something new.
+ * `suggestions`: open suggestions in the admin's categories (and uncategorised ones).
+ */
+export const adminNav = (
+	user: { isSuperadmin: boolean },
+	{ unread = 0, suggestions = 0 } = {}
+): NavItem[] => [
 	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: ListChecks },
 	{ href: resolve('/admin/series'), label: m.admin_nav_series(), icon: Repeat },
+	{
+		href: resolve('/admin/suggestions'),
+		label: m.admin_nav_suggestions(),
+		icon: Lightbulb,
+		count: suggestions,
+		countLabel: suggestions ? m.admin_nav_suggestions_open({ count: suggestions }) : undefined
+	},
 	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: CheckCheck },
 	{
 		href: resolve('/admin/messages'),

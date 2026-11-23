@@ -9,7 +9,7 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type { Db } from '@commonsdb/db';
-import { profile, task, taskSeries, upload, uploadFile } from '@commonsdb/db/schema';
+import { profile, suggestion, task, taskSeries, upload, uploadFile } from '@commonsdb/db/schema';
 import {
 	MediaError,
 	processUpload,
@@ -18,8 +18,9 @@ import {
 	type UploadKind
 } from '@commonsdb/media';
 import { DomainError, ValidationError } from '../errors.ts';
-import { isSuperadmin, type Actor } from '../roles.ts';
+import { isAdmin, isSuperadmin, type Actor } from '../roles.ts';
 import { maySeePhoto } from '../profile/photo.ts';
+import { manageableCategories } from '../tasks/policy.ts';
 
 export type UploadInput = {
 	/** The file's bytes. */
@@ -160,6 +161,7 @@ export async function getUploadView(db: Db, id: string): Promise<UploadView | nu
  *     first: 'nobody' means nobody, superadmins included
  *   - the uploader, and superadmins
  *   - a task's or series' photo: every signed-in member
+ *   - a suggestion's photo: the admins who may handle that suggestion
  *
  * Everything else, e.g. an upload nothing references any more: nobody else.
  */
@@ -176,7 +178,7 @@ export async function canViewUpload(db: Db, actor: Actor, id: string): Promise<b
 	});
 	if (!row) return false;
 	if (row.uploadedBy === actor.id) return true;
-	return isTaskImage(db, id);
+	return (await isTaskImage(db, id)) || isHandleableSuggestionImage(db, actor, id);
 }
 
 /**
@@ -192,6 +194,18 @@ async function isTaskImage(db: Db, id: string): Promise<boolean> {
 		.unionAll(db.select({ id: taskSeries.id }).from(taskSeries).where(eq(taskSeries.imageId, id)))
 		.limit(1);
 	return hit !== undefined;
+}
+
+/** Admins see the photo of a suggestion in their scope (uncategorised: all admins). */
+async function isHandleableSuggestionImage(db: Db, actor: Actor, id: string) {
+	if (!isAdmin(actor)) return false;
+	const s = await db.query.suggestion.findFirst({
+		where: eq(suggestion.imageId, id),
+		columns: { categoryId: true }
+	});
+	if (!s) return false;
+	const scope = await manageableCategories(db, actor);
+	return scope === 'all' || s.categoryId === null || scope.includes(s.categoryId);
 }
 
 /**

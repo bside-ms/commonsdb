@@ -67,7 +67,7 @@ would mean rewriting the domain.
 
 - **Hosting**: cheap shared PHP hosting is no longer a target. The
   reference deployment is Docker or a small VPS (Node process + Postgres
-    - worker). Other spaces need that, or a managed container platform.
+  - worker). Other spaces need that, or a managed container platform.
 - **Supply chain**: npm ecosystem risk is real. Mitigations: lockfile,
   install scripts disabled by default, small dependency count, regular
   audits.
@@ -102,11 +102,11 @@ and simple.
   `packages/auth` exports `createAuth(options)`: Keycloak/OIDC (issuer,
   client id/secret) or email/password, chosen by env vars. Two seams keep
   the library out of the domain:
-    - `core` only sees an **`Actor`** (`{ id, platformRole }`), never a
-      Better Auth session.
-    - `createAuth` exposes an **`onUserCreated`** callback; the webapp
-      connects it to `core` (profile provisioning). `auth` never imports
-      `core`.
+  - `core` only sees an **`Actor`** (`{ id, platformRole }`), never a
+    Better Auth session.
+  - `createAuth` exposes an **`onUserCreated`** callback; the webapp
+    connects it to `core` (profile provisioning). `auth` never imports
+    `core`.
 - **`CalendarProvider`** — where booking events actually live. Reference
   implementations: internal DB (default), CalDAV, Google Calendar. Not
   needed before resource booking (ROADMAP slice 10).
@@ -265,13 +265,13 @@ which UI rendered it.
   the auth API; arrives with the session, no extra query). Managed in the
   app, not mapped from Keycloak — mapping can become an optional auth
   setting later.
-    - The earlier "roles as data in a table" idea is replaced: the
-      flexibility it was meant to provide lives in **category-scoped
-      capabilities** (ROADMAP slice 2), not in the platform role.
-    - Whether `admin` stays a role or becomes "has capabilities" is still
-      open (ROADMAP, "Noticed, not decided").
-    - Initiative-scoped roles (`member` / `admin` on the
-      User↔Initiative relationship) remain as planned for slice 9.
+  - The earlier "roles as data in a table" idea is replaced: the
+    flexibility it was meant to provide lives in **category-scoped
+    capabilities** (ROADMAP slice 2), not in the platform role.
+  - Whether `admin` stays a role or becomes "has capabilities" is still
+    open (ROADMAP, "Noticed, not decided").
+  - Initiative-scoped roles (`member` / `admin` on the
+    User↔Initiative relationship) remain as planned for slice 9.
 - **Account concept**: a shared conceptual role (not necessarily a DB
   table) that both **User** and **Initiative** fulfill — anything that
   can hold a ledger balance and be the "party" on a booking. User and
@@ -281,35 +281,34 @@ which UI rendered it.
   (not just a flag pivot) — a User can belong to zero, one, or many
   Initiatives; standalone use without any Initiative is fully supported.
   The relationship carries an initiative-scoped role.
-    - Better Auth ships an organization plugin (members, roles,
-      invitations). Worth evaluating as a foundation, but the domain model
-      (roles as data, Account concept, ledger) stays owned by `core`; the
-      auth library must not own it.
+  - Better Auth ships an organization plugin (members, roles,
+    invitations). Worth evaluating as a foundation, but the domain model
+    (roles as data, Account concept, ledger) stays owned by `core`; the
+    auth library must not own it.
 - **Ledger (repros) — Approach B, confirmed**:
-    - Both Users and Initiatives hold a balance (they're both Accounts).
-    - Users earn repros (tied to completing tasks/contributions). Earning
-      is always credited to a User for now.
-    - Users can transfer repros to an Initiative's balance.
-    - Either a User or an Initiative can spend from its own balance to pay
-      for a resource booking.
-    - Every transaction carries a **reason/memo** field (like
-      `Verwendungszweck`) — covers today's needs (task credit, resource
-      payment, transfer) and future ones (e.g. "commons working day"
-      contributions by people without an account, credited to an
-      Initiative by an organizer, documented via the memo) without a
-      schema change.
-    - **Credit / negative balance**: allowed, bounded. Each Account has a
-      credit limit (floor) and, while negative, a `credit_since` timestamp.
-      After a grace period an unsettled negative balance blocks the
-      Account from further resource use. Account standing (blocked or not)
-      is a check independent from per-resource access rules — two separate
-      rule types that both gate a booking. The grace-period check runs in
-      the background worker.
-    - Open question: should transfers (User → Initiative) be allowed to
-      push the _sender_ negative, or only resource spending? Leaning
-      toward: transfers must not create/increase a negative balance.
-    - Storage: ledger_account (kind + user_id, initiative later) and append-only ledger_entry; details in ROADMAP slice
-      3.
+  - Both Users and Initiatives hold a balance (they're both Accounts).
+  - Users earn repros (tied to completing tasks/contributions). Earning
+    is always credited to a User for now.
+  - Users can transfer repros to an Initiative's balance.
+  - Either a User or an Initiative can spend from its own balance to pay
+    for a resource booking.
+  - Every transaction carries a **reason/memo** field (like
+    `Verwendungszweck`) — covers today's needs (task credit, resource
+    payment, transfer) and future ones (e.g. "commons working day"
+    contributions by people without an account, credited to an
+    Initiative by an organizer, documented via the memo) without a
+    schema change.
+  - **Credit / negative balance**: allowed, bounded. Each Account has a
+    credit limit (floor) and, while negative, a `credit_since` timestamp.
+    After a grace period an unsettled negative balance blocks the
+    Account from further resource use. Account standing (blocked or not)
+    is a check independent from per-resource access rules — two separate
+    rule types that both gate a booking. The grace-period check runs in
+    the background worker.
+  - Open question: should transfers (User → Initiative) be allowed to
+    push the _sender_ negative, or only resource spending? Leaning
+    toward: transfers must not create/increase a negative balance.
+  - Storage: ledger_account (kind + user_id, initiative later) and append-only ledger_entry; details in ROADMAP slice 3.
 
 ## Repo structure (decided)
 

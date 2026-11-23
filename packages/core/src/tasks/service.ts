@@ -601,7 +601,7 @@ const shiftValues = (s: Omit<ShiftData, 'id'>, position: number) => ({
 	hoursTenths: s.hoursTenths
 });
 
-type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
 async function insertTaskWithShifts(
 	tx: Tx,
@@ -619,13 +619,29 @@ async function insertTaskWithShifts(
 	return t.id;
 }
 
+export type CreateTaskOptions = {
+	/** An upload the actor may use although someone else uploaded it (a suggestion's photo). */
+	keepImageId?: string | null;
+	/** Runs inside the task's transaction, after the insert; throwing rolls the task back. */
+	within?: (tx: Tx, taskId: string) => Promise<void>;
+};
+
 /** New task with its shifts, in one transaction. Returns the task id. */
-export async function createTask(db: Db, actor: Actor, input: unknown): Promise<string> {
+export async function createTask(
+	db: Db,
+	actor: Actor,
+	input: unknown,
+	{ keepImageId = null, within }: CreateTaskOptions = {}
+): Promise<string> {
 	const data = parse(TaskInput, input);
 	await assertManagesCategory(db, actor, data.categoryId);
-	await assertUsableImage(db, actor, data.imageId);
+	await assertUsableImage(db, actor, data.imageId, keepImageId);
 	// ids only mean something when editing
-	return db.transaction((tx) => insertTaskWithShifts(tx, actor, data, data.shifts, data.links));
+	return db.transaction(async (tx) => {
+		const id = await insertTaskWithShifts(tx, actor, data, data.shifts, data.links);
+		await within?.(tx, id);
+		return id;
+	});
 }
 
 /**

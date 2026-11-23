@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ListChecks } from '@lucide/svelte';
+	import { Lightbulb, ListChecks } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
 	import TaskCard from '#lib/components/TaskCard.svelte';
@@ -22,6 +22,11 @@
 	value={formatRepros(balance)}
 	label={m.account_balance_label()}
 />
+
+<Button class="mt-4" size="sm" variant="ghost" href={resolve('/suggestions')}>
+	<Lightbulb class="size-4" strokeWidth={2} aria-hidden="true" />
+	{m.home_suggest()}
+</Button>
 
 <section class="mt-8" aria-labelledby="mine-heading">
 	<div class="flex flex-wrap items-end justify-between gap-3">

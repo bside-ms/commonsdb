@@ -14,6 +14,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { form, query } from '$app/server';
 import * as v from 'valibot';
 import {
+	convertSuggestion,
 	createTask,
 	deleteTask,
 	duplicateTask,
@@ -81,6 +82,8 @@ export const wikiLinkSearch = query(v.string(), async (q) => {
  */
 export type TaskFormData = TemplateFormData & {
 	id?: string;
+	/** Set when the form converts a suggestion. */
+	suggestionId?: string;
 	whenKind: 'date' | 'range';
 	startsOn: string;
 	endsOn?: string;
@@ -95,17 +98,19 @@ export type ShiftFormData = {
 };
 
 /** Create (no id) or update (with id). Back to the list on success. */
-export const saveTask = form('unchecked', async ({ id, ...posted }: TaskFormData) => {
+export const saveTask = form('unchecked', async ({ id, suggestionId, ...posted }: TaskFormData) => {
 	const actor = requireAdmin();
 	if (id !== undefined && !v.is(Id, id)) error(400, 'task_not_found');
+	if (suggestionId !== undefined && !v.is(Id, suggestionId)) error(400, 'suggestion_not_found');
 	try {
 		const input = await withImage(actor, posted, TaskInput);
 		if (id) await updateTask(db, actor, id, input);
+		else if (suggestionId) await convertSuggestion(db, actor, suggestionId, input);
 		else await createTask(db, actor, input);
 	} catch (e) {
 		toFormIssues(e);
 	}
-	redirect(303, '/admin/tasks');
+	redirect(303, suggestionId ? '/admin/suggestions' : '/admin/tasks');
 });
 
 /**

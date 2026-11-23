@@ -15,6 +15,7 @@
 	import { page } from '$app/state';
 	import { unreadCount } from './messages/messages.remote';
 	import { adminUnread } from './admin/messages/messages.remote';
+	import { openSuggestionCount } from './admin/suggestions/suggestions.remote';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -32,6 +33,7 @@
 	const showAdminNav = $derived(Boolean(data.user?.isAdmin) && inAdmin);
 	let unread = $state(0);
 	let adminUnreadCount = $state(0);
+	let openSuggestions = $state(0);
 	// re-read on every page change (path), so opening a conversation clears it
 	$effect(() => {
 		void page.url.pathname;
@@ -44,9 +46,9 @@
 			unread = await q;
 		}
 		if (admin) {
-			const q = adminUnread();
-			await q.refresh();
-			adminUnreadCount = await q;
+			const counts = [adminUnread(), openSuggestionCount()] as const;
+			await Promise.all(counts.map((q) => q.refresh()));
+			[adminUnreadCount, openSuggestions] = await Promise.all(counts);
 		}
 	}
 </script>
@@ -67,7 +69,7 @@
 	{@const user = data.user}
 	<AppShell
 		variant="admin"
-		items={adminNav(user, { unread: adminUnreadCount })}
+		items={adminNav(user, { unread: adminUnreadCount, suggestions: openSuggestions })}
 		homeHref={resolve('/admin')}
 		title={m.nav_admin()}
 	>

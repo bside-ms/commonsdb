@@ -22,9 +22,15 @@
 		task?: AdminTask & { descriptionHtml: string };
 		categories: CategoryGroup[];
 		cancelHref: string;
+		/** Converting a suggestion: start from its fields, post its id (see saveTask). */
+		fromSuggestion?: {
+			id: string;
+			prefill: NonNullable<Parameters<typeof templateInitial>[0]>;
+			descriptionHtml: string;
+		};
 	};
 
-	let { task, categories, cancelHref }: Props = $props();
+	let { task, categories, cancelHref, fromSuggestion }: Props = $props();
 
 	// Editing: one form instance per task (`for` is keyed by the id, and
 	// also posts it). Creating: the plain form, so no id is sent.
@@ -33,7 +39,7 @@
 
 	/** Initial values: the stored task, or sensible defaults for a new one. */
 	const initial = $derived({
-		...templateInitial(task, task?.shifts),
+		...templateInitial(task ?? fromSuggestion?.prefill, task?.shifts),
 		whenKind: task?.whenKind ?? 'date',
 		startsOn: task?.startsOn ?? '',
 		endsOn: task?.endsOn ?? ''
@@ -43,14 +49,15 @@
 <!-- multipart: the photo is a file (remote forms don't add it on their own) -->
 <form {...form} enctype="multipart/form-data" class="grid gap-8">
 	{#if task}<input {...f.id.as('hidden', task.id)} />{/if}
+	{#if fromSuggestion}<input {...f.suggestionId.as('hidden', fromSuggestion.id)} />{/if}
 
 	<TemplateFields
 		fields={f}
 		{initial}
 		{categories}
-		descriptionHtml={task?.descriptionHtml}
+		descriptionHtml={task?.descriptionHtml ?? fromSuggestion?.descriptionHtml}
 		stored={task?.shifts}
-		imageSeed={task && (task.series?.id ?? task.id)}
+		imageSeed={task ? (task.series?.id ?? task.id) : fromSuggestion?.id}
 	>
 		{#snippet when()}
 			<fieldset class="when grid gap-5 sm:grid-cols-2">
