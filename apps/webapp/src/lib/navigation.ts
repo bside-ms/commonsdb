@@ -6,6 +6,7 @@ import {
 	KeyRound,
 	Lightbulb,
 	ListChecks,
+	Newspaper,
 	Repeat,
 	Users,
 	Wallet
@@ -56,6 +57,7 @@ export const adminNav = (
 		countLabel: suggestions ? m.admin_nav_suggestions_open({ count: suggestions }) : undefined
 	},
 	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: CheckCheck },
+	{ href: resolve('/admin/news'), label: m.admin_nav_news(), icon: Newspaper },
 	{
 		href: resolve('/admin/messages'),
 		label: m.admin_nav_messages(),

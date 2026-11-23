@@ -21,7 +21,7 @@
 -->
 <script lang="ts">
 	import { flushSync, untrack } from 'svelte';
-	import { Editor, Extension, type Extensions, type JSONContent } from '@tiptap/core';
+	import { Editor, Extension, getSchema, type Extensions, type JSONContent } from '@tiptap/core';
 	import {
 		Bold,
 		Code,
@@ -209,7 +209,14 @@
 		run: (e: Editor) => void;
 		pressed?: () => boolean;
 		enabled?: () => boolean;
+		/** Node or mark the tool needs; hidden when the profile doesn't have it. */
+		needs?: string;
 	};
+
+	// What the profile allows, read once like the editor (SSR included), so
+	// the toolbar never offers a button the server would reject.
+	const schema = untrack(() => getSchema(extensions));
+	const available = (t: Tool) => !t.needs || t.needs in schema.nodes || t.needs in schema.marks;
 
 	const bold: Tool = {
 		label: m.ui_editor_bold(),
@@ -279,13 +286,15 @@
 				label: m.ui_editor_heading2(),
 				icon: Heading2,
 				run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
-				pressed: () => active('heading', { level: 2 })
+				pressed: () => active('heading', { level: 2 }),
+				needs: 'heading'
 			},
 			{
 				label: m.ui_editor_heading3(),
 				icon: Heading3,
 				run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
-				pressed: () => active('heading', { level: 3 })
+				pressed: () => active('heading', { level: 3 }),
+				needs: 'heading'
 			},
 			bulletList,
 			orderedList
@@ -306,7 +315,11 @@
 		]
 	]);
 
-	const groups = $derived(compact ? messageGroups : documentGroups);
+	const groups = $derived(
+		(compact ? messageGroups : documentGroups)
+			.map((group) => group.filter(available))
+			.filter((group) => group.length > 0)
+	);
 </script>
 
 <div

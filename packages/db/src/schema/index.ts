@@ -7,3 +7,4 @@ export * from './messaging.ts';
 export * from './knowledge.ts';
 export * from './uploads.ts';
 export * from './suggestions.ts';
+export * from './news.ts';

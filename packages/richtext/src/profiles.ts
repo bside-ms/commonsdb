@@ -62,6 +62,23 @@ export const profiles = {
 		})
 	],
 	/**
+	 * News on the start page (slice 7): short and calm. Bold, italic,
+	 * links and lists; no headings (the post title is the heading), no
+	 * quotes, code, strike or rules.
+	 */
+	news: (): Extensions => [
+		StarterKit.configure({
+			heading: false,
+			blockquote: false,
+			code: false,
+			codeBlock: false,
+			horizontalRule: false,
+			strike: false,
+			underline: false,
+			link
+		})
+	],
+	/**
 	 * Wiki pages: everything the description has, plus quotes, code,
 	 * strike and rules. The page title is the h1. No images yet: media
 	 * need uploads (ROADMAP slice 6b, "later").

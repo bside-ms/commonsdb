@@ -92,6 +92,13 @@
       "when": 1795454097755,
       "tag": "0012_faithful_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795459109928,
+      "tag": "0013_news",
+      "breakpoints": true
     }
   ]
 }

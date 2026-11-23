@@ -123,6 +123,30 @@ test('fromPlainText: blank lines split paragraphs, single newlines become breaks
 	assert.equal(parseRichText('message', result).ok, true);
 });
 
+// ---- news profile (slice 7) ----------------------------------------------------
+
+test('news: marks, links and lists are allowed', () => {
+	const result = parseRichText(
+		'news',
+		doc(p(text('Am '), { type: 'text', text: 'Samstag', marks: [{ type: 'bold' }] }), {
+			type: 'bulletList',
+			content: [{ type: 'listItem', content: [p(text('Kuchen'))] }]
+		})
+	);
+	assert.equal(result.ok, true);
+});
+
+test('news: headings, quotes, code and rules are rejected', () => {
+	for (const node of [
+		{ type: 'heading', attrs: { level: 2 }, content: [text('Titel')] },
+		{ type: 'blockquote', content: [p(text('Zitat'))] },
+		{ type: 'codeBlock', content: [text('x')] },
+		{ type: 'horizontalRule' }
+	]) {
+		assert.deepEqual(parseRichText('news', doc(node)), { ok: false, reason: 'schema' });
+	}
+});
+
 // ---- wiki profile and Markdown export (slice 6b) ------------------------------
 
 test('wiki: quotes, rules and code blocks are allowed, h1 is not', () => {
