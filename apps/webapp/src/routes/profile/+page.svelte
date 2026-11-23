@@ -2,8 +2,10 @@
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage } from '#lib/i18n/errors.ts';
+	import { mediaUrl } from '#lib/media.ts';
 	import { Avatar, Button, Card, Checkbox, toast } from '#lib/ui';
 	import { messagingSettings, saveDmOpen, unblock } from '../messages/messages.remote';
+	import PhotoCard from './PhotoCard.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -15,7 +17,12 @@
 
 <div class="flex flex-wrap items-end justify-between gap-4">
 	<div class="flex items-center gap-4">
-		<Avatar name={p.displayName} size="lg" decorative />
+		<Avatar
+			name={p.displayName}
+			src={p.photoId && mediaUrl(p.photoId, 'thumb')}
+			size="lg"
+			decorative
+		/>
 		<h1>
 			{p.displayName}
 			{#if p.pronoun}<span class="text-body font-normal text-muted">({p.pronoun})</span>{/if}
@@ -40,6 +47,8 @@
 		<dd>{roleLabel[data.platformRole]()}</dd>
 	</dl>
 </Card>
+
+<PhotoCard profile={p} />
 
 <Card class="mt-6 max-w-2xl" title={m.profile_messages_title()}>
 	<form
@@ -67,7 +76,12 @@
 				{@const f = unblock.for(person.id)}
 				<li class="flex items-center justify-between gap-3 px-3 py-2">
 					<span class="flex items-center gap-2 font-semibold">
-						<Avatar name={person.name} size="sm" decorative />
+						<Avatar
+							name={person.name}
+							src={person.photoId && mediaUrl(person.photoId, 'thumb')}
+							size="sm"
+							decorative
+						/>
 						{person.name}
 					</span>
 					<form

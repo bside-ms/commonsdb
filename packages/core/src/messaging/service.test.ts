@@ -170,7 +170,7 @@ test('blocking stops new and direct messages; unblocking restores', async () => 
 
 	assert.deepEqual(await getMessagingSettings(db, lu), {
 		dmOpen: true,
-		blocked: [{ id: 'kim', name: 'Kim' }]
+		blocked: [{ id: 'kim', name: 'Kim', photoId: null }]
 	});
 	await unblockUser(db, lu, kim.id);
 	await reply(db, kim, id, { body: body() });

@@ -531,11 +531,14 @@ Status: **in progress.**
   full width on the task page. Without a photo: a pattern placeholder
   (stripes/dots/grid/blocks/waves × area colours), derived from the task
   id, or the series id for occurrences; nothing stored.
-- **Step 3 — profile pictures: next.** Upload/replace/remove, avatars
-  everywhere, photo visibility enforced at `/media`.
+- **Step 3 — profile pictures: done.** "Profilbild" card on the profile
+  page (upload/replace, remove; preview with JS; works without). Old
+  pictures are deleted at once. Visibility (members / admins / nobody,
+  superadmins included) enforced at `/media` and in people lists, which
+  return no id the viewer may not load. Avatars: shell, profile, people
+  list, blocked list.
 
-Demo: an admin adds a photo to a task, members see it in the list;
-Kim sets a profile picture visible to admins only, Lu sees initials.
+Status: **done.**
 
 **Decided:**
 
@@ -618,6 +621,12 @@ when the design side stabilises.
   upload with S3, resumable uploads (tus) with local disk. Several files
   on one entity need an `attachment` table. Some documents may belong
   in the wiki instead; decide with the first real case.
+- **Profile picture as task photo.** An admin could post their own
+  profile picture's id as a task photo; reject uploads a profile uses?
+- **More avatars.** Conversation threads and admin shift views still
+  show initials; their read models need `visiblePhotoId`.
+- **Avatar variant.** Avatars load the 480px thumb; a 160px square
+  variant would be lighter.
 
 ---
 

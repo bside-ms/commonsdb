@@ -9,7 +9,7 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type { Db } from '@commonsdb/db';
-import { task, taskSeries, upload, uploadFile } from '@commonsdb/db/schema';
+import { profile, task, taskSeries, upload, uploadFile } from '@commonsdb/db/schema';
 import {
 	MediaError,
 	processUpload,
@@ -19,6 +19,7 @@ import {
 } from '@commonsdb/media';
 import { DomainError, ValidationError } from '../errors.ts';
 import { isSuperadmin, type Actor } from '../roles.ts';
+import { maySeePhoto } from '../profile/photo.ts';
 
 export type UploadInput = {
 	/** The file's bytes. */
@@ -155,13 +156,19 @@ export async function getUploadView(db: Db, id: string): Promise<UploadView | nu
  * Who may see an upload. Decided by what references it; each feature
  * that references uploads adds its rule here:
  *
- *   - the uploader, and superadmins: always
+ *   - a profile picture: its owner, else by photo visibility. Checked
+ *     first: 'nobody' means nobody, superadmins included
+ *   - the uploader, and superadmins
  *   - a task's or series' photo: every signed-in member
- *   - (step 3) a profile picture: its owner, else by photo visibility
  *
  * Everything else, e.g. an upload nothing references any more: nobody else.
  */
 export async function canViewUpload(db: Db, actor: Actor, id: string): Promise<boolean> {
+	const owner = await db.query.profile.findFirst({
+		where: eq(profile.photoId, id),
+		columns: { userId: true, photoVisibility: true }
+	});
+	if (owner) return maySeePhoto(actor, owner);
 	if (isSuperadmin(actor)) return true;
 	const row = await db.query.upload.findFirst({
 		where: eq(upload.id, id),

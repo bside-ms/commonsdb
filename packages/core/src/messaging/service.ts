@@ -32,6 +32,7 @@ import { DomainError, ValidationError } from '../errors.ts';
 import { isAdmin, type Actor } from '../roles.ts';
 import { manageableCategories } from '../tasks/policy.ts';
 import { parse } from '../validation.ts';
+import { visiblePhotoId } from '../profile/photo.ts';
 import {
 	adminThreadAccess,
 	canWriteTo,
@@ -48,7 +49,12 @@ import {
 
 // ---- views ------------------------------------------------------------------
 
-export type Person = { id: string; name: string };
+export type Person = {
+	id: string;
+	name: string;
+	/** Profile picture upload, where the actor may see it (profile/photo.ts). Only in people lists. */
+	photoId?: string | null;
+};
 
 export type InboxItem = {
 	id: string;
@@ -493,7 +499,12 @@ export async function listRecipients(
 	const term = q.trim();
 	if (term) where.push(ilike(profile.displayName, `%${term.replace(/[\\%_]/g, '\\$&')}%`));
 	const rows = await db
-		.select({ id: user.id, name: profile.displayName, role: user.platformRole })
+		.select({
+			id: user.id,
+			name: profile.displayName,
+			photoId: visiblePhotoId(actor),
+			role: user.platformRole
+		})
 		.from(user)
 		.innerJoin(profile, eq(profile.userId, user.id))
 		.where(and(...where))
@@ -524,7 +535,7 @@ export async function unblockUser(db: Db, actor: Actor, userId: string) {
 
 export async function listBlocked(db: Db, actor: Actor): Promise<Person[]> {
 	return db
-		.select({ id: profile.userId, name: profile.displayName })
+		.select({ id: profile.userId, name: profile.displayName, photoId: visiblePhotoId(actor) })
 		.from(userBlock)
 		.innerJoin(profile, eq(profile.userId, userBlock.blockedId))
 		.where(eq(userBlock.blockerId, actor.id))

@@ -12,6 +12,7 @@
 	import { isAllowedHref, profiles } from '@commonsdb/richtext';
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage, fieldError } from '#lib/i18n/errors.ts';
+	import { mediaUrl } from '#lib/media.ts';
 	import { Avatar, Badge, Button, Editor, FormField, Input } from '#lib/ui';
 	import { recipients, send } from '../messages.remote';
 
@@ -55,7 +56,12 @@
 								{...f.to.as('checkbox', person.id, preselected.includes(person.id))}
 								class="size-4.5 accent-ink"
 							/>
-							<Avatar name={person.name} size="sm" decorative />
+							<Avatar
+								name={person.name}
+								src={person.photoId && mediaUrl(person.photoId, 'thumb')}
+								size="sm"
+								decorative
+							/>
 							<span class="font-semibold">{person.name}</span>
 							{#if person.isAdmin}<Badge outline>{m.role_admin()}</Badge>{/if}
 						</label>

@@ -1,6 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, check, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, check, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from './auth.ts';
+import { upload } from './uploads.ts';
 
 export const PROFILE_VISIBILITY = ['members', 'admins'] as const;
 export const PHOTO_VISIBILITY = ['members', 'admins', 'nobody'] as const;
@@ -25,6 +26,8 @@ export const profile = pgTable(
 		photoVisibility: text('photo_visibility', { enum: PHOTO_VISIBILITY })
 			.notNull()
 			.default('members'),
+		/** Profile picture (slice 6c); who sees it follows photoVisibility. */
+		photoId: uuid('photo_id').references(() => upload.id, { onDelete: 'set null' }),
 		notifyByEmail: boolean('notify_by_email').notNull().default(true),
 		notifyNewTasks: boolean('notify_new_tasks').notNull().default(false),
 		/** Other members may start conversations with this person (slice 6a). Admins always can. */

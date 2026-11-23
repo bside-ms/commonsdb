@@ -7,6 +7,7 @@
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import { m } from '#lib/paraglide/messages.js';
+	import { mediaUrl } from '#lib/media.ts';
 	import { AppShell, Avatar, Button, Toaster } from '#lib/ui';
 	import { adminNav, memberNav } from '#lib/navigation.ts';
 	import type { LayoutProps } from './$types';
@@ -21,6 +22,7 @@
 	const inAdmin = $derived(path === resolve('/admin') || path.startsWith(`${resolve('/admin')}/`));
 	// during onboarding every other page redirects back, so no nav there
 	const inOnboarding = $derived(path.startsWith(resolve('/onboarding')));
+	const photo = $derived(data.user?.photoId ? mediaUrl(data.user.photoId, 'thumb') : null);
 
 	// Unread messages for the nav badges. Loaded after each navigation and
 	// kept in plain state, deliberately not awaited in the markup: an
@@ -75,7 +77,7 @@
 					href={resolve('/profile')}
 					class="flex items-center gap-2 text-small font-semibold no-underline"
 				>
-					<Avatar name={user.displayName} size="sm" decorative />
+					<Avatar name={user.displayName} src={photo} size="sm" decorative />
 					{user.displayName}
 				</a>
 				<a href={resolve('/')} class="text-small font-semibold underline underline-offset-3"
@@ -103,7 +105,7 @@
 					href={resolve('/profile')}
 					class="flex items-center gap-2 border border-transparent p-0.5 font-semibold no-underline hover:border-ink"
 				>
-					<Avatar name={user.displayName} decorative />
+					<Avatar name={user.displayName} src={photo} decorative />
 					<span class="hidden sm:inline">{user.displayName}</span>
 					<span class="sr-only sm:hidden">{user.displayName}</span>
 				</a>
