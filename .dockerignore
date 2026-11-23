@@ -1,0 +1,12 @@
+**/node_modules
+**/.DS_Store
+.git
+.idea
+.vscode
+.env
+.env.*
+!.env.example
+apps/webapp/uploads
+apps/webapp/test-results
+apps/webapp/.svelte-kit
+apps/webapp/build
