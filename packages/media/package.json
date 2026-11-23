@@ -1,0 +1,22 @@
+{
+	"name": "@commonsdb/media",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./kinds": "./src/kinds.ts"
+	},
+	"scripts": {
+		"check": "tsc",
+		"test": "node --test"
+	},
+	"dependencies": {
+		"file-type": "^22.3.0",
+		"sharp": "^0.35.5"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"typescript": "catalog:"
+	}
+}

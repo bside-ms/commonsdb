@@ -23,6 +23,9 @@
 	} from '#lib/ui';
 	import { enhance } from '$app/forms';
 	import { isAllowedHref, profiles } from '@commonsdb/richtext';
+	import { ACCEPTED_TYPES } from '@commonsdb/media/kinds';
+	import { errorMessage } from '#lib/i18n/errors.ts';
+	import { mediaUrl } from '#lib/media.ts';
 
 	let category = $state('alle');
 	let range = $state('heute');
@@ -212,6 +215,47 @@
 					html={form?.richText?.html ?? data.richText.html}
 					class="border border-ink bg-paper p-4"
 				/>
+			{/if}
+		</div>
+	</section>
+
+	<section class="grid gap-4 border-t border-ink pt-6 lg:grid-cols-2">
+		<h2 class="lg:col-span-2">Upload</h2>
+
+		<form
+			method="post"
+			action="?/upload"
+			enctype="multipart/form-data"
+			use:enhance
+			class="grid content-start gap-3"
+		>
+			<FormField
+				label="Bild"
+				hint="Geht durch die echte Pipeline: Typ aus den Bytes, neu kodiert, ohne Metadaten."
+			>
+				<input type="file" name="file" accept={ACCEPTED_TYPES.join(',')} required />
+			</FormField>
+			<div><Button type="submit" size="sm">Hochladen</Button></div>
+		</form>
+
+		<div class="grid content-start gap-3">
+			{#if form?.upload && !form.upload.ok}
+				<p class="font-semibold text-danger">{errorMessage(form.upload.code)}</p>
+			{:else if form?.upload?.ok}
+				{@const up = form.upload.view}
+				<p class="text-caps uppercase">thumb · large</p>
+				<div class="flex flex-wrap items-start gap-3">
+					<img
+						src={mediaUrl(up.id, 'thumb')}
+						width={up.variants.thumb.width}
+						height={up.variants.thumb.height}
+						alt=""
+						class="h-auto max-w-60 border border-ink"
+					/>
+					<a href={mediaUrl(up.id, 'large')} class="text-small"
+						>large ({up.variants.large.width}×{up.variants.large.height})</a
+					>
+				</div>
 			{/if}
 		</div>
 	</section>

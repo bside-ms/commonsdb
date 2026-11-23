@@ -1,6 +1,6 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
@@ -23,9 +23,9 @@ export default defineConfig({
 				experimental: { async: true }
 			},
 
-			// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-			// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
+			// Node server for the VPS target (ARCHITECTURE: reference deployment).
+			// Uploads need a larger request body than its 512 KB default:
+			// set BODY_SIZE_LIMIT (e.g. 12M) in the server's environment.
 			adapter: adapter(),
 			env: { dir: '../../' },
 			experimental: { remoteFunctions: true }

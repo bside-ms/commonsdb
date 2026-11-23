@@ -5,3 +5,4 @@ export * from './series-json.ts';
 export * from './ledger.ts';
 export * from './messaging.ts';
 export * from './knowledge.ts';
+export * from './uploads.ts';

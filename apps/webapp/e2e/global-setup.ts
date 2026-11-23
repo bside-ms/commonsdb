@@ -1,8 +1,10 @@
 /**
  * Runs once before all tests: a fresh database with the real migrations,
  * categories, and the users from users.ts, created through Better Auth
- * (so passwords are hashed the real way) and already onboarded.
+ * (so passwords are hashed the real way) and already onboarded. Uploaded
+ * files from the last run are removed.
  */
+import { rm } from 'node:fs/promises';
 import { eq } from 'drizzle-orm';
 import { createAuth } from '@commonsdb/auth';
 import { provisionProfile, setCapabilities } from '@commonsdb/core';
@@ -13,6 +15,7 @@ import { ADMIN_CATEGORIES, PASSWORD, TAXONOMY, USERS } from './users.ts';
 
 export default async function globalSetup() {
 	await recreateDatabase(TEST_ENV.DATABASE_URL);
+	await rm(TEST_ENV.UPLOAD_DIR, { recursive: true, force: true });
 	const { db, close } = createDb(TEST_ENV.DATABASE_URL);
 
 	try {

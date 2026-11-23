@@ -14,6 +14,11 @@ export const variables = defineEnvVars({
 	KEYCLOAK_CLIENT_ID: { schema: optional, description: 'OIDC client ID.' },
 	KEYCLOAK_CLIENT_SECRET: { schema: optional, description: 'OIDC client secret.' },
 
+	UPLOAD_DIR: {
+		description:
+			'Where uploaded files are stored. Absolute on servers (a mounted volume); a relative path is resolved from the working directory.'
+	},
+
 	AUTH_EMAIL_PASSWORD: {
 		schema: (value) => value === 'true',
 		description: 'Set to `true` to allow email/password accounts.'

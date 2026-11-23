@@ -1,8 +1,6 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-
 	"app_name": "B-Side Commons",
-
 	"login_title": "Anmelden",
 	"login_keycloak_button": "Mit B-Side-Konto anmelden",
 	"login_email_label": "E-Mail",
@@ -12,14 +10,11 @@
 	"login_error_method_disabled": "Diese Anmeldemethode ist nicht aktiviert.",
 	"login_error_start_failed": "Die Anmeldung konnte nicht gestartet werden.",
 	"login_error_invalid_credentials": "E-Mail oder Passwort stimmen nicht.",
-
 	"logout": "Abmelden",
-
 	"home_greeting": "Hallo {name}!",
 	"home_no_tasks_title": "Du hast gerade keine Aufgaben übernommen",
 	"home_no_tasks_hint": "Schau, was ansteht – vielleicht ist etwas für dich dabei.",
 	"home_browse_tasks": "Aufgaben ansehen",
-
 	"nav_admin": "Admin",
 	"nav_start": "Start",
 	"nav_back_to_app": "Zur App",
@@ -28,12 +23,10 @@
 	"nav_account": "Konto",
 	"nav_messages": "Postfach",
 	"nav_messages_unread": "{count} ungelesen",
-
 	"onboarding_title": "Willkommen!",
 	"onboarding_intro": "Erzähl uns kurz, wer du bist. Du kannst alles später ändern.",
 	"onboarding_accept_rules": "Ich habe die Hausregeln gelesen und akzeptiere sie.",
 	"onboarding_submit": "Los geht's",
-
 	"profile_edit": "Bearbeiten",
 	"profile_edit_title": "Profil bearbeiten",
 	"profile_save": "Speichern",
@@ -56,7 +49,6 @@
 	"profile_blocked_none": "Du hast niemanden blockiert.",
 	"profile_unblock": "Aufheben",
 	"profile_unblocked_toast": "Blockierung von {name} aufgehoben.",
-
 	"messages_title": "Postfach",
 	"messages_intro": "Hier laufen alle Nachrichten zusammen: an die Admins, an einzelne Menschen aus dem Haus, an Gruppen und die Chats zu deinen Aufgaben.",
 	"messages_new": "Neue Nachricht",
@@ -102,7 +94,6 @@
 	"messages_subject_group_hint": "Für Gruppen. Bei einer einzelnen Person wird er nicht gebraucht.",
 	"messages_subject_placeholder": "Worum geht es?",
 	"messages_body": "Nachricht",
-
 	"tasks_title": "Aufgaben",
 	"tasks_search": "Suchen",
 	"tasks_search_placeholder": "Was suchst du?",
@@ -119,7 +110,6 @@
 	"tasks_empty_title": "Keine offenen Aufgaben",
 	"tasks_empty_hint": "Schau später wieder vorbei oder ändere den Filter.",
 	"tasks_back": "Alle Aufgaben",
-
 	"task_mine": "Deine",
 	"task_duration": "Dauer",
 	"task_self_service_info": "Geht ohne Absprache: Du kannst einfach loslegen.",
@@ -150,7 +140,6 @@
 	"task_reported_by": "Gemeldet von {name}",
 	"task_chat": "Chat zur Aufgabe",
 	"task_ask_admins": "Frage an die Admins",
-
 	"account_title": "Dein Konto",
 	"account_balance_label": "Repros",
 	"account_intro": "Für jede bestätigte Stunde bekommst du einen Repro. Damit kannst du später Räume und Geräte buchen.",
@@ -160,15 +149,12 @@
 	"account_adjustment": "Korrektur",
 	"account_thanks": "Dankeschön",
 	"account_thanks_from": "Danke von {name}",
-
 	"visibility_members": "Alle Mitglieder",
 	"visibility_admins": "Nur Admins",
 	"visibility_nobody": "Niemand",
-
 	"role_member": "Mitglied",
 	"role_admin": "Admin",
 	"role_superadmin": "Superadmin",
-
 	"admin_title": "Admin",
 	"admin_placeholder": "Kommt mit den Aufgaben.",
 	"admin_nav_overview": "Übersicht",
@@ -178,7 +164,6 @@
 	"admin_nav_members": "Mitglieder",
 	"admin_nav_messages": "Postfach",
 	"admin_nav_capabilities": "Zuständigkeiten",
-
 	"admin_tasks_title": "Aufgaben",
 	"admin_tasks_new": "Neue Aufgabe",
 	"admin_tasks_views": "Ansicht",
@@ -249,7 +234,6 @@
 	"admin_messages_archived_hint": "Liegt im Archiv. Eine Antwort holt sie zurück ins Postfach.",
 	"admin_no_capabilities_title": "Dir sind noch keine Kategorien zugeordnet",
 	"admin_no_capabilities_hint": "Ein Superadmin kann dir unter „Zuständigkeiten“ Kategorien geben.",
-
 	"admin_task_new_title": "Neue Aufgabe",
 	"admin_task_edit_title": "Aufgabe bearbeiten",
 	"admin_task_create": "Anlegen",
@@ -294,7 +278,6 @@
 	"admin_series_end_hint": "Danach entstehen keine Termine mehr. Übernommene Termine bleiben bestehen.",
 	"admin_series_end_on": "Letzter Tag",
 	"admin_series_ended_toast": "Die Serie endet am {date}.",
-
 	"series_section_rule": "Wiederholung",
 	"series_repeat": "Wie oft?",
 	"series_repeat_weekly": "Jede Woche",
@@ -387,7 +370,6 @@
 	"task_shift_remove": "Entfernen",
 	"task_shift_next_day": "Endet am nächsten Tag.",
 	"task_shift_locked_hint": "Vergeben: Uhrzeit fest, Schicht bleibt. Zum Ändern erst freigeben.",
-
 	"task_urgent": "Dringend",
 	"task_deleted": "Gelöscht",
 	"task_status_open": "Offen",
@@ -399,7 +381,6 @@
 	"task_shifts_free": "{free} von {total} frei",
 	"task_shifts_full": "Voll besetzt",
 	"task_shifts_reported": "{count} gemeldet",
-
 	"admin_members_title": "Mitglieder",
 	"admin_members_intro": "Alle Konten mit ihrem Stand. Korrekturen sind eigene Buchungen: Nichts wird überschrieben, ein Fehler wird mit einer weiteren Korrektur ausgeglichen.",
 	"admin_members_adjust": "Korrigieren",
@@ -409,13 +390,11 @@
 	"admin_members_memo_hint": "Sieht die Person auf ihrem Konto.",
 	"admin_members_adjust_submit": "Buchen",
 	"admin_members_adjusted_toast": "Gebucht.",
-
 	"admin_capabilities_title": "Zuständigkeiten",
 	"admin_capabilities_intro": "Admins sehen und bearbeiten nur Aufgaben in ihren Kategorien. Superadmins dürfen alles und brauchen hier keinen Eintrag.",
 	"admin_capabilities_save": "Speichern",
 	"admin_capabilities_saved": "Zuständigkeiten von {name} gespeichert.",
 	"admin_capabilities_empty": "Es gibt noch keine Admins.",
-
 	"wiki_title": "Wiki",
 	"wiki_intro": "Wissen aus dem Haus: wie Dinge funktionieren, wo was liegt, was zu beachten ist.",
 	"wiki_new": "Neue Seite",
@@ -462,7 +441,6 @@
 	"wiki_version_restore": "Diese Fassung wiederherstellen",
 	"wiki_version_pick": "Wähl links eine Version, um sie anzusehen.",
 	"wiki_link_unavailable": "nicht mehr verfügbar",
-
 	"ui_optional": "optional",
 	"ui_close": "Schließen",
 	"ui_cancel": "Abbrechen",
@@ -488,7 +466,6 @@
 	"ui_editor_code_block": "Codeblock",
 	"ui_hours": "{hours} Std.",
 	"ui_repros": "{amount} Repros",
-
 	"error_unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal.",
 	"error_user_not_found": "Dieses Konto gibt es nicht.",
 	"error_profile_not_found": "Profil nicht gefunden.",
@@ -584,5 +561,10 @@
 	"error_message_too_many_recipients": "Höchstens 50 Personen auf einmal.",
 	"error_message_recipient_unreachable": "Mindestens eine Person ist gerade nicht erreichbar.",
 	"error_message_task_chat_forbidden": "Den Chat sehen nur Menschen, die die Aufgabe übernommen haben.",
-	"error_user_block_self": "Dich selbst kannst du nicht blockieren."
+	"error_user_block_self": "Dich selbst kannst du nicht blockieren.",
+	"error_upload_empty": "Die Datei ist leer.",
+	"error_upload_too_large": "Die Datei ist zu groß (höchstens 10 MB).",
+	"error_upload_type_unsupported": "Dieses Dateiformat geht nicht. Erlaubt sind JPEG, PNG und WebP.",
+	"error_upload_unreadable": "Die Datei konnte nicht gelesen werden. Ist sie beschädigt?",
+	"error_upload_not_found": "Datei nicht gefunden."
 }

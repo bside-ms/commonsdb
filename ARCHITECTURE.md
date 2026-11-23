@@ -182,7 +182,9 @@ authenticate, call a service in `core`, and return the result. Nothing in
   input into variants; a type without a processor is rejected.
 - Images are always re-encoded (metadata stripped); originals are not
   kept.
-- Everything is served by `/media/[id]/[variant]` behind the login.
+- Everything is served by `/media/[id]/[variant]` behind the login
+  (ETag/304, Range/206 for later audio/video seeking). Any denial looks
+  like a missing file (404 `upload_not_found`).
   Core decides access from what references the upload (a task image:
   every member; a profile picture: its photo visibility). Headers:
   stored content type, `nosniff`, `Content-Disposition` for documents,
@@ -318,7 +320,10 @@ spaces fork and customize adapters). pnpm workspaces.
 │   ├── auth/            # createAuth(options) around Better Auth
 │   ├── core/            # domain services, Actor, policies, input
 │   │                    # schemas, domain errors (+ *.test.ts)
-│   └── richtext/        # TipTap profiles, parseRichText, toHtml
+│   ├── richtext/        # TipTap profiles, parseRichText, toHtml
+│   └── media/           # FileStorage port (disk, memory; S3 later),
+│                        # type detection, processors (sharp);
+│                        # server-only except ./kinds
 ├── docs/
 ├── docker-compose.yml   # Postgres (+ optional local Keycloak)
 ├── tsconfig.base.json
@@ -330,6 +335,8 @@ spaces fork and customize adapters). pnpm workspaces.
 
 Dependencies point one way: `webapp → auth → db`, `webapp → core → db`,
 and `core`, `db`, `webapp → richtext` (which depends on nothing internal).
+`core`, `db` and `webapp → media` (which depends on nothing internal either;
+`db` and browser code import only its `./kinds` entry).
 `core` and `auth` never depend on each other or on SvelteKit.
 
 ### Package conventions
@@ -349,6 +356,12 @@ and `core`, `db`, `webapp → richtext` (which depends on nothing internal).
   (dummy values; the CLI only needs to know which features are on), then
   `pnpm db:generate` / `pnpm db:migrate`. Generated schema and migrations
   are committed.
+- **Barrels stay browser-safe.** Pages import constants from
+  `@commonsdb/core`, so its root export must not pull in Node or native
+  code. Modules that do (sharp) get their own subpath
+  (`@commonsdb/core/uploads`) and are imported only from `*.server.ts`,
+  `+server.ts` or `lib/server`. sharp has side effects, so it can't be
+  tree-shaken out of a client bundle.
 - **Erasable TypeScript only.** No enums, namespaces or constructor
   parameter properties: Node runs package sources by stripping types
   (seed, worker), which only works for erasable syntax.
@@ -387,15 +400,24 @@ available for offline work.
 database on the same server, created and dropped by the tests; the dev
 database is never touched.
 
+Uploads go to `UPLOAD_DIR` (required; relative paths resolve from the
+working directory, e.g. `./uploads`, which is git-ignored). The e2e tests
+use `E2E_UPLOAD_DIR` (default: a temp folder, cleared in global setup).
+
 Database: Postgres, decided.
+
+### Deployment
+
+`@sveltejs/adapter-node` (`node build`, VPS). Runtime settings beyond
+`.env`: `UPLOAD_DIR` as an absolute path, ideally a mounted volume
+outside the app; `BODY_SIZE_LIMIT=12M` (the default 512 KB is too
+small; the largest allowed image is 10 MB plus form overhead).
 
 ## Open / next
 
-- **Slice 6c — uploads, task images, profile pictures**: next, then
-  slice 7.
-- **Deployment adapter**: the webapp still uses `adapter-auto`; the VPS
-  target means `adapter-node`. Raise its `BODY_SIZE_LIMIT` (512 KB by
-  default) for uploads.
+- **Slice 6c — uploads, task images, profile pictures**: step 1
+  (foundation) done; next step 2 (task images), then step 3 (profile
+  pictures), then slice 7.
 - **CI**: GitHub Actions with a Postgres service running `pnpm check`,
   `pnpm test`, `pnpm test:e2e`.
 - **Admin views of a member's ledger**: superadmins see balances, not

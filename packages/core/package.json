@@ -4,7 +4,8 @@
 	"private": true,
 	"type": "module",
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.ts",
+		"./uploads": "./src/uploads/index.ts"
 	},
 	"scripts": {
 		"check": "tsc",
@@ -12,12 +13,14 @@
 	},
 	"dependencies": {
 		"@commonsdb/db": "workspace:*",
+		"@commonsdb/media": "workspace:*",
 		"@commonsdb/richtext": "workspace:*",
 		"drizzle-orm": "catalog:",
 		"valibot": "^1.5.0"
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.6",
+		"sharp": "^0.35.5",
 		"typescript": "catalog:"
 	}
 }

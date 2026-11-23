@@ -5,8 +5,12 @@
  *
  * The database is separate from the dev one and is recreated on every
  * run. Override with E2E_DATABASE_URL (the name must contain "e2e" or
- * "test", see recreateDatabase).
+ * "test", see recreateDatabase). Uploads go to a temporary folder that
+ * global-setup empties on every run.
  */
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 export const PORT = 4173;
 
 export const TEST_ENV = {
@@ -15,6 +19,7 @@ export const TEST_ENV = {
 	ORIGIN: `http://localhost:${PORT}`,
 	BETTER_AUTH_SECRET: 'e2e-only-secret-not-for-production-use',
 	AUTH_EMAIL_PASSWORD: 'true',
+	UPLOAD_DIR: process.env.E2E_UPLOAD_DIR ?? join(tmpdir(), 'commonsdb-e2e-uploads'),
 	// empty = Keycloak off, even if the dev .env configures it
 	KEYCLOAK_ISSUER: '',
 	KEYCLOAK_CLIENT_ID: '',

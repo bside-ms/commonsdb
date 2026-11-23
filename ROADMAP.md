@@ -504,7 +504,7 @@ can be uploaded yet, so this slice builds that once and uses it twice.
 - Images are re-encoded on the server: resized (large + thumbnail),
   WebP, metadata stripped (no GPS from phone photos). Originals are
   never stored. JPEG/PNG/WebP, up to 10 MB.
-- Served by `/media/[id]/[size]` behind the login; core decides who
+- Served by `/media/[id]/[variant]` behind the login; core decides who
   may see which upload
 - **Task image**: one per task, optional alt text; shown on cards and
   the detail page. Series templates carry one too; occurrences and
@@ -516,6 +516,19 @@ can be uploaded yet, so this slice builds that once and uses it twice.
 Deliberately not here: images inside rich text (wiki, descriptions),
 suggestion photos (slice 7 uses the same foundation), the S3 adapter,
 orphan cleanup (needs the worker).
+
+Status: **in progress.**
+
+- **Step 1 — foundation: done.** `packages/media` (storage port, disk
+  and memory adapters, type detection, image processor), `upload` and
+  `upload_file` tables, `core/uploads` (store, open, access check,
+  delete), `/media/[id]/[variant]`, adapter-node, upload demo on
+  `/dev/ui`. Until step 2, only superadmins and the uploader can see an
+  upload.
+- **Step 2 — task images: next.** Task and series forms, cards,
+  detail page.
+- **Step 3 — profile pictures.** Upload/replace/remove, avatars
+  everywhere, photo visibility enforced at `/media`.
 
 Demo: an admin adds a photo to a task, members see it in the list;
 Kim sets a profile picture visible to admins only, Lu sees initials.

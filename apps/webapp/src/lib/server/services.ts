@@ -5,15 +5,21 @@ import {
 	KEYCLOAK_ISSUER,
 	KEYCLOAK_CLIENT_ID,
 	KEYCLOAK_CLIENT_SECRET,
-	AUTH_EMAIL_PASSWORD
+	AUTH_EMAIL_PASSWORD,
+	UPLOAD_DIR
 } from '$app/env/private';
 import { getRequestEvent } from '$app/server';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
+import { resolve } from 'node:path';
 import { createDb } from '@commonsdb/db';
+import { createDiskStorage } from '@commonsdb/media';
 import { createAuth } from '@commonsdb/auth';
 import { provisionProfile } from '@commonsdb/core';
 
 export const { db } = createDb(DATABASE_URL);
+
+/** Uploaded files (FileStorage port). Local disk; an S3 adapter can replace it per deployment. */
+export const storage = createDiskStorage(resolve(UPLOAD_DIR));
 
 export const loginMethods = {
 	keycloak: Boolean(KEYCLOAK_ISSUER && KEYCLOAK_CLIENT_ID),
