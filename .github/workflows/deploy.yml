@@ -59,12 +59,13 @@ jobs:
       - name: Roll out
         env:
           TARGET: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+          PORT: ${{ vars.SSH_PORT || '22' }}
           DIR: ${{ vars.DEPLOY_DIR }}
           TAG: ${{ needs.build.outputs.tag }}
           OWNER: ${{ needs.build.outputs.owner }}
         run: |
-          scp infra/compose.prod.yml "$TARGET:$DIR/compose.yml"
-          ssh "$TARGET" "cd '$DIR' && export IMAGE_TAG='$TAG' IMAGE_OWNER='$OWNER' \
+          scp -P "$PORT" infra/compose.prod.yml "$TARGET:$DIR/compose.yml"
+          ssh -p "$PORT" "$TARGET" "cd '$DIR' && export IMAGE_TAG='$TAG' IMAGE_OWNER='$OWNER' \
             && docker compose pull migrate webapp \
             && docker compose up -d --remove-orphans \
             && docker image prune -f"
