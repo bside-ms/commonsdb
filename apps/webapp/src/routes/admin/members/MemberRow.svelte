@@ -1,19 +1,29 @@
 <!--
-	One member. The adjustment form sits in a <details>: works without JS,
-	and a correction is rare enough to stay folded away.
+	One member. Role and balance adjustment each sit in a <details>: works
+	without JS, and both are rare enough to stay folded away.
 -->
 <script lang="ts">
 	import type { MemberBalance } from '@commonsdb/core';
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage } from '#lib/i18n/errors.ts';
 	import { formatRepros } from '#lib/format.ts';
-	import { Badge, Button, FormField, Input, Textarea, toast } from '#lib/ui';
-	import { adjust } from './members.remote';
+	import { PLATFORM_ROLES } from '@commonsdb/core';
+	import { Badge, Button, FormField, Input, Select, Textarea, toast } from '#lib/ui';
+	import { adjust, setRole } from './members.remote';
 
 	let { member }: { member: MemberBalance } = $props();
 
 	const f = $derived(adjust.for(member.id));
+	const r = $derived(setRole.for(member.id));
 	let open = $state(false);
+	let roleOpen = $state(false);
+
+	const roleNames = {
+		member: m.role_member,
+		admin: m.role_admin,
+		superadmin: m.role_superadmin
+	};
+	const roleOptions = PLATFORM_ROLES.map((value) => ({ value, label: roleNames[value]() }));
 
 	const err = (field: { issues(): { message: string }[] | undefined }) => {
 		const issue = field.issues()?.[0];
@@ -43,6 +53,32 @@
 			{m.ui_repros({ amount: formatRepros(member.balanceTenths) })}
 		</p>
 	</div>
+
+	<details bind:open={roleOpen} class="text-small">
+		<summary class="cursor-pointer font-semibold">{m.admin_members_role()}</summary>
+		<form
+			{...r.enhance(async ({ submit }) => {
+				if (await submit()) {
+					roleOpen = false;
+					toast(m.admin_members_role_saved_toast({ name: member.name }));
+				}
+			})}
+			class="mt-3 grid max-w-md gap-3"
+		>
+			<input {...r.fields.userId.as('hidden', member.id)} />
+			<FormField
+				label={m.admin_members_role()}
+				hint={m.admin_members_role_hint()}
+				error={err(r.fields.role)}
+			>
+				<Select {...r.fields.role.as('select', member.role)} options={roleOptions} />
+			</FormField>
+			<Button type="submit" disabled={r.pending > 0}>{m.admin_members_role_submit()}</Button>
+			{#each r.fields.userId.issues() ?? [] as issue (issue.message)}
+				<p role="alert" class="font-semibold text-danger">{errorMessage(issue.message)}</p>
+			{/each}
+		</form>
+	</details>
 
 	<details bind:open class="text-small">
 		<summary class="cursor-pointer font-semibold">{m.admin_members_adjust()}</summary>

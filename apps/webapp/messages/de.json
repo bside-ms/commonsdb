@@ -168,6 +168,10 @@
 	"role_member": "Mitglied",
 	"role_admin": "Admin",
 	"role_superadmin": "Superadmin",
+	"admin_members_role": "Rolle ändern",
+	"admin_members_role_hint": "Admins sehen nur die Bereiche, die ihnen unter „Zuständigkeiten“ zugeordnet sind. Superadmins sehen und dürfen alles.",
+	"admin_members_role_submit": "Rolle speichern",
+	"admin_members_role_saved_toast": "Rolle von {name} gespeichert.",
 	"admin_title": "Admin",
 	"admin_placeholder": "Kommt mit den Aufgaben.",
 	"admin_nav_overview": "Übersicht",
@@ -688,5 +692,7 @@
 	"error_site_page_invalid": "Der Text enthält etwas, das hier nicht geht.",
 	"error_site_page_link_invalid": "Ein Link ist ungültig. Erlaubt sind http(s), mailto und tel.",
 	"error_site_page_too_long": "Der Text ist zu lang.",
-	"error_site_page_not_found": "Diese Seite gibt es nicht."
+	"error_site_page_not_found": "Diese Seite gibt es nicht.",
+	"error_last_superadmin": "Es muss immer mindestens eine Superadmin geben. Ernenne erst jemand anderen.",
+	"error_role_invalid": "Diese Rolle gibt es nicht."
 }

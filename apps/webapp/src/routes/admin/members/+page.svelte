@@ -1,6 +1,6 @@
 <!--
-	Members with their balances (superadmins). Minimal on purpose: role
-	assignment and search come with the member admin.
+	Members with their roles and balances (superadmins). Minimal on
+	purpose: search comes with the member admin.
 -->
 <script lang="ts">
 	import { m } from '#lib/paraglide/messages.js';
