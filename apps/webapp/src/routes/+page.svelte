@@ -11,6 +11,7 @@
 	import { unreadCount } from './messages/messages.remote';
 	import { currentNews } from './news/news.remote';
 	import NewsPost from './news/NewsPost.svelte';
+	import LogoutButton from '#lib/components/LogoutButton.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -120,9 +121,7 @@
 			{@render sectionHead('profile-heading', m.home_profile_title())}
 			<div class="mt-3 grid gap-2">
 				<Button variant="ghost" href={resolve('/profile/edit')}>{m.profile_edit_title()}</Button>
-				<form method="post" action="/logout" class="grid">
-					<Button type="submit" variant="ghost">{m.logout()}</Button>
-				</form>
+				<LogoutButton block />
 			</div>
 		</section>
 

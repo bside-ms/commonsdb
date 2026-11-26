@@ -16,6 +16,7 @@
 	import { unreadCount } from './messages/messages.remote';
 	import { adminUnread } from './admin/messages/messages.remote';
 	import { openSuggestionCount } from './admin/suggestions/suggestions.remote';
+	import LogoutButton from '#lib/components/LogoutButton.svelte';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -60,12 +61,6 @@
 	<link rel="preload" href={archivo400} as="font" type="font/woff2" crossorigin="anonymous" />
 </svelte:head>
 
-{#snippet logout()}
-	<form method="post" action="/logout">
-		<Button type="submit" size="sm" variant="ghost">{m.logout()}</Button>
-	</form>
-{/snippet}
-
 {#if data.user && inAdmin}
 	{@const user = data.user}
 	<AppShell
@@ -87,7 +82,7 @@
 				<a href={resolve('/')} class="text-small font-semibold underline underline-offset-3"
 					>{m.nav_back_to_app()}</a
 				>
-				{@render logout()}
+				<LogoutButton />
 			</div>
 		{/snippet}
 		{@render children()}
@@ -103,7 +98,7 @@
 		stage={{ label: m.app_stage(), srLabel: m.app_stage_label(), href: resolve('/about') }}
 	>
 		{#snippet footer()}
-			{@render logout()}
+			<LogoutButton />
 		{/snippet}
 		{#snippet actions()}
 			{#if user.isAdmin && !inOnboarding}
@@ -119,7 +114,6 @@
 					<span class="sr-only sm:hidden">{user.displayName}</span>
 				</a>
 			{/if}
-			{@render logout()}
 		{/snippet}
 		{@render children()}
 	</AppShell>

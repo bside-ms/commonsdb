@@ -12,6 +12,7 @@
 	import { Button, Chip, EmptyState, Input } from '#lib/ui';
 	import { memberTasks, taskCategories } from './tasks.remote';
 	import TaskCard from '#lib/components/TaskCard.svelte';
+	import TaskRow from '#lib/components/TaskRow.svelte';
 
 	const params = $derived(page.url.searchParams);
 	const q = $derived(params.get('q') ?? '');
@@ -54,9 +55,11 @@
 
 <svelte:head><title>{m.tasks_title()} · {m.app_name()}</title></svelte:head>
 
-<h1>{m.tasks_title()}</h1>
+<p class="text-small text-muted">{m.home_tagline()}</p>
+<h1 class="mt-1.5">{m.tasks_title()}</h1>
+<p class="mt-3 max-w-[52ch] text-small text-muted">{m.tasks_intro()}</p>
 
-<form method="get" data-sveltekit-reset="false" class="mt-5 flex gap-2" role="search">
+<form method="get" data-sveltekit-reset="false" class="mt-4 flex gap-2" role="search">
 	{#if superId}<input type="hidden" name="super" value={superId} />{/if}
 	{#if categoryId}<input type="hidden" name="category" value={categoryId} />{/if}
 	{#each toggles as [, key, on] (key)}
@@ -68,7 +71,7 @@
 		value={q}
 		placeholder={m.tasks_search_placeholder()}
 		aria-label={m.tasks_search()}
-		class="max-w-md"
+		class="flex-1"
 	/>
 	<Button type="submit" variant="ghost">{m.tasks_search()}</Button>
 </form>
@@ -107,10 +110,10 @@
 {#if mine.length > 0}
 	<section class="mt-8" aria-labelledby="mine-heading">
 		<h2 id="mine-heading">{m.tasks_mine()}</h2>
-		<ul class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+		<ul class="mt-3 grid border-t border-ink lg:grid-cols-2 lg:gap-x-7">
 			{#each mine as task (task.id)}
 				<li>
-					<TaskCard {task} />
+					<TaskRow {task} />
 				</li>
 			{/each}
 		</ul>
@@ -135,12 +138,18 @@
 			{/snippet}
 		</EmptyState>
 	{:else}
-		<ul class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+		<ul class="mt-3 grid border-t border-ink lg:grid-cols-2 lg:gap-x-7">
 			{#each open as task (task.id)}
 				<li>
-					<TaskCard {task} />
+					<TaskRow {task} />
 				</li>
 			{/each}
 		</ul>
 	{/if}
 </section>
+
+<div class="mt-6 border border-hair bg-sunken p-4">
+	<p class="font-semibold">{m.tasks_suggest_title()}</p>
+	<p class="mt-1.5 mb-3 text-small text-muted">{m.tasks_suggest_text()}</p>
+	<Button size="sm" href={resolve('/suggestions')}>{m.tasks_suggest_button()}</Button>
+</div>

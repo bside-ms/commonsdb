@@ -84,13 +84,13 @@
 
 <Thumb
 	size="lg"
-	class="mt-4 max-w-4xl"
+	class="mt-4"
 	seed={task.seriesId ?? task.id}
 	src={task.image && mediaUrl(task.image.id, 'large')}
 	alt={task.image?.alt}
 />
 
-<div class="mt-6 grid max-w-4xl gap-6 lg:grid-cols-[1fr_18rem] lg:items-start">
+<div class="mt-6 grid gap-6 lg:grid-cols-[1fr_18rem] lg:items-start">
 	<div class="grid gap-6">
 		<dl class="grid gap-x-6 gap-y-2.5 text-small sm:grid-cols-[max-content_1fr]">
 			{#each facts as [label, value] (label)}

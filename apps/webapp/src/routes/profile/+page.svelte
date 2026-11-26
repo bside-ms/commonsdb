@@ -7,6 +7,7 @@
 	import { messagingSettings, saveDmOpen, unblock } from '../messages/messages.remote';
 	import PhotoCard from './PhotoCard.svelte';
 	import type { PageProps } from './$types';
+	import LogoutButton from '#lib/components/LogoutButton.svelte';
 
 	let { data }: PageProps = $props();
 	const p = $derived(data.profile);
@@ -102,3 +103,5 @@
 		</ul>
 	{/if}
 </Card>
+
+<LogoutButton size="md" block class="mt-10 lg:hidden" />
