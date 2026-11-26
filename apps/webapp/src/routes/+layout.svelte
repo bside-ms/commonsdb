@@ -73,6 +73,7 @@
 		items={adminNav(user, { unread: adminUnreadCount, suggestions: openSuggestions })}
 		homeHref={resolve('/admin')}
 		title={m.nav_admin()}
+		stage={{ label: m.app_stage(), srLabel: m.app_stage_label(), href: resolve('/about') }}
 	>
 		{#snippet footer()}
 			<div class="grid gap-3">
@@ -84,7 +85,7 @@
 					{user.displayName}
 				</a>
 				<a href={resolve('/')} class="text-small font-semibold underline underline-offset-3"
-				>{m.nav_back_to_app()}</a
+					>{m.nav_back_to_app()}</a
 				>
 				{@render logout()}
 			</div>
@@ -99,6 +100,7 @@
 		more={inOnboarding ? [] : memberMoreNav({ unread })}
 		homeHref={resolve('/')}
 		title={m.app_name()}
+		stage={{ label: m.app_stage(), srLabel: m.app_stage_label(), href: resolve('/about') }}
 	>
 		{#snippet footer()}
 			{@render logout()}

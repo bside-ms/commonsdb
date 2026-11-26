@@ -20,7 +20,7 @@
 	import { page } from '$app/state';
 	import { m } from '#lib/paraglide/messages.js';
 	import logo from '#lib/assets/bside-logo.svg';
-	import { cn } from '#lib/ui';
+	import { Badge, cn } from '#lib/ui';
 	import type { Area, NavItem } from './types.ts';
 
 	type Props = {
@@ -37,6 +37,8 @@
 		/** admin: bottom of the side nav. member: after the `more` links (e.g. logout). */
 		footer?: Snippet;
 		children: Snippet;
+		/** Small chip after the title, e.g. the app's stage. */
+		stage?: { label: string; href: string; srLabel?: string };
 	};
 
 	let {
@@ -47,7 +49,8 @@
 		actions,
 		footer,
 		more = [],
-		children
+		children,
+		stage
 	}: Props = $props();
 
 	const showNav = $derived(items.length > 1);
@@ -77,32 +80,38 @@
 
 {#snippet moreLinks()}
 	{#if more.some((g) => g.length) || footer}
-		<div class="mt-3 hidden border-t border-hair px-5 pt-4.5 text-small lg:block">
+		<div class="mt-3 hidden border-t border-hair pt-4.5 text-small lg:block">
 			<nav aria-label={m.nav_more()}>
 				{#each more as group, i (i)}
-					{#if i > 0}<hr class="my-3 border-hair" />{/if}
-					<ul class="grid gap-1.5">
-						{#each group as item (item.href)}
-							<li>
-								<a
-									href={item.href}
-									aria-current={isCurrent(item) ? 'page' : undefined}
-									class="font-semibold underline-offset-3 hover:underline aria-[current=page]:underline"
-								>
-									{item.label}
-									{#if item.count}
-										<span aria-hidden="true">({item.count})</span>
-										<span class="sr-only">{item.countLabel ?? item.count}</span>
-									{/if}
-								</a>
-							</li>
-						{/each}
-					</ul>
+					{#if i > 0}
+						<hr class="my-3 border-hair" />
+					{/if}
+					<div class=" px-5">
+						<ul class="grid gap-1.5">
+							{#each group as item (item.href)}
+								<li>
+									<a
+										href={item.href}
+										aria-current={isCurrent(item) ? 'page' : undefined}
+										class="font-semibold underline-offset-3 hover:underline aria-[current=page]:underline"
+									>
+										{item.label}
+										{#if item.count}
+											<span aria-hidden="true">({item.count})</span>
+											<span class="sr-only">{item.countLabel ?? item.count}</span>
+										{/if}
+									</a>
+								</li>
+							{/each}
+						</ul>
+					</div>
 				{/each}
 			</nav>
 			{#if footer}
 				<hr class="my-3 border-hair" />
-				{@render footer()}
+				<div class=" px-5">
+					{@render footer()}
+				</div>
 			{/if}
 		</div>
 	{/if}
@@ -115,10 +124,20 @@
 		<header
 			class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink bg-paper px-3 py-2.5 lg:col-span-2 lg:px-6.5 lg:py-3"
 		>
-			<a href={homeHref} class="flex items-center gap-2.5 font-semibold no-underline">
-				<img src={logo} alt="" class="h-8 w-auto" />
-				<span>{title}</span>
-			</a>
+			<div class="flex flex-col items-center lg:flex-row lg:gap-2.5">
+				<a href={homeHref} class="flex items-center gap-2.5 font-semibold no-underline">
+					<img src={logo} alt="" class="h-8 w-auto" />
+					<span>{title}</span>
+				</a>
+				{#if stage}
+					<a href={stage.href} class="no-underline hover:opacity-80">
+						<Badge tone="attention">
+							<span aria-hidden={stage.srLabel ? 'true' : undefined}>{stage.label}</span>
+							{#if stage.srLabel}<span class="sr-only">{stage.srLabel}</span>{/if}
+						</Badge>
+					</a>
+				{/if}
+			</div>
 			{#if actions}
 				<div class="flex items-center gap-2">{@render actions()}</div>
 			{/if}
@@ -189,10 +208,20 @@
 			<div
 				class="flex items-center justify-between gap-2.25 px-4 py-3 md:mb-2.5 md:border-b md:border-ink md:pt-0 md:pb-3.5"
 			>
-				<a href={homeHref} class="flex items-center gap-2.25 font-semibold no-underline">
-					<img src={logo} alt="" class="h-10 w-auto" />
-					<span>{title}</span>
-				</a>
+				<div class="flex items-center gap-2.5">
+					<a href={homeHref} class="flex items-center gap-2.5 font-semibold no-underline">
+						<img src={logo} alt="" class="h-8 w-auto" />
+						<span>{title}</span>
+					</a>
+					{#if stage}
+						<a href={stage.href} class="no-underline hover:opacity-80">
+							<Badge tone="attention">
+								<span aria-hidden={stage.srLabel ? 'true' : undefined}>{stage.label}</span>
+								{#if stage.srLabel}<span class="sr-only">{stage.srLabel}</span>{/if}
+							</Badge>
+						</a>
+					{/if}
+				</div>
 				{#if actions}
 					<div class="flex items-center gap-2">{@render actions()}</div>
 				{/if}

@@ -62,7 +62,12 @@
 		</section>
 
 		<section aria-labelledby="inbox-heading">
-			{@render sectionHead('inbox-heading', m.home_inbox(), resolve('/messages'), m.home_inbox_all())}
+			{@render sectionHead(
+				'inbox-heading',
+				m.home_inbox(),
+				resolve('/messages'),
+				m.home_inbox_all()
+			)}
 			<a
 				href={resolve('/messages')}
 				class="mt-3 flex items-center justify-between gap-3 border border-ink bg-paper p-4 no-underline hover:bg-hover"
@@ -145,5 +150,6 @@
 				{/each}
 			</ul>
 		</section>
+		<p class="mt-8 border-t border-hair pt-4 text-small text-muted">{m.home_stage_note()}</p>
 	</div>
 </div>

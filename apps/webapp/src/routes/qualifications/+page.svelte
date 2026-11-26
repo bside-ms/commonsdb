@@ -9,4 +9,9 @@
 <h1>{m.nav_qualifications()}</h1>
 <p class="mt-3 max-w-[52ch] text-muted">{m.qualifications_intro()}</p>
 
-<EmptyState class="mt-6" icon={GraduationCap} title={m.locked_title()} description={m.locked_hint()} />
+<EmptyState
+	class="mt-6"
+	icon={GraduationCap}
+	title={m.locked_title()}
+	description={m.locked_hint()}
+/>

@@ -1,5 +1,6 @@
 import {
 	Box,
+	CheckCheck,
 	GraduationCap,
 	House,
 	Inbox,
@@ -15,14 +16,7 @@ import { m } from '#lib/paraglide/messages.js';
 import type { NavItem } from '#lib/ui';
 
 /** Pages that belong to "Start" in the prototype (navActive()). */
-const START_PATHS = [
-	'/messages',
-	'/account',
-	'/profile',
-	'/suggestions',
-	'/news',
-	'/about'
-] as const;
+const START_PATHS = ['/news'] as const;
 const inStart = (path: string) =>
 	path === resolve('/') ||
 	START_PATHS.some((p) => path === resolve(p) || path.startsWith(`${resolve(p)}/`));
@@ -77,7 +71,7 @@ export const adminNav = (
 		count: suggestions,
 		countLabel: suggestions ? m.admin_nav_suggestions_open({ count: suggestions }) : undefined
 	},
-	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: SquareCheck },
+	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: CheckCheck },
 	{ href: resolve('/admin/news'), label: m.admin_nav_news(), icon: Newspaper },
 	{
 		href: resolve('/admin/messages'),

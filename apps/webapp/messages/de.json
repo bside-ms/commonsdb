@@ -1,6 +1,9 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"app_name": "B-Side Commons",
+	"app_stage": "Testphase",
+	"app_stage_label": "Testphase: Diese App wird gerade gemeinsam entwickelt. Mehr erfahren",
+	"home_stage_note": "Diese App wird gerade gemeinsam entwickelt. Wenn euch etwas fehlt oder komisch ist, sagt uns gern Bescheid.",
+	"app_name": "Commons",
 	"login_title": "Anmelden",
 	"login_keycloak_button": "Mit B-Side-Konto anmelden",
 	"login_email_label": "E-Mail",
@@ -14,6 +17,7 @@
 	"home_greeting": "Hallo {name}.",
 	"home_no_tasks_title": "Du hast gerade keine Aufgaben übernommen",
 	"home_no_tasks_hint": "Schau, was ansteht – vielleicht ist etwas für dich dabei.",
+	"home_browse_tasks": "Aufgaben ansehen",
 	"home_soon_title": "Bald verfügbar",
 	"home_tagline": "Ein Haus für alle — pack mit an:",
 	"home_find_tasks": "Aufgaben finden",
