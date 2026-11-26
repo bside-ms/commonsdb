@@ -1,0 +1,29 @@
+# Same result as ./Dockerfile, but without BuildKit-only syntax (no RUN --mount).
+# -> builds on the legacy builder.
+
+FROM node:24-slim AS build
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+WORKDIR /repo
+COPY . .
+RUN printf '\nnodeLinker: hoisted\nverifyDepsBeforeRun: false\n' >> pnpm-workspace.yaml
+RUN pnpm install --frozen-lockfile
+RUN DATABASE_URL=postgres://build@localhost/build \
+	ORIGIN=http://localhost \
+	BETTER_AUTH_SECRET=build-only-placeholder-000000000000 \
+	UPLOAD_DIR=/tmp/uploads \
+	pnpm --filter webapp build
+
+FROM node:24-slim
+WORKDIR /app
+ENV NODE_ENV=production PORT=3000 UPLOAD_DIR=/data/uploads
+COPY --from=build /repo/package.json ./
+COPY --from=build /repo/node_modules ./node_modules
+COPY --from=build /repo/packages ./packages
+COPY --from=build /repo/apps/webapp/package.json ./apps/webapp/
+COPY --from=build /repo/apps/webapp/build ./apps/webapp/build
+RUN mkdir -p /data/uploads && chown node:node /data/uploads
+USER node
+EXPOSE 3000
+
+CMD ["node", "apps/webapp/build"]
