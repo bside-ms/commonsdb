@@ -32,12 +32,23 @@
 		title: string;
 		/** member: right side of the header. admin: next to the brand. */
 		actions?: Snippet;
-		/** admin only: bottom of the side nav (user, back to app, logout). */
+		/** member only: secondary link groups below the side nav (desktop). */
+		more?: NavItem[][];
+		/** admin: bottom of the side nav. member: after the `more` links (e.g. logout). */
 		footer?: Snippet;
 		children: Snippet;
 	};
 
-	let { variant = 'member', items, homeHref, title, actions, footer, children }: Props = $props();
+	let {
+		variant = 'member',
+		items,
+		homeHref,
+		title,
+		actions,
+		footer,
+		more = [],
+		children
+	}: Props = $props();
 
 	const showNav = $derived(items.length > 1);
 
@@ -64,6 +75,39 @@
 	>{m.ui_skip_to_content()}</a
 >
 
+{#snippet moreLinks()}
+	{#if more.some((g) => g.length) || footer}
+		<div class="mt-3 hidden border-t border-hair px-5 pt-4.5 text-small lg:block">
+			<nav aria-label={m.nav_more()}>
+				{#each more as group, i (i)}
+					{#if i > 0}<hr class="my-3 border-hair" />{/if}
+					<ul class="grid gap-1.5">
+						{#each group as item (item.href)}
+							<li>
+								<a
+									href={item.href}
+									aria-current={isCurrent(item) ? 'page' : undefined}
+									class="font-semibold underline-offset-3 hover:underline aria-[current=page]:underline"
+								>
+									{item.label}
+									{#if item.count}
+										<span aria-hidden="true">({item.count})</span>
+										<span class="sr-only">{item.countLabel ?? item.count}</span>
+									{/if}
+								</a>
+							</li>
+						{/each}
+					</ul>
+				{/each}
+			</nav>
+			{#if footer}
+				<hr class="my-3 border-hair" />
+				{@render footer()}
+			{/if}
+		</div>
+	{/if}
+{/snippet}
+
 {#if variant === 'member'}
 	<div
 		class="min-h-dvh bg-paper lg:grid lg:h-dvh lg:grid-cols-[var(--shell-member-side)_1fr] lg:grid-rows-[auto_1fr]"
@@ -81,45 +125,49 @@
 		</header>
 
 		{#if showNav}
-			<nav
-				aria-label={m.ui_nav_main()}
-				class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-ink bg-paper lg:static lg:flex lg:flex-col lg:overflow-y-auto lg:border-t-0 lg:border-r lg:py-5.5"
-			>
-				{#each items as item (item.href)}
-					{@const current = isCurrent(item)}
-					<a
-						href={item.href}
-						aria-current={current ? 'page' : undefined}
-						class={cn(
-							'flex min-h-14 flex-col items-center justify-center gap-0.75 border-l border-hair px-0.5 py-2.5 text-[0.65625rem] font-semibold no-underline first:border-l-0',
-							'lg:min-h-0 lg:flex-row lg:justify-start lg:gap-2.75 lg:border-l-5 lg:border-transparent lg:px-5 lg:py-2.75 lg:text-button lg:first:border-l-5',
-							current
-								? [AREA_BG[item.area ?? 'start'], 'lg:border-l-ink']
-								: 'hover:bg-hover lg:hover:bg-hover'
-						)}
-					>
-						<span class="relative">
-							{#if item.icon}
-								<item.icon class="size-5.25" strokeWidth={1.9} aria-hidden="true" />
-							{/if}
+			<div class="lg:flex lg:flex-col lg:overflow-y-auto lg:border-r lg:border-ink lg:py-5.5">
+				<nav
+					aria-label={m.ui_nav_main()}
+					class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-ink bg-paper lg:static lg:flex lg:flex-col lg:border-t-0"
+				>
+					{#each items as item (item.href)}
+						{@const current = isCurrent(item)}
+						<a
+							href={item.href}
+							aria-current={current ? 'page' : undefined}
+							class={cn(
+								'flex min-h-14 flex-col items-center justify-center gap-0.75 border-l border-hair px-0.5 py-2.5 text-[0.65625rem] font-semibold no-underline first:border-l-0',
+								'lg:min-h-0 lg:flex-row lg:justify-start lg:gap-2.75 lg:border-l-5 lg:border-transparent lg:px-5 lg:py-2.75 lg:text-button lg:first:border-l-5',
+								current
+									? [AREA_BG[item.area ?? 'start'], 'lg:border-l-ink']
+									: 'hover:bg-hover lg:hover:bg-hover'
+							)}
+						>
+							<span class="relative">
+								{#if item.icon}
+									<item.icon class="size-5.25" strokeWidth={1.9} aria-hidden="true" />
+								{/if}
+								{#if item.count}
+									<span
+										class="absolute -top-1.5 -right-2.5 min-w-4.5 border border-ink bg-accent px-1 text-center text-caps lg:hidden"
+										aria-hidden="true">{item.count}</span
+									>
+								{/if}
+							</span>
+							<span>{item.label}</span>
 							{#if item.count}
 								<span
-									class="absolute -top-1.5 -right-2.5 min-w-4.5 border border-ink bg-accent px-1 text-center text-caps lg:hidden"
+									class="hidden border border-ink bg-accent px-1.5 text-caps lg:ml-auto lg:inline"
 									aria-hidden="true">{item.count}</span
 								>
+								<span class="sr-only">{item.countLabel ?? item.count}</span>
 							{/if}
-						</span>
-						<span>{item.label}</span>
-						{#if item.count}
-							<span
-								class="hidden border border-ink bg-accent px-1.5 text-caps lg:ml-auto lg:inline"
-								aria-hidden="true">{item.count}</span
-							>
-							<span class="sr-only">{item.countLabel ?? item.count}</span>
-						{/if}
-					</a>
-				{/each}
-			</nav>
+						</a>
+					{/each}
+				</nav>
+
+				{@render moreLinks()}
+			</div>
 		{/if}
 
 		<main

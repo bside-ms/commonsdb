@@ -1,42 +1,63 @@
 import {
-	BookOpen,
-	CheckCheck,
+	Box,
+	GraduationCap,
 	House,
 	Inbox,
 	KeyRound,
 	Lightbulb,
-	ListChecks,
 	Newspaper,
 	Repeat,
-	Users,
-	Wallet
+	SquareCheck,
+	Users
 } from '@lucide/svelte';
 import { resolve } from '$app/paths';
 import { m } from '#lib/paraglide/messages.js';
 import type { NavItem } from '#lib/ui';
 
+/** Pages that belong to "Start" in the prototype (navActive()). */
+const START_PATHS = [
+	'/messages',
+	'/account',
+	'/profile',
+	'/suggestions',
+	'/news',
+	'/about'
+] as const;
+const inStart = (path: string) =>
+	path === resolve('/') ||
+	START_PATHS.some((p) => path === resolve(p) || path.startsWith(`${resolve(p)}/`));
+
 /**
- * Navigation of the two shells. Functions, so labels are translated at
- * render time. Add areas as their slices land; the nav shows from two
- * items on.
- *
- * Prototype areas and their Lucide icons, for later:
- *   Start House · Aufgaben ListChecks · Commons Box · Initiativen Users ·
- *   Qualifikationen GraduationCap
+ * Main nav: the prototype's five areas, in order. Areas not built yet
+ * point to a "noch nicht freigeschaltet" page.
  */
-export const memberNav = ({ unread = 0 }: { unread?: number } = {}): NavItem[] => [
-	{ href: resolve('/'), label: m.nav_start(), icon: House, area: 'start' },
-	{ href: resolve('/tasks'), label: m.nav_tasks(), icon: ListChecks, area: 'tasks' },
+export const memberNav = (): NavItem[] => [
+	{ href: resolve('/'), label: m.nav_start(), icon: House, area: 'start', match: inStart },
+	{ href: resolve('/tasks'), label: m.nav_tasks(), icon: SquareCheck, area: 'tasks' },
+	{ href: resolve('/commons'), label: m.nav_commons(), icon: Box, area: 'commons' },
+	{ href: resolve('/initiatives'), label: m.nav_initiatives(), icon: Users, area: 'init' },
 	{
-		href: resolve('/messages'),
-		label: m.nav_messages(),
-		icon: Inbox,
-		area: 'start',
-		count: unread,
-		countLabel: unread ? m.nav_messages_unread({ count: unread }) : undefined
-	},
-	{ href: resolve('/wiki'), label: m.nav_wiki(), icon: BookOpen, area: 'qual' },
-	{ href: resolve('/account'), label: m.nav_account(), icon: Wallet, area: 'commons' }
+		href: resolve('/qualifications'),
+		label: m.nav_qualifications(),
+		icon: GraduationCap,
+		area: 'qual'
+	}
+];
+
+/** Secondary member links below the side nav, in groups (hairline between). */
+export const memberMoreNav = ({ unread = 0 }: { unread?: number } = {}): NavItem[][] => [
+	[
+		{ href: resolve('/account'), label: m.nav_account_mine() },
+		{
+			href: resolve('/messages'),
+			label: m.nav_messages(),
+			count: unread,
+			countLabel: unread ? m.nav_messages_unread({ count: unread }) : undefined
+		},
+		{ href: resolve('/suggestions'), label: m.home_suggest_task() },
+		{ href: resolve('/about'), label: m.nav_about() }
+	],
+	[{ href: resolve('/profile/edit'), label: m.profile_edit_title() }]
 ];
 
 /**
@@ -47,7 +68,7 @@ export const adminNav = (
 	user: { isSuperadmin: boolean },
 	{ unread = 0, suggestions = 0 } = {}
 ): NavItem[] => [
-	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: ListChecks },
+	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: SquareCheck },
 	{ href: resolve('/admin/series'), label: m.admin_nav_series(), icon: Repeat },
 	{
 		href: resolve('/admin/suggestions'),
@@ -56,7 +77,7 @@ export const adminNav = (
 		count: suggestions,
 		countLabel: suggestions ? m.admin_nav_suggestions_open({ count: suggestions }) : undefined
 	},
-	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: CheckCheck },
+	{ href: resolve('/admin/confirmations'), label: m.admin_nav_confirmations(), icon: SquareCheck },
 	{ href: resolve('/admin/news'), label: m.admin_nav_news(), icon: Newspaper },
 	{
 		href: resolve('/admin/messages'),

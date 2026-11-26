@@ -50,6 +50,8 @@ as teaser content only: **resource booking**, **initiatives**,
 So `CalendarProviderContract` is not needed for v1 at all.
 `AuthProviderContract` still is — it gates slice 1.
 
+The deferred areas (Commons, Initiativen, Qualifizieren) are in the member nav from now on, each as a route showing EmptyState with "Dieser Bereich ist noch nicht freigeschaltet. Wir bauen ihn gerade." There is no preview content and no "benachrichtigen" button. Start shows them as "Bald verfügbar". When an area's slice lands, its placeholder page is replaced; the nav item stays.
+
 ---
 
 ## Slice 0 — Design system, first pass
@@ -474,7 +476,7 @@ cached_title)` is provider-neutral. Tasks and series templates get a
   subpages; admins: edit, subpage, Markdown, delete), `/wiki/new`
   (?parent), `/wiki/[slug]/edit` (+ move), `/wiki/[slug]/history`
   (?rev, restore), `/wiki/trash`, `/wiki/[slug]/markdown` (download).
-  "Wiki" in the member nav (area colour `qual`).
+  Not in the member nav (decided 2026-11): the wiki is reached from task/series links ("Im Wiki") and by URL. The qual slot belongs to Qualifizieren.
 - On a save conflict the text stays in the editor, the new version
   opens in a new tab; the edit form keeps its starting revision even
   when queries refresh.
@@ -645,6 +647,13 @@ when the design side stabilises.
   show initials; their read models need `visiblePhotoId`.
 - **Avatar variant.** Avatars load the 480px thumb; a 160px square
   variant would be lighter.
+- **Category management.** Categories only came from the seed; there was
+  no UI to create them, so a fresh install has no way to create tasks.
+  Superadmin CRUD at `/admin/categories`; categories in use can be
+  renamed, not deleted (archiving later if needed).
+- Start page: pending repros. Prototype shows "N Repros warten noch auf Bestätigung" under the saldo. Needs a core query (sum of reported, unconfirmed shifts) — cheap, next to getOwnBalance.
+- Start page: thank-you card. Shown once after a confirmation with a thanks note, dismissible. Needs a per-member "seen" marker on the ledger entry. Small slice; decide whether "dismissed" is per entry or per day.
+- "Feedback zur App". Prototype has it on Start and globally. Could reuse suggestions with a fixed category, or messages to admins. Decide before building.
 
 ---
 

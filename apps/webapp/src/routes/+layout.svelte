@@ -9,7 +9,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { mediaUrl } from '#lib/media.ts';
 	import { AppShell, Avatar, Button, Toaster } from '#lib/ui';
-	import { adminNav, memberNav } from '#lib/navigation.ts';
+	import { adminNav, memberNav, memberMoreNav } from '#lib/navigation.ts';
 	import type { LayoutProps } from './$types';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -39,6 +39,7 @@
 		void page.url.pathname;
 		void loadBadges(showMemberNav, showAdminNav);
 	});
+
 	async function loadBadges(member: boolean, admin: boolean) {
 		if (member) {
 			const q = unreadCount();
@@ -83,7 +84,7 @@
 					{user.displayName}
 				</a>
 				<a href={resolve('/')} class="text-small font-semibold underline underline-offset-3"
-					>{m.nav_back_to_app()}</a
+				>{m.nav_back_to_app()}</a
 				>
 				{@render logout()}
 			</div>
@@ -94,10 +95,14 @@
 	{@const user = data.user}
 	<AppShell
 		variant="member"
-		items={inOnboarding ? [] : memberNav({ unread })}
+		items={inOnboarding ? [] : memberNav()}
+		more={inOnboarding ? [] : memberMoreNav({ unread })}
 		homeHref={resolve('/')}
 		title={m.app_name()}
 	>
+		{#snippet footer()}
+			{@render logout()}
+		{/snippet}
 		{#snippet actions()}
 			{#if user.isAdmin && !inOnboarding}
 				<Button size="sm" variant="ghost" href={resolve('/admin')}>{m.nav_admin()}</Button>

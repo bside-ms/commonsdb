@@ -4,7 +4,7 @@
 	whenever the URL changes, because their arguments are derived from it.
 -->
 <script lang="ts">
-	import { ListChecks, Plus } from '@lucide/svelte';
+	import { SquareCheck, Plus } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
@@ -67,7 +67,7 @@
 {#if !hasCategories}
 	<EmptyState
 		class="mt-6"
-		icon={ListChecks}
+		icon={SquareCheck}
 		title={m.admin_no_capabilities_title()}
 		description={m.admin_no_capabilities_hint()}
 	/>

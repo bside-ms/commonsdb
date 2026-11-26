@@ -7,7 +7,7 @@ export type NavItem = {
 	href: string;
 	/** Already translated. */
 	label: string;
-	/** A Lucide icon component, e.g. `ListChecks`. */
+	/** A Lucide icon component, e.g. `SquareCheck`. */
 	icon?: typeof House;
 	/** Member shell: colours the active item with the area colour. */
 	area?: Area;

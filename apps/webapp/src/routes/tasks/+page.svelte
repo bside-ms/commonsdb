@@ -5,7 +5,7 @@
 	"Meine Aufgaben" first, then what's open.
 -->
 <script lang="ts">
-	import { ListChecks } from '@lucide/svelte';
+	import { SquareCheck } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
@@ -122,7 +122,7 @@
 	{#if open.length === 0}
 		<EmptyState
 			class="mt-3"
-			icon={ListChecks}
+			icon={SquareCheck}
 			title={m.tasks_empty_title()}
 			description={m.tasks_empty_hint()}
 		>

@@ -3,7 +3,7 @@
 	first. Each row owns its forms (see ConfirmationRow).
 -->
 <script lang="ts">
-	import { CheckCheck } from '@lucide/svelte';
+	import { SquareCheck } from '@lucide/svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { EmptyState } from '#lib/ui';
 	import { confirmations } from './confirmations.remote';
@@ -20,7 +20,7 @@
 {#if items.length === 0}
 	<EmptyState
 		class="mt-6"
-		icon={CheckCheck}
+		icon={SquareCheck}
 		title={m.admin_confirmations_empty_title()}
 		description={m.admin_confirmations_empty_hint()}
 	/>
