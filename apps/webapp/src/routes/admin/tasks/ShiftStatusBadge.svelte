@@ -7,8 +7,8 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { Badge } from '#lib/ui';
 
-	let { shift }: { shift: Pick<AdminShift, 'status' | 'assigneeName'> } = $props();
-	const name = $derived(shift.assigneeName);
+	let { shift }: { shift: Pick<AdminShift, 'status' | 'assigneeName' | 'guest'> } = $props();
+	const name = $derived(shift.assigneeName ?? (shift.guest ? m.action_guest() : '—'));
 </script>
 
 {#if shift.status === 'open'}

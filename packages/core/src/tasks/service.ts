@@ -23,7 +23,8 @@ import {
 	task,
 	user,
 	type ShiftStatus,
-	type WhenKind
+	type WhenKind,
+	shiftClaim
 } from '@commonsdb/db/schema';
 import { DomainError, ValidationError, type FieldErrors } from '../errors.ts';
 import {
@@ -109,6 +110,7 @@ export type MemberShift = ShiftTimes & {
 	status: ShiftStatus;
 	mine: boolean;
 	assigneeName: string | null;
+	guest: boolean;
 	notes: { report: string | null; sentBack: string | null } | null;
 };
 
@@ -130,6 +132,7 @@ export type AdminShift = ShiftTimes & {
 	hoursTenths: number;
 	status: ShiftStatus;
 	assigneeName: string | null;
+	guest: boolean;
 };
 
 export type AdminTaskListItem = Omit<TaskListItem, 'shifts'> & {
@@ -200,6 +203,8 @@ type ShiftRow = ShiftTimes & {
 	status: ShiftStatus;
 	assigneeId: string | null;
 	assigneeName: string | null;
+	guestName: string | null;
+	guest: boolean;
 	reportNote: string | null;
 	sendBackNote: string | null;
 };
@@ -220,11 +225,14 @@ async function loadShifts(db: Db, taskIds: string[]): Promise<Map<string, ShiftR
 			status: shift.status,
 			assigneeId: shift.assigneeId,
 			assigneeName: profile.displayName,
+			guestName: shiftClaim.guestName,
+			guest: sql<boolean>`${shiftClaim.id} is not null and ${shiftClaim.claimedAt} is null`,
 			reportNote: shift.reportNote,
 			sendBackNote: shift.sendBackNote
 		})
 		.from(shift)
 		.leftJoin(profile, eq(profile.userId, shift.assigneeId))
+		.leftJoin(shiftClaim, eq(shiftClaim.shiftId, shift.id))
 		.where(inArray(shift.taskId, taskIds))
 		.orderBy(asc(shift.position), asc(shift.createdAt));
 
@@ -424,7 +432,8 @@ export async function getTaskForMember(
 				hoursTenths: s.hoursTenths,
 				status: s.status,
 				mine,
-				assigneeName: s.status === 'open' ? null : s.assigneeName,
+				assigneeName: s.status === 'open' ? null : s.guest ? s.guestName : s.assigneeName,
+				guest: s.guest,
 				notes: mine ? { report: s.reportNote, sentBack: s.sendBackNote } : null
 			};
 		}),
@@ -525,7 +534,8 @@ const toAdminShift = (s: ShiftRow): AdminShift => ({
 	...timesOf(s),
 	hoursTenths: s.hoursTenths,
 	status: s.status,
-	assigneeName: s.assigneeName
+	assigneeName: s.status === 'open' ? null : s.guest ? s.guestName : s.assigneeName,
+	guest: s.guest
 });
 
 /** Tasks in the categories the admin manages; deleted ones on request. */
@@ -783,8 +793,8 @@ export const restoreTask = (db: Db, actor: Actor, taskId: string) =>
 	setDeleted(db, actor, taskId, null);
 
 export type ActionTaskItem = TaskListItem & {
-	/** Names on taken/reported/confirmed shifts, in shift order. */
-	people: string[];
+	/** Who's on the shifts; `guest` = no account yet (name optional). */
+	people: { name: string | null; guest: boolean }[];
 	/** Every shift reported or confirmed. */
 	done: boolean;
 };
@@ -811,7 +821,9 @@ export async function listTasksForAction(
 		return {
 			...baseItem(r),
 			shifts: summarize(r, list, actor, today),
-			people: list.filter((s) => s.status !== 'open').map((s) => s.assigneeName ?? '—'),
+			people: list
+				.filter((s) => s.status !== 'open')
+				.map((s) => ({ name: s.guest ? s.guestName : s.assigneeName, guest: s.guest })),
 			done:
 				list.length > 0 && list.every((s) => s.status === 'reported' || s.status === 'confirmed')
 		};

@@ -36,7 +36,7 @@ const guard: Handle = async ({ event, resolve }) => {
 		redirect(303, `/login?redirectTo=${encodeURIComponent(path + event.url.search)}`);
 	}
 	if (!isOnboarded(profile) && !matches(path, ONBOARDING_PATHS)) {
-		redirect(303, '/onboarding');
+		redirect(303, `/onboarding?redirectTo=${encodeURIComponent(path + event.url.search)}`);
 	}
 	if (isOnboarded(profile) && path === '/onboarding') {
 		redirect(303, '/');

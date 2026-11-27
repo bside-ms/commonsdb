@@ -7,9 +7,10 @@
 	import { page } from '$app/state';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatDate } from '#lib/format.ts';
-	import { Badge, EmptyState } from '#lib/ui';
+	import { Badge, Button, EmptyState } from '#lib/ui';
 	import { actionPage } from '../aktion.remote';
 	import MemberTaskRow from '#lib/components/MemberTaskRow.svelte';
+	import { resolve } from '$app/paths';
 
 	const a = $derived(await actionPage(page.params.id!));
 
@@ -52,7 +53,20 @@
 				<h2 id="{g.id}-heading">{g.title} ({g.list.length})</h2>
 				<ul class="mt-3 grid border-t border-ink lg:grid-cols-2 lg:gap-x-7">
 					{#each g.list as task (task.id)}
-						<li><MemberTaskRow {task} people={task.people} /></li>
+						<li class="relative">
+							<MemberTaskRow {task} people={task.people} />
+							{#if a.canRecordGuests && g.id !== 'done'}
+								<div class="pb-3">
+									<Button
+										size="sm"
+										variant="ghost"
+										href={resolve('/aktion/[id]/gast/[taskId]', { id: a.id, taskId: task.id })}
+									>
+										{m.action_record_guest()}
+									</Button>
+								</div>
+							{/if}
+						</li>
 					{/each}
 				</ul>
 			</section>

@@ -10,6 +10,7 @@ import {
 	Newspaper,
 	Repeat,
 	SquareCheck,
+	Ticket,
 	Users
 } from '@lucide/svelte';
 import { resolve } from '$app/paths';
@@ -66,6 +67,7 @@ export const adminNav = (
 	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: SquareCheck },
 	{ href: resolve('/admin/series'), label: m.admin_nav_series(), icon: Repeat },
 	{ href: resolve('/admin/actions'), label: m.admin_nav_actions(), icon: CalendarDays },
+	{ href: resolve('/admin/guest-claims'), label: m.admin_nav_guest_claims(), icon: Ticket },
 	{
 		href: resolve('/admin/suggestions'),
 		label: m.admin_nav_suggestions(),

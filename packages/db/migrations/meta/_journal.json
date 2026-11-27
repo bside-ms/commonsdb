@@ -113,6 +113,13 @@
       "when": 1795775624834,
       "tag": "0015_actions",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795780152321,
+      "tag": "0016_guest_claims",
+      "breakpoints": true
     }
   ]
 }

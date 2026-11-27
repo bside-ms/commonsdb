@@ -10,6 +10,7 @@
 	import { formatDate, formatReproChange, formatRepros } from '#lib/format.ts';
 	import { Balance, Button, EmptyState } from '#lib/ui';
 	import { ownAccount } from './account.remote';
+	import RedeemForm from '#lib/components/RedeemForm.svelte';
 
 	const account = $derived(await ownAccount());
 </script>
@@ -77,4 +78,10 @@
 			{/each}
 		</ul>
 	{/if}
+</section>
+
+<section class="mt-10 max-w-lg" aria-labelledby="redeem-heading">
+	<h2 id="redeem-heading">{m.redeem_title()}</h2>
+	<p class="mt-2 text-small text-muted">{m.redeem_intro()}</p>
+	<div class="mt-3"><RedeemForm /></div>
 </section>

@@ -240,7 +240,7 @@ their entries at `/account`; superadmins correct balances at
   name, email, role, balance). Signed half steps, ±1000, memo required
   and shown to the member. Fixed by another adjustment, never edited.
   Superadmins may adjust their own balance; `actor_id` records it.
-- Only `confirmation.ts` and `ledger/admin.ts` write ledger entries.
+- Only `confirmation.ts`, `guest-shifts.ts` (slice 12b) and `ledger/admin.ts` write ledger entries.
 
 ---
 
@@ -636,10 +636,14 @@ erledigt and names. Tested in core (actions/service.test.ts).
 
 ## Slice 12b — Guest credit
 
-Decided: codes only, no email. Admins and the Aktion's leads record "als Gast erledigt" on site (report + confirm in one
-step); shown as "Gast" unless a name is entered. shift_claim holds the hashed one-time code; no ledger entry until
-claimed, then credited through confirmation.ts. Codes expire after 3 months; admins can still assign an expired or lost
-claim to an account by hand. Later (slice 9): redeem for an initiative.
+Decided:
+
+- Who records: admins with the task's category; leads of the task's published Aktion from its day until 7 days after (`LEAD_DAYS_AFTER`).
+- Recording takes the task's first free shift (or adds one) and confirms it with no assignee — report and confirm in one step. No ledger entry yet.
+- `shift_claim`: one per shift, code stored as sha256 (`XXXX-XXXX`, no 0/O/1/I/L), optional guest name (shown instead of "Gast"), `expires_at` = issue + 3 months (`CLAIM_VALID_MONTHS`). No email.
+- Redeem at `/einloesen/[code]` (QR on the slip) or on Konto. Needs an account; login and onboarding now carry `redirectTo` through. Redeeming sets the assignee and credits via `tasks/guest-shifts.ts`; the ledger entry's actor is whoever confirmed on site.
+- Admins (`/admin/guest-claims`): assign to a person by hand, also after expiry; reissue a code when the slip is lost (old one stops working).
+- A member who already has a shift on that task can't redeem it (`claim_already_on_task`, one shift per member per task) — admins sort it out.
 
 ---
 

@@ -2,12 +2,10 @@ import { fail, redirect } from '@sveltejs/kit';
 import { APIError } from 'better-auth/api';
 import type { Actions, PageServerLoad } from './$types';
 import { auth, loginMethods, keycloakOrigin } from '#lib/server/services.ts';
+import { safeRedirect as safe } from '#lib/server/redirect.ts';
 
 /** Error codes the login page knows how to display. */
 export type LoginError = 'method_disabled' | 'start_failed' | 'invalid_credentials';
-
-/** only same-site relative targets, no open redirect */
-const safe = (t: string | null) => (t?.startsWith('/') && !t.startsWith('//') ? t : '/');
 
 export const load: PageServerLoad = ({ locals, url }) => {
 	if (locals.user) redirect(303, safe(url.searchParams.get('redirectTo')));

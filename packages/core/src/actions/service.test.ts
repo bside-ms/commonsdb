@@ -247,11 +247,11 @@ describe('listTasksForAction', () => {
 		const by = Object.fromEntries(list.map((x) => [x.title, x]));
 		assert.deepEqual(Object.keys(by).sort(), ['Hecke schneiden', 'Laub rechen']);
 
-		assert.deepEqual(by['Hecke schneiden'].people, ['Kim']);
+		assert.deepEqual(by['Hecke schneiden'].people, [{ name: 'Kim', guest: false }]);
 		assert.equal(by['Hecke schneiden'].shifts.free, 1);
 		assert.equal(by['Hecke schneiden'].done, false);
 
-		assert.deepEqual(by['Laub rechen'].people, ['Lu']);
+		assert.deepEqual(by['Laub rechen'].people, [{ name: 'Lu', guest: false }]);
 		assert.equal(by['Laub rechen'].shifts.free, 0);
 		assert.equal(by['Laub rechen'].done, true);
 	});

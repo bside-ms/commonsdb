@@ -120,7 +120,7 @@
 							{:else if shift.status === 'open'}
 								<Badge outline>{m.task_shift_free()}</Badge>
 							{:else}
-								<span class="font-semibold">{shift.assigneeName ?? m.task_status_taken()}</span>
+								<span class="font-semibold">{shift.assigneeName ?? (shift.guest ? m.action_guest() : '—')}</span>
 							{/if}
 						</li>
 					{/each}
