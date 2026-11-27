@@ -118,6 +118,8 @@ Status: **done.** Login/logout through Better Auth against Keycloak,
 onboarding (profile fields + house rules) instead of in-app
 registration, profile view and edit, `platform_role` in the session.
 Tested in core (integration, PGlite) and end to end.
+Platform role follows the Keycloak client roles at every login (applyIdpRole, Better Auth account hooks); see
+ARCHITECTURE.md. Off unless KEYCLOAK_ROLE_ADMIN is set.
 
 ---
 

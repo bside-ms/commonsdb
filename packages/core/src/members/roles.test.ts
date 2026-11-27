@@ -5,7 +5,7 @@ import { createTestDb, insertUser } from '@commonsdb/db/testing';
 import { user } from '@commonsdb/db/schema';
 import { ValidationError } from '../errors.ts';
 import type { Actor } from '../roles.ts';
-import { setPlatformRole } from './roles.ts';
+import { applyIdpRole, setPlatformRole } from './roles.ts';
 
 const t = await createTestDb();
 const { db } = t;
@@ -78,4 +78,37 @@ test('two superadmins demoting each other at once: one stays', async () => {
 
 test('setting the same role again is a no-op', async () => {
 	assert.equal(await setPlatformRole(db, sam, 'sam', { role: 'superadmin' }), 'superadmin');
+});
+
+test('Keycloak: admin role makes an admin, none makes a member', async () => {
+	assert.equal(await applyIdpRole(db, 'kim', { admin: true }), 'admin');
+	assert.equal(await roleOf('kim'), 'admin');
+	assert.equal(await applyIdpRole(db, 'kim', { admin: false }), 'member');
+	assert.equal(await roleOf('kim'), 'member');
+});
+
+test('Keycloak: a superadmin stays one while Keycloak says admin', async () => {
+	await setPlatformRole(db, sam, 'ada', { role: 'superadmin' });
+	assert.equal(await applyIdpRole(db, 'ada', { admin: true }), 'superadmin');
+});
+
+test('Keycloak: without the admin role a superadmin becomes a member, even the last one', async () => {
+	assert.equal(await applyIdpRole(db, 'sam', { admin: false }), 'member');
+	assert.equal(await roleOf('sam'), 'member');
+});
+
+test('Keycloak: unknown user', async () => {
+	await assert.rejects(applyIdpRole(db, 'nobody', { admin: true }), { code: 'user_not_found' });
+});
+
+test('with Keycloak roles the app only switches admin ↔ superadmin', async () => {
+	const idp = { idpManaged: true };
+	await setPlatformRole(db, sam, 'ada', { role: 'superadmin' }, idp);
+	await setPlatformRole(db, sam, 'ada', { role: 'admin' }, idp);
+	await assert.rejects(setPlatformRole(db, sam, 'kim', { role: 'admin' }, idp), {
+		code: 'role_managed_by_idp'
+	});
+	await assert.rejects(setPlatformRole(db, sam, 'ada', { role: 'member' }, idp), {
+		code: 'role_managed_by_idp'
+	});
 });

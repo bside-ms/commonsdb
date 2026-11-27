@@ -79,13 +79,30 @@ pnpm db:seed              # demo categories
 pnpm dev                  # http://localhost:5173
 ```
 
+### Authentication
+
+**Session vs. Keycloak**: Keycloak is only asked at login. After that the Better Auth session lives on its own: a logout
+or a disabled account in Keycloak doesn't end it, and /logout doesn't end the Keycloak SSO session. That's the usual SSO
+behaviour and fine for now. If shared devices come up (bar laptop, entrance tablet), add RP-initiated logout (/logout →
+Keycloak end_session_endpoint with id_token_hint); a periodic refresh-token check or back-channel logout only if an
+immediate lockout is ever needed.
+
+**Roles from Keycloak**: B-Side manages users in its own tool (bside_nexus) on top of Keycloak. With
+KEYCLOAK_ROLE_ADMIN set, every Keycloak login maps the client roles from the access token: …_admin → admin, anything
+else → member. Superadmin is granted in the app (first ones via SQL) and kept only while Keycloak still says admin;
+losing …_admin there makes a superadmin a member at the next login, also the last one. In the app, superadmins can then
+only switch admin ↔ superadmin. Changes in Keycloak apply at the next login (same as sessions). Category scopes (
+capability) stay in the app.
+
 ### Roles
 
 New users start as members. The first superadmin is set once in the
 database (log in once first, so the user exists):
 
 ```sql
-update "user" set platform_role = 'superadmin' where email = '...';
+update "user"
+set platform_role = 'superadmin'
+where email = '...';
 ```
 
 After that, superadmins manage roles in the app under Admin → Mitglieder.

@@ -11,7 +11,7 @@
 	import { Badge, Button, FormField, Input, Select, Textarea, toast } from '#lib/ui';
 	import { adjust, setRole } from './members.remote';
 
-	let { member }: { member: MemberBalance } = $props();
+	let { member, idpManaged = false }: { member: MemberBalance; idpManaged?: boolean } = $props();
 
 	const f = $derived(adjust.for(member.id));
 	const r = $derived(setRole.for(member.id));
@@ -23,7 +23,11 @@
 		admin: m.role_admin,
 		superadmin: m.role_superadmin
 	};
-	const roleOptions = PLATFORM_ROLES.map((value) => ({ value, label: roleNames[value]() }));
+	// with Keycloak roles: only admin ↔ superadmin, and only for admins
+	const roleOptions = (idpManaged ? (['admin', 'superadmin'] as const) : PLATFORM_ROLES).map(
+		(value) => ({ value, label: roleNames[value]() })
+	);
+	const canChangeRole = $derived(!idpManaged || member.role !== 'member');
 
 	const err = (field: { issues(): { message: string }[] | undefined }) => {
 		const issue = field.issues()?.[0];
@@ -54,31 +58,33 @@
 		</p>
 	</div>
 
-	<details bind:open={roleOpen} class="text-small">
-		<summary class="cursor-pointer font-semibold">{m.admin_members_role()}</summary>
-		<form
-			{...r.enhance(async ({ submit }) => {
-				if (await submit()) {
-					roleOpen = false;
-					toast(m.admin_members_role_saved_toast({ name: member.name }));
-				}
-			})}
-			class="mt-3 grid max-w-md gap-3"
-		>
-			<input {...r.fields.userId.as('hidden', member.id)} />
-			<FormField
-				label={m.admin_members_role()}
-				hint={m.admin_members_role_hint()}
-				error={err(r.fields.role)}
+	{#if canChangeRole}
+		<details bind:open={roleOpen} class="text-small">
+			<summary class="cursor-pointer font-semibold">{m.admin_members_role()}</summary>
+			<form
+				{...r.enhance(async ({ submit }) => {
+					if (await submit()) {
+						roleOpen = false;
+						toast(m.admin_members_role_saved_toast({ name: member.name }));
+					}
+				})}
+				class="mt-3 grid max-w-md gap-3"
 			>
-				<Select {...r.fields.role.as('select', member.role)} options={roleOptions} />
-			</FormField>
-			<Button type="submit" disabled={r.pending > 0}>{m.admin_members_role_submit()}</Button>
-			{#each r.fields.userId.issues() ?? [] as issue (issue.message)}
-				<p role="alert" class="font-semibold text-danger">{errorMessage(issue.message)}</p>
-			{/each}
-		</form>
-	</details>
+				<input {...r.fields.userId.as('hidden', member.id)} />
+				<FormField
+					label={m.admin_members_role()}
+					hint={idpManaged ? m.admin_members_role_hint_idp() : m.admin_members_role_hint()}
+					error={err(r.fields.role)}
+				>
+					<Select {...r.fields.role.as('select', member.role)} options={roleOptions} />
+				</FormField>
+				<Button type="submit" disabled={r.pending > 0}>{m.admin_members_role_submit()}</Button>
+				{#each r.fields.userId.issues() ?? [] as issue (issue.message)}
+					<p role="alert" class="font-semibold text-danger">{errorMessage(issue.message)}</p>
+				{/each}
+			</form>
+		</details>
+	{/if}
 
 	<details bind:open class="text-small">
 		<summary class="cursor-pointer font-semibold">{m.admin_members_adjust()}</summary>

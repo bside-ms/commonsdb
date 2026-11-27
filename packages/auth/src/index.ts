@@ -3,6 +3,9 @@ import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { genericOAuth, keycloak } from 'better-auth/plugins/generic-oauth';
 import type { Db } from '@commonsdb/db';
+import { keycloakClientRoles } from './keycloak.ts';
+
+export { keycloakClientRoles };
 
 export type KeycloakOptions = {
 	/** Issuer incl. realm, e.g. https://login.b-side.ms/realms/Test */
@@ -22,12 +25,25 @@ export type AuthOptions = {
 	/** local email/password accounts */
 	emailPassword?: boolean;
 	onUserCreated?: (user: CreatedUser) => Promise<void>;
+	/**
+	 * After every Keycloak login (first and repeat), with the client roles
+	 * from the fresh access token. Not called if the token can't be read.
+	 */
+	onKeycloakLogin?: (login: { userId: string; clientRoles: string[] }) => Promise<void>;
 	/** framework-specific plugins, appended last */
 	plugins?: BetterAuthPlugin[];
 };
 
 export function createAuth(options: AuthOptions) {
 	const { db, keycloak: kc } = options;
+
+	type AccountRow = { providerId?: string; userId?: string; accessToken?: string | null };
+	const afterKeycloakTokens = async (a: AccountRow) => {
+		if (!kc || !options.onKeycloakLogin) return;
+		if (a.providerId !== 'keycloak' || !a.userId || !a.accessToken) return;
+		const clientRoles = keycloakClientRoles(a.accessToken, kc.clientId);
+		if (clientRoles) await options.onKeycloakLogin({ userId: a.userId, clientRoles });
+	};
 
 	return betterAuth({
 		baseURL: options.baseURL,
@@ -55,6 +71,12 @@ export function createAuth(options: AuthOptions) {
 						await options.onUserCreated?.(user);
 					}
 				}
+			},
+			// Better Auth writes fresh tokens to the account on every sign-in
+			// (updateAccountOnSignIn, default on), first sign-in creates it.
+			account: {
+				create: { after: afterKeycloakTokens },
+				update: { after: afterKeycloakTokens }
 			}
 		},
 		plugins: [

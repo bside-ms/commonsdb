@@ -5,6 +5,7 @@ import {
 	KEYCLOAK_ISSUER,
 	KEYCLOAK_CLIENT_ID,
 	KEYCLOAK_CLIENT_SECRET,
+	KEYCLOAK_ROLE_ADMIN,
 	AUTH_EMAIL_PASSWORD,
 	UPLOAD_DIR
 } from '$app/env/private';
@@ -14,7 +15,7 @@ import { resolve } from 'node:path';
 import { createDb } from '@commonsdb/db';
 import { createDiskStorage } from '@commonsdb/media';
 import { createAuth } from '@commonsdb/auth';
-import { provisionProfile } from '@commonsdb/core';
+import { applyIdpRole, provisionProfile } from '@commonsdb/core';
 
 export const { db } = createDb(DATABASE_URL);
 
@@ -27,6 +28,9 @@ export const loginMethods = {
 } as const;
 
 export const keycloakOrigin = KEYCLOAK_ISSUER ? new URL(KEYCLOAK_ISSUER).origin : undefined;
+
+/** Keycloak decides admin vs. member (only with a configured admin role). */
+export const rolesFromKeycloak = loginMethods.keycloak && Boolean(KEYCLOAK_ROLE_ADMIN);
 
 export const auth = createAuth({
 	db,
@@ -41,5 +45,10 @@ export const auth = createAuth({
 		: undefined,
 	emailPassword: loginMethods.emailPassword,
 	onUserCreated: (user) => provisionProfile(db, user),
+	onKeycloakLogin: rolesFromKeycloak
+		? async ({ userId, clientRoles }) => {
+				await applyIdpRole(db, userId, { admin: clientRoles.includes(KEYCLOAK_ROLE_ADMIN!) });
+			}
+		: undefined,
 	plugins: [sveltekitCookies(getRequestEvent)]
 });

@@ -9,10 +9,15 @@ export const variables = defineEnvVars({
 
 	KEYCLOAK_ISSUER: {
 		schema: optional,
-		description: 'Issuer incl. realm, e.g. `https://login.b-side.ms/realms/Test`.'
+		description: 'Issuer incl. realm, e.g. https://login.b-side.ms/auth/realms/bside.'
 	},
 	KEYCLOAK_CLIENT_ID: { schema: optional, description: 'OIDC client ID.' },
 	KEYCLOAK_CLIENT_SECRET: { schema: optional, description: 'OIDC client secret.' },
+	KEYCLOAK_ROLE_ADMIN: {
+		schema: optional,
+		description:
+			'Keycloak client role that makes an admin, e.g. `commonsdb_admin`. Set it to let Keycloak decide admin vs. member at every login; unset = roles only in the app.'
+	},
 
 	UPLOAD_DIR: {
 		description:

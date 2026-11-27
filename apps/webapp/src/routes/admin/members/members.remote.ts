@@ -5,7 +5,7 @@
 import { form, query } from '$app/server';
 import * as v from 'valibot';
 import { adjustBalance, listMemberBalances, setPlatformRole } from '@commonsdb/core';
-import { db } from '#lib/server/services.ts';
+import { db, rolesFromKeycloak } from '#lib/server/services.ts';
 import { requireSuperadmin, toFormIssues, toHttpError } from '#lib/server/guards.ts';
 
 export const memberBalances = query(async () =>
@@ -25,6 +25,12 @@ export const adjust = form(
 	}
 );
 
+/** For the role form: does admin vs. member come from Keycloak? */
+export const roleMode = query(async () => {
+	requireSuperadmin();
+	return { idpManaged: rolesFromKeycloak };
+});
+
 /** Role change; core keeps at least one superadmin ('last_superadmin'). */
 export const setRole = form(
 	v.object({
@@ -32,7 +38,13 @@ export const setRole = form(
 		role: v.optional(v.string())
 	}),
 	async ({ userId, role }) => {
-		await setPlatformRole(db, requireSuperadmin(), userId, { role }).catch(toFormIssues);
+		await setPlatformRole(
+			db,
+			requireSuperadmin(),
+			userId,
+			{ role },
+			{ idpManaged: rolesFromKeycloak }
+		).catch(toFormIssues);
 		await memberBalances().refresh();
 		return { done: true };
 	}
