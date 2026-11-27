@@ -5,11 +5,14 @@ import { form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';
 import {
 	canRecordGuestsForAction,
+	confirmShift,
 	getAction,
 	getTaskForMember,
+	listConfirmationsForAction,
 	listTasksForAction,
 	listUpcomingActions,
-	recordGuestWork
+	recordGuestWork,
+	sendBackShift
 } from '@commonsdb/core';
 import { toHtml } from '@commonsdb/richtext';
 import { db } from '#lib/server/services.ts';
@@ -54,8 +57,39 @@ export const recordGuest = form('unchecked', async (input: GuestFormData) => {
 		const { code, expiresAt } = await recordGuestWork(db, actor, input);
 		const url = `${getRequestEvent().url.origin}/einloesen/${code}`;
 		const qr = await QRCode.toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M' });
-		return { code, expiresAt, url, qr, hoursTenths: Math.round(Number(input.hours.replace(',', '.')) * 10) };
+		return {
+			code,
+			expiresAt,
+			url,
+			qr,
+			hoursTenths: Math.round(Number(input.hours.replace(',', '.')) * 10)
+		};
 	} catch (e) {
 		toFormIssues(e);
 	}
 });
+
+/** Reported shifts of this Aktion the actor may see (leads: all; admins: their categories). */
+export const actionConfirmations = query(Id, async (id) =>
+	listConfirmationsForAction(db, requireActor(), id).catch(toHttpError)
+);
+
+/*
+ * Same fields as the admin queue's forms, but requireActor(): leads
+ * aren't admins. Who may confirm is decided in core (loadReported).
+ */
+export const leadConfirm = form(
+	v.object({ shiftId: Id, hours: v.string(), note: v.optional(v.string()) }),
+	async ({ shiftId, ...input }) => {
+		await confirmShift(db, requireActor(), shiftId, input).catch(toFormIssues);
+		return { done: true };
+	}
+);
+
+export const leadSendBack = form(
+	v.object({ shiftId: Id, note: v.optional(v.string()) }),
+	async ({ shiftId, ...input }) => {
+		await sendBackShift(db, requireActor(), shiftId, input).catch(toFormIssues);
+		return { done: true };
+	}
+);

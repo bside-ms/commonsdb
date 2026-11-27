@@ -14,44 +14,23 @@ import { isActionLead } from '../actions/service.ts';
 import { assertManagesCategory, canManageCategory, manageableCategories } from '../tasks/policy.ts';
 import { localToday } from '../tasks/shifts.ts';
 import { confirmGuestShift, creditGuestShift } from '../tasks/guest-shifts.ts';
+import { isLeadInWindow } from '../actions/service.ts';
 import { hashCode, newClaimCode } from './code.ts';
-import {
-	AssignClaimInput,
-	CLAIM_VALID_MONTHS,
-	GuestWorkInput,
-	LEAD_DAYS_AFTER,
-	RedeemInput
-} from './schema.ts';
+import { AssignClaimInput, CLAIM_VALID_MONTHS, GuestWorkInput, RedeemInput } from './schema.ts';
 
 const expiry = () => sql`now() + ${`${CLAIM_VALID_MONTHS} months`}::interval`;
-
-/** 'YYYY-MM-DD' + n days, as a date string. */
-function addDays(day: string, n: number) {
-	const d = new Date(`${day}T12:00:00Z`);
-	d.setUTCDate(d.getUTCDate() + n);
-	return d.toISOString().slice(0, 10);
-}
 
 // ---- who may record ---------------------------------------------------------
 
 /** Admin of the task's category, or a lead of its published Aktion in the lead window. */
 async function canRecordForTask(db: Db, actor: Actor, taskId: string, today: string) {
-	const [t] = await db
-		.select({
-			categoryId: task.categoryId,
-			deletedAt: task.deletedAt,
-			actionId: task.actionId,
-			actionDate: action.date,
-			published: action.publishedAt
-		})
-		.from(task)
-		.leftJoin(action, eq(action.id, task.actionId))
-		.where(eq(task.id, taskId));
+	const t = await db.query.task.findFirst({
+		where: eq(task.id, taskId),
+		columns: { categoryId: true, deletedAt: true, actionId: true }
+	});
 	if (!t || t.deletedAt) throw new DomainError('task_not_found');
 	if (await canManageCategory(db, actor, t.categoryId)) return true;
-	if (!t.actionId || !t.published || !t.actionDate) return false;
-	if (today < t.actionDate || today > addDays(t.actionDate, LEAD_DAYS_AFTER)) return false;
-	return isActionLead(db, actor, t.actionId);
+	return t.actionId !== null && isLeadInWindow(db, actor, t.actionId, today);
 }
 
 /**
@@ -64,14 +43,7 @@ export async function canRecordGuestsForAction(
 	actionId: string,
 	{ today = localToday() }: { today?: string } = {}
 ) {
-	if (isAdmin(actor)) return true;
-	const a = await db.query.action.findFirst({
-		where: eq(action.id, actionId),
-		columns: { date: true, publishedAt: true }
-	});
-	if (!a?.publishedAt) return false;
-	if (today < a.date || today > addDays(a.date, LEAD_DAYS_AFTER)) return false;
-	return isActionLead(db, actor, actionId);
+	return isAdmin(actor) || isLeadInWindow(db, actor, actionId, today);
 }
 
 // ---- recording --------------------------------------------------------------

@@ -8,11 +8,14 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatDate } from '#lib/format.ts';
 	import { Badge, Button, EmptyState } from '#lib/ui';
-	import { actionPage } from '../aktion.remote';
 	import MemberTaskRow from '#lib/components/MemberTaskRow.svelte';
 	import { resolve } from '$app/paths';
+	import ConfirmationRow from '#lib/components/ConfirmationRow.svelte';
+	import { actionConfirmations, actionPage, leadConfirm, leadSendBack } from '../aktion.remote';
 
-	const a = $derived(await actionPage(page.params.id!));
+	const [a, toConfirm] = $derived(
+		await Promise.all([actionPage(page.params.id!), actionConfirmations(page.params.id!)])
+	);
 
 	const free = $derived(a.tasks.filter((t) => t.shifts.free > 0));
 	const running = $derived(a.tasks.filter((t) => t.shifts.free === 0 && !t.done));
@@ -42,6 +45,23 @@
 {/if}
 {#if a.html}
 	<div class="prose mt-5 max-w-[65ch]">{@html a.html}</div>
+{/if}
+
+{#if toConfirm.length}
+	<section class="mt-8" aria-labelledby="confirm-heading">
+		<h2 id="confirm-heading">{m.action_to_confirm()} ({toConfirm.length})</h2>
+		<p class="mt-2 max-w-[60ch] text-small text-muted">{m.action_to_confirm_hint()}</p>
+		<ul class="mt-3 divide-y divide-ink border border-ink bg-paper">
+			{#each toConfirm as item (item.shiftId)}
+				<ConfirmationRow
+					{item}
+					confirm={leadConfirm}
+					sendBack={leadSendBack}
+					taskHref={resolve('/tasks/[id]', { id: item.task.id })}
+				/>
+			{/each}
+		</ul>
+	</section>
 {/if}
 
 {#if a.tasks.length === 0}

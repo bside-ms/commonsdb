@@ -14,7 +14,7 @@ import { parse } from '../validation.ts';
 import { assertManagesCategory } from '../tasks/policy.ts';
 import { localToday } from '../tasks/shifts.ts';
 import { ActionInput } from './schema.ts';
-import type { Tx } from '../tasks/index.ts';
+import { addDays, type Tx } from '../tasks/index.ts';
 
 export type ActionItem = {
 	id: string;
@@ -58,6 +58,25 @@ async function withLeads(db: Db, rows: (typeof action.$inferSelect)[]): Promise<
 		publishedAt: r.publishedAt,
 		leads: leads.filter((l) => l.actionId === r.id).map(({ id, name }) => ({ id, name }))
 	}));
+}
+
+/** Leads act (guests, confirmations) from the Aktion's day until this many days after. */
+export const LEAD_DAYS_AFTER = 7;
+
+/** A lead of this published Aktion, between its day and LEAD_DAYS_AFTER days later. */
+export async function isLeadInWindow(
+	db: Db,
+	actor: Actor,
+	actionId: string,
+	today: string = localToday()
+) {
+	const a = await db.query.action.findFirst({
+		where: eq(action.id, actionId),
+		columns: { date: true, publishedAt: true }
+	});
+	if (!a?.publishedAt) return false;
+	if (today < a.date || today > addDays(a.date, LEAD_DAYS_AFTER)) return false;
+	return isActionLead(db, actor, actionId);
 }
 
 // ---- reading (every member) -------------------------------------------------

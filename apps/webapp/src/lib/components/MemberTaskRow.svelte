@@ -12,7 +12,9 @@
 
 	type Person = { name: string | null; guest: boolean };
 	let { task, people = [] }: { task: TaskListItem; people?: Person[] } = $props();
-	const names = $derived(people.map((p) => p.name ?? (p.guest ? m.action_guest() : '—')).join(', '));
+	const names = $derived(
+		people.map((p) => p.name ?? (p.guest ? m.action_guest() : '—')).join(', ')
+	);
 
 	const shifts = $derived(task.shifts);
 	const range = $derived(

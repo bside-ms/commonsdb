@@ -5,14 +5,24 @@
 -->
 <script lang="ts">
 	import type { ConfirmationItem } from '@commonsdb/core';
-	import { resolve } from '$app/paths';
 	import { m } from '#lib/paraglide/messages.js';
 	import { errorMessage } from '#lib/i18n/errors.ts';
 	import { formatDate, formatHours, formatWhen, hoursValue } from '#lib/format.ts';
 	import { Badge, Button, FormField, Input, Textarea, toast } from '#lib/ui';
-	import { confirm, sendBack } from './confirmations.remote';
+	import type {
+		confirm as ConfirmForm,
+		sendBack as SendBackForm
+	} from '../../routes/admin/confirmations/confirmations.remote';
 
-	let { item }: { item: ConfirmationItem } = $props();
+	type Props = {
+		item: ConfirmationItem;
+		/** Remote forms: the admin queue's or the Aktion page's (same fields). */
+		confirm: typeof ConfirmForm;
+		sendBack: typeof SendBackForm;
+		/** Where the task title links to (admin edit page or member detail). */
+		taskHref: string;
+	};
+	let { item, confirm, sendBack, taskHref }: Props = $props();
 
 	const confirmForm = $derived(confirm.for(item.shiftId));
 	const sendBackForm = $derived(sendBack.for(item.shiftId));
@@ -37,10 +47,7 @@
 			{/if}
 		</div>
 		<h2 class="mt-1.5 text-h3">
-			<a
-				href={resolve('/admin/tasks/[id]', { id: item.task.id })}
-				class="no-underline hover:underline"
-			>
+			<a href={taskHref} class="no-underline hover:underline">
 				{item.task.title}
 			</a>
 		</h2>

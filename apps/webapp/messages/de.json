@@ -209,6 +209,8 @@
 	"action_when": "{date}, {from}–{to} Uhr",
 	"action_guest": "Gast",
 	"action_record_guest": "Gast eintragen",
+	"action_to_confirm": "Zu bestätigen",
+	"action_to_confirm_hint": "Gemeldete Aufgaben dieser Aktion. Als Lead kannst du sie bis 7 Tage nach der Aktion bestätigen – deine eigenen bestätigen die Admins.",
 	"guest_title": "Gast eintragen",
 	"guest_intro": "Für jemanden ohne Konto: Die Arbeit gilt sofort als bestätigt. Die Person bekommt einen Code und löst ihn ein, sobald sie ein Konto hat.",
 	"guest_field_hours": "Stunden",

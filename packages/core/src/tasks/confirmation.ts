@@ -1,14 +1,16 @@
-import { and, asc, eq, inArray, type SQL } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, type SQL } from 'drizzle-orm';
 import type { Db } from '@commonsdb/db';
 import { category, profile, shift, task, type WhenKind } from '@commonsdb/db/schema';
 import { DomainError } from '../errors.ts';
 import { creditShift } from '../ledger/internal.ts';
 import { isSuperadmin, type Actor } from '../roles.ts';
 import { parse } from '../validation.ts';
-import { assertManagesCategory, manageableCategories } from './policy.ts';
+import { canManageCategory, manageableCategories } from './policy.ts';
 import { ConfirmInput, SendBackInput } from './schema.ts';
-import { afterOccurrenceConfirmed } from './series/generator.ts';
+import { afterOccurrenceConfirmed } from './series/index.ts';
 import { postTaskLogMessage } from '../messaging/internal.ts';
+import { isLeadInWindow } from '../actions/index.ts';
+import { localToday } from './shifts.ts';
 
 export type ConfirmationItem = {
 	shiftId: string;
@@ -30,17 +32,8 @@ export type ConfirmationItem = {
 	canConfirm: boolean;
 };
 
-/**
- * Reported shifts in the actor's categories, oldest report first.
- * Includes soft-deleted tasks: deleting a task must not cost anyone repros.
- */
-export async function listConfirmations(db: Db, actor: Actor): Promise<ConfirmationItem[]> {
-	const scope = await manageableCategories(db, actor);
-	if (scope !== 'all' && scope.length === 0) return [];
-
-	const where: SQL[] = [eq(shift.status, 'reported')];
-	if (scope !== 'all') where.push(inArray(task.categoryId, scope));
-
+/** Reported shifts matching `where`, oldest report first, with what the actor may do. */
+async function selectReported(db: Db, actor: Actor, where: SQL[]): Promise<ConfirmationItem[]> {
 	const rows = await db
 		.select({
 			shiftId: shift.id,
@@ -62,9 +55,8 @@ export async function listConfirmations(db: Db, actor: Actor): Promise<Confirmat
 		.innerJoin(task, eq(shift.taskId, task.id))
 		.innerJoin(category, eq(task.categoryId, category.id))
 		.leftJoin(profile, eq(profile.userId, shift.assigneeId))
-		.where(and(...where))
+		.where(and(eq(shift.status, 'reported'), ...where))
 		.orderBy(asc(shift.reportedAt));
-
 	return rows.map((r) => {
 		const own = r.assigneeId === actor.id;
 		return {
@@ -89,13 +81,39 @@ export async function listConfirmations(db: Db, actor: Actor): Promise<Confirmat
 	});
 }
 
+export async function listConfirmations(db: Db, actor: Actor): Promise<ConfirmationItem[]> {
+	const scope = await manageableCategories(db, actor);
+	if (scope !== 'all' && scope.length === 0) return [];
+	return selectReported(db, actor, scope === 'all' ? [] : [inArray(task.categoryId, scope)]);
+}
+
+/**
+ * Reported shifts of one Aktion, for its page. Leads in the window see
+ * all of them; admins those in their categories; everyone else none.
+ * Report notes included: whoever confirms needs them.
+ */
+export async function listConfirmationsForAction(
+	db: Db,
+	actor: Actor,
+	actionId: string,
+	{ today = localToday() }: { today?: string } = {}
+): Promise<ConfirmationItem[]> {
+	const lead = await isLeadInWindow(db, actor, actionId, today);
+	const scope = lead ? 'all' : await manageableCategories(db, actor);
+	if (scope !== 'all' && scope.length === 0) return [];
+	const where: SQL[] = [eq(task.actionId, actionId), isNull(task.deletedAt)];
+	if (scope !== 'all') where.push(inArray(task.categoryId, scope));
+	return selectReported(db, actor, where);
+}
+
 /** A reported shift the actor manages, or the matching error. */
-async function loadReported(db: Db, actor: Actor, shiftId: string) {
+async function loadReported(db: Db, actor: Actor, shiftId: string, today: string) {
 	const [s] = await db
 		.select({
 			status: shift.status,
 			assigneeId: shift.assigneeId,
 			categoryId: task.categoryId,
+			actionId: task.actionId,
 			taskId: task.id,
 			taskTitle: task.title
 		})
@@ -103,7 +121,10 @@ async function loadReported(db: Db, actor: Actor, shiftId: string) {
 		.innerJoin(task, eq(shift.taskId, task.id))
 		.where(eq(shift.id, shiftId));
 	if (!s) throw new DomainError('shift_not_found');
-	await assertManagesCategory(db, actor, s.categoryId);
+	const allowed =
+		(await canManageCategory(db, actor, s.categoryId)) ||
+		(s.actionId !== null && (await isLeadInWindow(db, actor, s.actionId, today)));
+	if (!allowed) throw new DomainError('forbidden');
 	if (s.status !== 'reported') throw new DomainError('shift_not_reported');
 	return s;
 }
@@ -114,9 +135,15 @@ async function loadReported(db: Db, actor: Actor, shiftId: string) {
  * For an occurrence of a series, the series' next occurrences follow in
  * the same transaction (they may depend on this completion).
  */
-export async function confirmShift(db: Db, actor: Actor, shiftId: string, input: unknown) {
+export async function confirmShift(
+	db: Db,
+	actor: Actor,
+	shiftId: string,
+	input: unknown,
+	{ today = localToday() }: { today?: string } = {}
+) {
 	const { hours, note } = parse(ConfirmInput, input);
-	const s = await loadReported(db, actor, shiftId);
+	const s = await loadReported(db, actor, shiftId, today);
 	if (!s.assigneeId) throw new DomainError('shift_no_assignee');
 	if (s.assigneeId === actor.id && !isSuperadmin(actor)) {
 		throw new DomainError('shift_confirm_own');
@@ -161,9 +188,15 @@ export async function confirmShift(db: Db, actor: Actor, shiftId: string, input:
  * Back to 'taken' with a reason. The assignee sees it on the task and,
  * as a message, in their inbox, where every send-back stays readable.
  */
-export async function sendBackShift(db: Db, actor: Actor, shiftId: string, input: unknown) {
+export async function sendBackShift(
+	db: Db,
+	actor: Actor,
+	shiftId: string,
+	input: unknown,
+	{ today = localToday() }: { today?: string } = {}
+) {
 	const { note } = parse(SendBackInput, input);
-	const s = await loadReported(db, actor, shiftId);
+	const s = await loadReported(db, actor, shiftId, today);
 
 	await db.transaction(async (tx) => {
 		const [row] = await tx

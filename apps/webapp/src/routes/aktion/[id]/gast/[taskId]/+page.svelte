@@ -36,7 +36,9 @@
 	<div class="mt-6 flex flex-wrap justify-center gap-3 print:hidden">
 		<Button onclick={() => window.print()}>{m.guest_print()}</Button>
 		<Button variant="ghost" href={page.url.pathname} data-sveltekit-reload>{m.guest_next()}</Button>
-		<Button variant="ghost" href={resolve('/aktion/[id]', { id: actionId })}>{m.guest_back()}</Button>
+		<Button variant="ghost" href={resolve('/aktion/[id]', { id: actionId })}
+			>{m.guest_back()}</Button
+		>
 	</div>
 {:else}
 	<p class="text-small text-muted">{m.guest_title()}</p>
@@ -46,9 +48,19 @@
 	<form {...recordGuest} class="mt-6 grid max-w-md gap-5">
 		<input {...f.taskId.as('hidden', t.id)} />
 		<FormField label={m.guest_field_hours()} error={err(f.hours)}>
-			<Input {...f.hours.as('text', hoursValue(t.hoursTenths))} inputmode="decimal" class="max-w-28" required />
+			<Input
+				{...f.hours.as('text', hoursValue(t.hoursTenths))}
+				inputmode="decimal"
+				class="max-w-28"
+				required
+			/>
 		</FormField>
-		<FormField label={m.guest_field_name()} hint={m.guest_field_name_hint()} optional error={err(f.guestName)}>
+		<FormField
+			label={m.guest_field_name()}
+			hint={m.guest_field_name_hint()}
+			optional
+			error={err(f.guestName)}
+		>
 			<Input {...f.guestName.as('text', '')} maxlength={80} autocomplete="off" />
 		</FormField>
 		{#each f.issues() ?? [] as issue (issue.message)}
@@ -56,15 +68,17 @@
 		{/each}
 		<div class="flex flex-wrap gap-3">
 			<Button type="submit" disabled={recordGuest.pending > 0}>{m.guest_submit()}</Button>
-			<Button variant="ghost" href={resolve('/aktion/[id]', { id: actionId })}>{m.ui_cancel()}</Button>
+			<Button variant="ghost" href={resolve('/aktion/[id]', { id: actionId })}
+				>{m.ui_cancel()}</Button
+			>
 		</div>
 	</form>
 {/if}
 
 <style>
-    @media print {
-        :global(header, nav) {
-            display: none !important;
-        }
-    }
+	@media print {
+		:global(header, nav) {
+			display: none !important;
+		}
+	}
 </style>

@@ -43,7 +43,10 @@
 			date: formatDate(claim.createdAt)
 		})}
 		{#if claim.claimedAt}
-			· {m.admin_claims_claimed_by({ name: claim.claimedBy ?? '—', date: formatDate(claim.claimedAt) })}
+			· {m.admin_claims_claimed_by({
+				name: claim.claimedBy ?? '—',
+				date: formatDate(claim.claimedAt)
+			})}
 		{/if}
 	</p>
 
@@ -58,7 +61,9 @@
 					options={people.map((p) => ({ value: p.id, label: p.name }))}
 					required
 				/>
-				<Button type="submit" size="sm" disabled={assign.pending > 0}>{m.admin_claims_assign()}</Button>
+				<Button type="submit" size="sm" disabled={assign.pending > 0}
+					>{m.admin_claims_assign()}</Button
+				>
 			</form>
 			<form {...reissue}>
 				<input {...reissue.fields.claimId.as('hidden', claim.id)} />

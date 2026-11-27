@@ -3,11 +3,13 @@
 	first. Each row owns its forms (see ConfirmationRow).
 -->
 <script lang="ts">
-	import { CheckCheck, SquareCheck } from '@lucide/svelte';
+	import { CheckCheck } from '@lucide/svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { EmptyState } from '#lib/ui';
 	import { confirmations } from './confirmations.remote';
-	import ConfirmationRow from './ConfirmationRow.svelte';
+	import { resolve } from '$app/paths';
+	import ConfirmationRow from '#lib/components/ConfirmationRow.svelte';
+	import { confirm, sendBack } from './confirmations.remote';
 
 	const items = $derived(await confirmations());
 </script>
@@ -27,7 +29,12 @@
 {:else}
 	<ul class="mt-6 divide-y divide-ink border border-ink bg-paper">
 		{#each items as item (item.shiftId)}
-			<ConfirmationRow {item} />
+			<ConfirmationRow
+				{item}
+				{confirm}
+				{sendBack}
+				taskHref={resolve('/admin/tasks/[id]', { id: item.task.id })}
+			/>
 		{/each}
 	</ul>
 {/if}

@@ -24,7 +24,7 @@ text on top.
 ## Stack
 
 | Concern            | Choice                                                                  |
-|--------------------|-------------------------------------------------------------------------|
+| ------------------ | ----------------------------------------------------------------------- |
 | Styling            | Tailwind v4, theme defined in `src/lib/ui/tokens.css` (`@theme static`) |
 | Headless behaviour | [Bits UI](https://bits-ui.com) for Dialog, Tabs, Popover, Combobox, ... |
 | Variants           | `tailwind-variants` (`tv`), via our own `tv` export                     |
@@ -107,7 +107,7 @@ anywhere in the app.
 ### Status
 
 | Component    | State | Notes                                                                                                                                                                                    |
-|--------------|-------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Button`     | done  | `variant` primary/ghost/accent, `size` md/sm, `tone` danger, `block`, renders `<a>` with `href`                                                                                          |
 | `FormField`  | done  | label + hint + error + "(optional)", context for the control                                                                                                                             |
 | `Input`      | done  | text-like types, `bind:value`                                                                                                                                                            |
@@ -153,7 +153,7 @@ Stays in routes until a second use: stat tile, tabs, table, "thanks" card.
   the route folder, not in `lib/ui`. Shared form errors go through
   `fieldError` from `#lib/i18n/errors.ts`.
 - Domain UI shared across route trees lives in `src/lib/components`
-  (`TaskCard`, `MemberTaskRow`, `ProfileFields`, `LogoutButton`, `RedeemForm`). Member tasks have two
+  (`TaskCard`, `MemberTaskRow`, `ProfileFields`, `LogoutButton`, `RedeemForm`, `ConfirmationRow`). Member tasks have two
   looks: `MemberTaskRow` for lists (prototype `.task-row`: rule on top of
   the `<ul>`, hairline per row, 2 columns from `lg`; badges + date | Repros,
   title, Kategorie · Stunden · Ort, free places only with >1 shift, thumb

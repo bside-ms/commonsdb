@@ -630,7 +630,7 @@ Occasional days where pre-picked tasks are done together ("Repro-Arbeitstag"). I
 - Teaser for the next Aktion on Start and the task list; ?action= filter on the list.
 - Leads have no rights yet: those come with 12b.
 
-Status: done. Admin list/new/edit under /admin/actions, marking from the Aktion's page (search over the admin's tasks, "
+Admin list/new/edit under /admin/actions, marking from the Aktion's page (search over the admin's tasks, "
 In anderer Aktion" badge; marking again moves a task). actionId on TaskListItem. Member page with free / läuft /
 erledigt and names. Tested in core (actions/service.test.ts).
 
@@ -638,12 +638,32 @@ erledigt and names. Tested in core (actions/service.test.ts).
 
 Decided:
 
-- Who records: admins with the task's category; leads of the task's published Aktion from its day until 7 days after (`LEAD_DAYS_AFTER`).
-- Recording takes the task's first free shift (or adds one) and confirms it with no assignee — report and confirm in one step. No ledger entry yet.
-- `shift_claim`: one per shift, code stored as sha256 (`XXXX-XXXX`, no 0/O/1/I/L), optional guest name (shown instead of "Gast"), `expires_at` = issue + 3 months (`CLAIM_VALID_MONTHS`). No email.
-- Redeem at `/einloesen/[code]` (QR on the slip) or on Konto. Needs an account; login and onboarding now carry `redirectTo` through. Redeeming sets the assignee and credits via `tasks/guest-shifts.ts`; the ledger entry's actor is whoever confirmed on site.
-- Admins (`/admin/guest-claims`): assign to a person by hand, also after expiry; reissue a code when the slip is lost (old one stops working).
-- A member who already has a shift on that task can't redeem it (`claim_already_on_task`, one shift per member per task) — admins sort it out.
+- Who records: admins with the task's category; leads of the task's published Aktion from its day until 7 days after (
+  `LEAD_DAYS_AFTER`).
+- Recording takes the task's first free shift (or adds one) and confirms it with no assignee — report and confirm in one
+  step. No ledger entry yet.
+- `shift_claim`: one per shift, code stored as sha256 (`XXXX-XXXX`, no 0/O/1/I/L), optional guest name (shown instead
+  of "Gast"), `expires_at` = issue + 3 months (`CLAIM_VALID_MONTHS`). No email.
+- Redeem at `/einloesen/[code]` (QR on the slip) or on Konto. Needs an account; login and onboarding now carry
+  `redirectTo` through. Redeeming sets the assignee and credits via `tasks/guest-shifts.ts`; the ledger entry's actor is
+  whoever confirmed on site.
+- Admins (`/admin/guest-claims`): assign to a person by hand, also after expiry; reissue a code when the slip is lost (
+  old one stops working).
+- A member who already has a shift on that task can't redeem it (`claim_already_on_task`, one shift per member per
+  task) — admins sort it out.
+
+## Slice 12c — Leads confirm on site
+
+Decided:
+
+- Leads of an Aktion may confirm or send back reported shifts of its tasks, in the same window as guest work (
+  isLeadInWindow: the day until LEAD_DAYS_AFTER = 7 days after, published only). Same rules as admins otherwise: hours
+  free (trust first, the ledger shows who confirmed what), own shifts never (only superadmins confirm their own). A
+  lead's own hours, e.g. for organising the day, wait in the area admins' queue.
+- loadReported accepts category admins or leads in the window; confirming stays one transaction in confirmation.ts.
+- Leads see report notes: the Aktion page lists the Aktion's reported shifts (listConfirmationsForAction): leads all,
+  admins by category, everyone else none.
+- ConfirmationRow moved to lib/components; forms and task link are props (admin queue vs. Aktion page).
 
 ---
 
