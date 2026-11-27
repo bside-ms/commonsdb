@@ -5,7 +5,7 @@
 	import archivo400 from '@fontsource/archivo/files/archivo-latin-400-normal.woff2?url';
 
 	import '../app.css';
-	import favicon from '#lib/assets/favicon.svg';
+	import favicon from '#lib/assets/favicon-192.png';
 	import { m } from '#lib/paraglide/messages.js';
 	import { mediaUrl } from '#lib/media.ts';
 	import { AppShell, Avatar, Button, Toaster } from '#lib/ui';
