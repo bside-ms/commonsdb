@@ -10,7 +10,8 @@
 	import { mediaUrl } from '#lib/media.ts';
 	import { Badge, Thumb } from '#lib/ui';
 
-	let { task }: { task: TaskListItem } = $props();
+	/** `people`: names on the task's shifts (Aktion page); empty elsewhere. */
+	let { task, people = [] }: { task: TaskListItem; people?: string[] } = $props();
 
 	const shifts = $derived(task.shifts);
 	const range = $derived(
@@ -61,6 +62,11 @@
 				{shifts.free === 0
 					? m.task_places_full()
 					: m.task_places_free({ free: shifts.free, total: shifts.total })}
+			</span>
+		{/if}
+		{#if people.length}
+			<span class="mt-1 block text-tiny text-muted">
+				{m.action_people({ names: people.join(', ') })}
 			</span>
 		{/if}
 	</span>

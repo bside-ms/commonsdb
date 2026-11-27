@@ -171,7 +171,9 @@ export const TaskFilter = v.object({
 	/** Doable now: a free shift and the task is on today. */
 	now: checkbox(),
 	/** Together only: at least two shifts at the same time. */
-	together: checkbox()
+	together: checkbox(),
+	/** Only tasks marked for this Aktion. */
+	actionId: v.optional(v.pipe(v.string(), v.uuid()))
 });
 export type TaskFilter = v.InferInput<typeof TaskFilter>;
 

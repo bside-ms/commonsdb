@@ -50,7 +50,10 @@ as teaser content only: **resource booking**, **initiatives**,
 So `CalendarProviderContract` is not needed for v1 at all.
 `AuthProviderContract` still is — it gates slice 1.
 
-The deferred areas (Commons, Initiativen, Qualifizieren) are in the member nav from now on, each as a route showing EmptyState with "Dieser Bereich ist noch nicht freigeschaltet. Wir bauen ihn gerade." There is no preview content and no "benachrichtigen" button. Start shows them as "Bald verfügbar". When an area's slice lands, its placeholder page is replaced; the nav item stays.
+The deferred areas (Commons, Initiativen, Qualifizieren) are in the member nav from now on, each as a route showing
+EmptyState with "Dieser Bereich ist noch nicht freigeschaltet. Wir bauen ihn gerade." There is no preview content and
+no "benachrichtigen" button. Start shows them as "Bald verfügbar". When an area's slice lands, its placeholder page is
+replaced; the nav item stays.
 
 ---
 
@@ -476,7 +479,8 @@ cached_title)` is provider-neutral. Tasks and series templates get a
   subpages; admins: edit, subpage, Markdown, delete), `/wiki/new`
   (?parent), `/wiki/[slug]/edit` (+ move), `/wiki/[slug]/history`
   (?rev, restore), `/wiki/trash`, `/wiki/[slug]/markdown` (download).
-  Not in the member nav (decided 2026-11): the wiki is reached from task/series links ("Im Wiki") and by URL. The qual slot belongs to Qualifizieren.
+  Not in the member nav (decided 2026-11): the wiki is reached from task/series links ("Im Wiki") and by URL. The qual
+  slot belongs to Qualifizieren.
 - On a save conflict the text stays in the editor, the new version
   opens in a new tab; the edit form keeps its starting revision even
   when queries refresh.
@@ -612,6 +616,33 @@ Certificates gating tasks and resources.
 
 ---
 
+## Slice 12a — Actions
+
+Occasional days where pre-picked tasks are done together ("Repro-Arbeitstag"). Internally action; member URL
+/aktion/[id] (QR at the door), admin /admin/actions.
+
+- action (title, description, date, optional time window, place, draft/published) and action_lead (day leads, shown as "
+  Ansprechpersonen").
+- task.action_id (nullable, set null on delete): a task belongs to at most one Aktion. Marked from the Aktion's admin
+  page; needs the task's category capability.
+- Member page: free / läuft / erledigt with names per task (names are visible anyway, slice 4). Full tasks of a
+  published Aktion can be opened.
+- Teaser for the next Aktion on Start and the task list; ?action= filter on the list.
+- Leads have no rights yet: those come with 12b.
+
+Status: done. Admin list/new/edit under /admin/actions, marking from the Aktion's page (search over the admin's tasks, "
+In anderer Aktion" badge; marking again moves a task). actionId on TaskListItem. Member page with free / läuft /
+erledigt and names. Tested in core (actions/service.test.ts).
+
+## Slice 12b — Guest credit
+
+Decided: codes only, no email. Admins and the Aktion's leads record "als Gast erledigt" on site (report + confirm in one
+step); shown as "Gast" unless a name is entered. shift_claim holds the hashed one-time code; no ledger entry until
+claimed, then credited through confirmation.ts. Codes expire after 3 months; admins can still assign an expired or lost
+claim to an account by hand. Later (slice 9): redeem for an initiative.
+
+---
+
 ## Noticed, not decided
 
 Things the prototype implies that we should _not_ settle yet. Revisit
@@ -651,9 +682,12 @@ when the design side stabilises.
   no UI to create them, so a fresh install has no way to create tasks.
   Superadmin CRUD at `/admin/categories`; categories in use can be
   renamed, not deleted (archiving later if needed).
-- Start page: pending repros. Prototype shows "N Repros warten noch auf Bestätigung" under the saldo. Needs a core query (sum of reported, unconfirmed shifts) — cheap, next to getOwnBalance.
-- Start page: thank-you card. Shown once after a confirmation with a thanks note, dismissible. Needs a per-member "seen" marker on the ledger entry. Small slice; decide whether "dismissed" is per entry or per day.
-- "Feedback zur App". Prototype has it on Start and globally. Could reuse suggestions with a fixed category, or messages to admins. Decide before building.
+- Start page: pending repros. Prototype shows "N Repros warten noch auf Bestätigung" under the saldo. Needs a core
+  query (sum of reported, unconfirmed shifts) — cheap, next to getOwnBalance.
+- Start page: thank-you card. Shown once after a confirmation with a thanks note, dismissible. Needs a per-member "seen"
+  marker on the ledger entry. Small slice; decide whether "dismissed" is per entry or per day.
+- "Feedback zur App". Prototype has it on Start and globally. Could reuse suggestions with a fixed category, or messages
+  to admins. Decide before building.
 
 ---
 

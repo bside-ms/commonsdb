@@ -1,5 +1,6 @@
 import {
 	Box,
+	CalendarDays,
 	CheckCheck,
 	GraduationCap,
 	House,
@@ -64,6 +65,7 @@ export const adminNav = (
 ): NavItem[] => [
 	{ href: resolve('/admin/tasks'), label: m.admin_nav_tasks(), icon: SquareCheck },
 	{ href: resolve('/admin/series'), label: m.admin_nav_series(), icon: Repeat },
+	{ href: resolve('/admin/actions'), label: m.admin_nav_actions(), icon: CalendarDays },
 	{
 		href: resolve('/admin/suggestions'),
 		label: m.admin_nav_suggestions(),

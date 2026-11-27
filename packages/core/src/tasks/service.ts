@@ -47,6 +47,7 @@ import {
 	parallelCount,
 	type ShiftWindow
 } from './shifts.ts';
+import { isPublishedAction } from '../actions/service.ts';
 
 // ---------------------------------------------------------------------------
 // Read models. Services return these shapes, never raw rows, so routes only
@@ -92,6 +93,8 @@ export type TaskListItem = {
 	image: TaskImage | null;
 	/** Occurrence of a series (slice 5); occurrences share a look. */
 	seriesId: string | null;
+	/** Marked for an Aktion (slice 12a). */
+	actionId: string | null;
 	shifts: ShiftSummary;
 };
 
@@ -279,7 +282,8 @@ const listColumns = {
 	categoryName: category.name,
 	imageId: task.imageId,
 	imageAlt: task.imageAlt,
-	seriesId: task.seriesId
+	seriesId: task.seriesId,
+	actionId: task.actionId
 };
 
 type ListRow = {
@@ -295,6 +299,7 @@ type ListRow = {
 	imageId: string | null;
 	imageAlt: string | null;
 	seriesId: string | null;
+	actionId: string | null;
 };
 
 const baseItem = (r: ListRow) => ({
@@ -307,7 +312,8 @@ const baseItem = (r: ListRow) => ({
 	endsOn: r.endsOn,
 	category: { id: r.categoryId, name: r.categoryName },
 	image: r.imageId ? { id: r.imageId, alt: r.imageAlt } : null,
-	seriesId: r.seriesId
+	seriesId: r.seriesId,
+	actionId: r.actionId
 });
 
 /** ilike pattern with the user's % and _ taken literally. */
@@ -353,6 +359,7 @@ export async function listTasksForMember(
 	if (f.categoryId) where.push(eq(task.categoryId, f.categoryId));
 	if (f.superCategoryId) where.push(eq(category.superCategoryId, f.superCategoryId));
 	if (f.urgent) where.push(eq(task.urgent, true));
+	if (f.actionId) where.push(eq(task.actionId, f.actionId));
 
 	const rows = await db
 		.select(listColumns)
@@ -396,7 +403,9 @@ export async function getTaskForMember(
 	if (!r) throw new DomainError('task_not_found');
 
 	const shifts = (await loadShifts(db, [taskId])).get(taskId) ?? [];
-	const visible = shifts.some((s) => s.status === 'open' || s.assigneeId === actor.id);
+	const visible =
+		shifts.some((s) => s.status === 'open' || s.assigneeId === actor.id) ||
+		(r.actionId !== null && (await isPublishedAction(db, r.actionId)));
 	if (!visible) throw new DomainError('task_not_found');
 
 	return {
@@ -772,6 +781,42 @@ export const deleteTask = (db: Db, actor: Actor, taskId: string) =>
 
 export const restoreTask = (db: Db, actor: Actor, taskId: string) =>
 	setDeleted(db, actor, taskId, null);
+
+export type ActionTaskItem = TaskListItem & {
+	/** Names on taken/reported/confirmed shifts, in shift order. */
+	people: string[];
+	/** Every shift reported or confirmed. */
+	done: boolean;
+};
+
+export async function listTasksForAction(
+	db: Db,
+	actor: Actor,
+	actionId: string,
+	{ today = localToday() }: MemberListOptions = {}
+): Promise<ActionTaskItem[]> {
+	const rows = await db
+		.select(listColumns)
+		.from(task)
+		.innerJoin(category, eq(task.categoryId, category.id))
+		.where(and(eq(task.actionId, actionId), isNull(task.deletedAt)))
+		.orderBy(desc(task.urgent), asc(task.title));
+
+	const shifts = await loadShifts(
+		db,
+		rows.map((r) => r.id)
+	);
+	return rows.map((r) => {
+		const list = shifts.get(r.id) ?? [];
+		return {
+			...baseItem(r),
+			shifts: summarize(r, list, actor, today),
+			people: list.filter((s) => s.status !== 'open').map((s) => s.assigneeName ?? '—'),
+			done:
+				list.length > 0 && list.every((s) => s.status === 'reported' || s.status === 'confirmed')
+		};
+	});
+}
 
 // ---------------------------------------------------------------------------
 // Capabilities (superadmin)

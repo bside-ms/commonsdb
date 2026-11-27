@@ -4,20 +4,22 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import TaskCard from '#lib/components/TaskCard.svelte';
 	import type { PageProps } from './$types';
-	import { formatRepros } from '#lib/format.ts';
+	import { formatDate, formatRepros } from '#lib/format.ts';
 	import { Badge, Balance, Button, EmptyState } from '#lib/ui';
 	import { myTasks } from './tasks/tasks.remote';
 	import { ownBalance } from './account/account.remote';
 	import { unreadCount } from './messages/messages.remote';
 	import { currentNews } from './news/news.remote';
 	import NewsPost from './news/NewsPost.svelte';
+	import { upcomingActions } from './aktion/aktion.remote';
 	import LogoutButton from '#lib/components/LogoutButton.svelte';
 
 	let { data }: PageProps = $props();
 
-	const [mine, balance, unread, news] = $derived(
-		await Promise.all([myTasks(), ownBalance(), unreadCount(), currentNews()])
+	const [mine, balance, unread, news, actionsAhead] = $derived(
+		await Promise.all([myTasks(), ownBalance(), unreadCount(), currentNews(), upcomingActions()])
 	);
+	const nextAction = $derived(actionsAhead[0]);
 
 	const soon = [
 		{ href: resolve('/commons'), label: m.nav_commons(), icon: Box },
@@ -43,6 +45,21 @@
 		</div>
 
 		<section aria-labelledby="mine-heading">
+			{#if nextAction}
+				<a
+					href={resolve('/aktion/[id]', { id: nextAction.id })}
+					class="mt-6 block border border-ink bg-area-init p-4 no-underline hover:opacity-90"
+				>
+					<span class="text-caps">{m.action_upcoming()}</span>
+					<span class="mt-1 block text-h3">{nextAction.title}</span>
+					<span class="mt-1 block text-small">
+						{formatDate(new Date(nextAction.date))}{nextAction.place
+							? ` · ${nextAction.place}`
+							: ''}
+					</span>
+					<span class="mt-2 block text-small font-semibold">{m.action_open()}</span>
+				</a>
+			{/if}
 			{@render sectionHead('mine-heading', m.tasks_mine(), resolve('/tasks'), m.home_find_tasks())}
 			{#if mine.length === 0}
 				<EmptyState

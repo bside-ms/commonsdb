@@ -11,8 +11,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { Button, Chip, EmptyState, Input } from '#lib/ui';
 	import { memberTasks, taskCategories } from './tasks.remote';
-	import TaskCard from '#lib/components/TaskCard.svelte';
-	import TaskRow from '#lib/components/TaskRow.svelte';
+	import MemberTaskRow from '#lib/components/MemberTaskRow.svelte';
 
 	const params = $derived(page.url.searchParams);
 	const q = $derived(params.get('q') ?? '');
@@ -113,7 +112,7 @@
 		<ul class="mt-3 grid border-t border-ink lg:grid-cols-2 lg:gap-x-7">
 			{#each mine as task (task.id)}
 				<li>
-					<TaskRow {task} />
+					<MemberTaskRow {task} />
 				</li>
 			{/each}
 		</ul>
@@ -141,7 +140,7 @@
 		<ul class="mt-3 grid border-t border-ink lg:grid-cols-2 lg:gap-x-7">
 			{#each open as task (task.id)}
 				<li>
-					<TaskRow {task} />
+					<MemberTaskRow {task} />
 				</li>
 			{/each}
 		</ul>

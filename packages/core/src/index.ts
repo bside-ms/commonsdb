@@ -10,3 +10,4 @@ export * from './suggestions/index.ts';
 export * from './news/index.ts';
 export * from './site-pages/index.ts';
 export * from './members/index.ts';
+export * from './actions/index.ts';

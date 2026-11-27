@@ -169,6 +169,9 @@ Stays in routes until a second use: stat tile, tabs, table, "thanks" card.
 - Confirmations (`Modal`) are an enhancement: the button is a real submit
   button that opens the modal only when JS runs; the modal's confirm
   button submits via `form="..."`.
+- Admin rows that change one thing (mark/unmark, duplicate, delete) are
+  one small form per row with `.for(key)` (`admin/tasks/TaskRow`,
+  `admin/actions/MarkTaskButton`).
 
 ## Showcase
 

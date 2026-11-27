@@ -18,6 +18,7 @@ import type { RichTextDoc } from '@commonsdb/richtext';
 import type { SeriesRuleJson, ShiftTemplateJson } from './series-json.ts';
 import { user } from './auth.ts';
 import { upload } from './uploads.ts';
+import { action } from './actions.ts';
 
 export const WHEN_KINDS = ['date', 'range'] as const;
 export type WhenKind = (typeof WHEN_KINDS)[number];
@@ -156,12 +157,15 @@ export const task = pgTable(
 		periodKey: text('period_key'),
 		/** Edited on its own: rule or template changes leave it alone. */
 		seriesEdited: boolean('series_edited').notNull().default(false),
+		/** Marked for an Aktion ("vorgemerkt"); null = none. */
+		actionId: uuid('action_id').references(() => action.id, { onDelete: 'set null' }),
 		...timestamps
 	},
 	(t) => [
 		index('task_category_idx').on(t.categoryId),
 		index('task_series_idx').on(t.seriesId),
 		index('task_image_idx').on(t.imageId),
+		index('task_action_idx').on(t.actionId),
 		// the generator's idempotency: one occurrence per period and series
 		uniqueIndex('task_series_period_idx')
 			.on(t.seriesId, t.periodKey)
@@ -253,7 +257,8 @@ export const taskSeriesRelations = relations(taskSeries, ({ one, many }) => ({
 export const taskRelations = relations(task, ({ one, many }) => ({
 	category: one(category, { fields: [task.categoryId], references: [category.id] }),
 	series: one(taskSeries, { fields: [task.seriesId], references: [taskSeries.id] }),
-	shifts: many(shift)
+	shifts: many(shift),
+	action: one(action, { fields: [task.actionId], references: [action.id] })
 }));
 
 export const shiftRelations = relations(shift, ({ one }) => ({
